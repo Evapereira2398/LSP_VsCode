@@ -1,3 +1,9 @@
+@ Rera desevolvida para tratar alguns pontos na ficha complementar do colaborador@
+@ Verifica se se o colaborador possui outro contrato , se não possuir inserie na aba 'Outros contratos'@
+@ Verifica as datas do outro contrato @
+@ Verifica se o campo customizadoestá setado para geradção de um novo contrato @
+
+
 @- verifica se colaborador possui fornecedor vinculado -@
 @- verifica duração/prorrogação de contrato, incluir informaões de contrato -@
 
