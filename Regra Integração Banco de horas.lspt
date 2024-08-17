@@ -1,0 +1,207 @@
+/* ----- REGRA INTEGRAÇÃO BANCO DE HORAS -----
+- 6 em 6 meses; 
+- Entre esses 6 meses, todas as horas que ultrapassarem de 20 horas no final de cada mês, em caso positivo são pagas e em caso negativo serão descontadas
+----- Chamado 189022 - Bruno Cavalcante - 20/12/2022 
+*/
+
+Definir Cursor cBanco;
+Definir Data dDatIni;
+Definir Data dDatFim;
+Definir Data dDatCmp;
+
+xNumEmp = R034FUN.NumEmp;
+xTipCol = R034FUN.TipCol;
+xNumCad = R034FUN.NumCad;
+dDatIni = DatIni;
+dDatFim = DatFim;
+xSalBan = 0;
+xValDif = 0;
+xLimPos = 1200;
+xLimNeg = xLimPos * (-1); /* xLimNeg = 1200×(−1)= −1200 */
+
+@@@@@ x = Codigo do banco de horas @@@@@
+
+/*
+inicialização: x = 1 - Aqui, a variável x é inicializada com o valor 1.
+condição de continuação: x <= 2 - O loop continuará executando enquanto o valor de x for menor ou igual a 2.
+incremento/decremento: x++ - Após cada execução do corpo do loop, o valor de x será incrementado em 1.
+Portanto, a estrutura do loop indica que o corpo do loop será executado duas vezes, uma vez para x = 1 e outra vez para x = 2.
+
+*/
+Para(x = 1; x <= 2; x++) {
+  /* função verifica se o colaborador está incluído na abrangência de um determinado banco de horas*/
+
+  /*
+  xNumEmp	Código da empresa.
+  xTipCol	Tipo do colaborador.
+  xNumCad	Código do Cadastro.
+  xCodBhr	Código do Banco de Horas.
+  xDatBus	Data da Verificação.
+  xColBhr	Retorna se o Colaborador faz parte do banco (0 - Não, 1 - Sim).
+  */
+  VerAbrBHR(xNumEmp, xTipCol, xNumCad, x , dDatFim, xColBhr);
+   
+  /* Se o colaborador faz parte do banco de horas xCodBhr recebe o codigo do banco de horas */
+    Se(xColBhr = 1) {
+      xCodBhr = x;
+      Pare;
+    }
+}  
+
+/* Data limite para a compensação */
+cBanco.Sql "SELECT DatCmp FROM R011LAN \
+            WHERE NumEmp = :xNumEmp \
+            AND TipCol = :xTipCol \
+            AND NumCad = :xNumCad \
+            AND CodBhr = :xCodBhr \
+            AND DatLan >= :dDatIni \
+            AND DatLan <= :dDatFim";
+cBanco.AbrirCursor();
+  Se(cBanco.Achou) { 
+    dDatCmp = cBanco.DatCmp; /* Atribui o valor a dDatCmp */
+  }
+cBanco.FecharCursor();
+
+
+/* função retorna o saldo do banco de horas conforme a data especificada para verificação.*/
+/*
+xnumemp	Número da empresa.
+xtipcol	Tipo de colaborador.
+xnumcad	Número do cadastro.
+xcodbhr	Código do banco de horas.
+xdatbas	Data base para verificação.
+xbhrdat	Retorno do saldo na data.
+*/
+RetBHRDat(xNumEmp, xTipCol, xNumCad, xCodBhr, dDatFim, xSalBan);
+
+/* Consulta para buscar quantidade de horas do lançamento e sinal do lançamento */
+cBanco.Sql "SELECT QtdHor, SinLan FROM R011LAN \
+            WHERE NumEmp = :xNumEmp \
+            AND TipCol = :xTipCol \
+            AND NumCad = :xNumCad \
+            AND CodBhr = :xCodBhr \
+            AND DatLan = :dDatFim \
+            AND OriLan = 'A'"; /* Origem lançamento = A 'Apuração' */
+
+cBanco.AbrirCursor();
+  Se(cBanco.Achou) {
+    Se(cBanco.SinLan = '+') {
+      xSalBan = xSalBan + cBanco.QtdHor; /* Se o sinal for '+' xSalBan = Saldo na data + quantidade de horas do lançamento */
+    }  
+    Se(cBanco.SinLan = '-') {
+      xSalBan = xSalBan - cBanco.QtdHor; /* Se o sinal for '-' xSalBan = Saldo na data - quantidade de horas do lançamento */
+    }
+  }
+cBanco.FecharCursor();
+
+/* Se o codigo do banco for = 1 xEvePag = 987 */
+Se(xCodBhr = 1) {
+    xEvePag = 987;
+}   
+/* Se o codigo do banco for = 2 xEvePag = 90 */
+Se(xCodBhr = 2) {
+  xEvePag = 90; 
+}
+
+/* Se a Data limite para a compensação for diferente da data final da compentencia  */
+Se(dDatCmp <> dDatFim) {  
+  /*
+  Excluir lançamentos no banco de horas que possuem o campo origem de lançamento (OriLan) contendo o valor 'R' (incluídos via regra).
+  É necessário utilizar essa função sempre que for utilizada a função IncLanBhr, para que a regra possa ser executada mais vezes, 
+  pois o lançamento deve ser excluído para não ser incluído em duplicidade. Ver abaixo exemplo 2.
+  
+  Nome		  Descrição
+  NumEmp		Número da empresa.
+  TipCol		Tipo do Colaborador.
+  NumCad		Cadastro do colaborador.
+  CodBhr		Código do banco de horas.
+  DatLan		Data do lançamento no banco de horas.
+  CodSit		Situação do lançamento.
+  
+  Exemplo 1:
+  Excluir um lançamento previamente incluído no banco de horas via regra com OriLan = 'R'.
+
+  ExcLanBhr(R034FUN.NumEmp, R034FUN.TipCol, R034FUN.NumCad, 1, DatIni, 301);
+  */
+
+  ExcLanBhr(xNumEmp, xTipCol, xNumCad, xCodBhr, dDatFim, 450);
+  ExcLanBhr(xNumEmp, xTipCol, xNumCad, xCodBhr, dDatFim, 400); 
+
+  /*função retorna o saldo do banco de horas conforme a data especificada para verificação*/
+
+  /*
+  xnumemp	Número da empresa.
+  xtipcol	Tipo de colaborador.
+  xnumcad	Número do cadastro.
+  xcodbhr	Código do banco de horas.
+  xdatbas	Data base para verificação.
+  xbhrdat	Retorno do saldo na data.
+  */
+  RetBHRDat(xNumEmp, xTipCol, xNumCad, xCodBhr, dDatFim+1, xSalBan);
+  
+
+  /* Se o saldo retornado na data for maior que 1200 */
+  Se(xSalBan > xLimPos) {
+    xValDif = xSalBan - xLimPos; /*0 recebe saldo do banco na data - 1200 */
+    CodEvt[xEvePag] = xValDif; /* Codigo do evento 987 ou 90 = recebe saldo do banco na data - 1200 */
+
+
+    /* Retorna a data de compensação para lançamentos do banco de horas. */
+
+    /*
+    NumEmp	Número da empresa
+    DatLan	Data do lançamento no banco de horas.
+    CodBhr	Código do banco de horas.
+    CodSit	Situação do lançamento.
+    vDatCmp	Variável de retorno contendo a data de compensação.
+    */
+    RetDatCmp(xNumEmp, dDatFim, xCodBhr, 450, dDatCmp);
+     
+    /* Incluir lançamentos no banco de horas e atualiza as compensações. 
+    O lançamento será incluso com o campo origem de lançamento (OriLan) contendo o valor 'R' (regra). */
+
+    /*
+    NumEmp	Numérico	Número da empresa.
+    TipCol	Numérico	Tipo do Colaborador.
+    NumCad	Numérico	Cadastro do colaborador.
+    CodBhr	Numérico	Código do banco de horas.
+    DatLan	Numérico	Data do lançamento no banco de horas.
+    CodSit	Numérico	Situação do lançamento.
+    QtdHor	Numérico	Quantidade de horas (em minutos).
+    DatCmp	Numérico	Data de compensação.
+    */
+    IncLanBhr(xNumEmp, xTipCol, xNumCad, xCodBhr, dDatFim, 450, xValDif, dDatCmp);
+
+
+  /* Se o saldo do banco for menor que -1200 */
+  } Senao Se(xSalBan < xLimNeg) {
+    xValDif = xSalBan - xLimNeg; /* 0 recebe o saldo do banco - -1200*/
+    xValAux = xValDif; /*xvalAux = valdif*/
+    xValDif = xValDif * (-1);
+
+    CodEvt[1014] = xValDif;
+    RetDatCmp(xNumEmp, dDatFim, xCodBhr, 400, dDatCmp);
+    IncLanBhr(xNumEmp, xTipCol, xNumCad, xCodBhr, dDatFim, 400, xValDif, dDatCmp);
+
+  } Senao {
+    CodEvt[xEvePag] = 0;
+    CodEvt[1014] = 0;
+  }
+  xSalBan = xValDif;
+}
+
+Se(xCodBhr = 1) {
+  Se(xSalBan > 2400) {
+    CodEvt[989] = xSalBan - 2400;
+    xSalBan = 2400; 
+  }
+  Se(xSalBan > 1200) {
+    CodEvt[988] = xSalBan - 1200;
+    xSalBan = 1200; 
+  }
+  Se(xValAux > 0) {
+    CodEvt[987] = xSalBan;
+  }
+}
+
+x=0;

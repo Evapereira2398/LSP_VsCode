@@ -1,0 +1,91 @@
+Definir Data FPrazo1;
+Definir Data FPrazo2;
+Definir Data EDatFim;
+Definir Numero xNumEmp;
+Definir Numero xTipCol;
+Definir Numero xNumCad;
+Definir Numero xDiaAfa;
+Definir Numero xPrazo1;
+Definir Numero xPrazo2;
+Definir Data xDatAfa;
+Definir Data xDatAdm;
+
+Definir Funcao ConsiderarAfastamentos();
+
+Funcao ConsiderarAfastamentos();
+inicio
+  Definir Cursor Cur_R038AFA;
+  Definir Alfa EConAfa;
+  Definir Numero xDatAfaJus;
+  
+
+  AlteraControle("FDatPre","Imprimir","Verdadeiro");
+    
+  @--- Considera Afastamentos ---@
+  Se (EConAfa = "S")
+  Inicio
+    xPrazo1 = 0;
+    xPrazo2 = 0;
+    xDiaAfa = 0;
+    
+    @--- Verifica se o colaborador possui afastamentos por Auxilio Doença, Acidente de Trabalho ou Suspensão MP936 ---@
+    Cur_R038AFA.SQL "SELECT R038AFA.DATAFA, \
+                            R038AFA.DATTER, \ 
+                            R038AFA.DIAJUS \
+                       FROM R038AFA, \
+                            R010SIT, \
+                            R010ESO \
+                      WHERE R038AFA.NUMEMP = :xNumEmp \
+                        AND R038AFA.TIPCOL = :xTipCol \
+                        AND R038AFA.NUMCAD = :xNumCad \
+                        AND R038AFA.DATAFA >= :xDatAdm \
+                        AND R038AFA.DATAFA <= :xDatAfa \
+                        AND R038AFA.SITAFA = R010SIT.CODSIT \
+                        AND R038AFA.SITAFA = R010ESO.CODSIT \
+                        AND R010ESO.CMPMOV = (SELECT MAX(ESO2.CMPMOV) \
+                                                FROM R010ESO ESO2 \
+                                               WHERE ESO2.CODSIT = R038AFA.SITAFA \
+                                                 AND ESO2.CMPMOV <= R038AFA.DATAFA) \
+                        AND (R010SIT.TIPSIT IN (3,4) OR R010ESO.MOTESO = 37)";
+    Cur_R038AFA.AbrirCursor();
+  
+    @--- Enquando achou afastamentos ---@
+    Enquanto (Cur_R038AFA.Achou) 
+    Inicio
+      xDatAfaJus = Cur_R038AFA.DiaJus + Cur_R038AFA.DatAfa;
+      @--- Se o Afastamento ja estiver terminado ---@
+      Se (Cur_R038AFA.DatTer > 0) 
+      Inicio
+        @--- Mostra os controles pra mostrar os valores ---@ 
+        AlteraControle("FDatPre","Imprimir","Verdadeiro");
+        xPrazo1 = 0;
+        xPrazo2 = 0;
+      
+        @--- Calcula quantos dias o colaborador ficou afastado ---@ 
+        xDiaAfa = (Cur_R038AFA.DatTer - Cur_R038AFA.DatAfa) + 1;
+        xDiaAfa = xDiaAfa - Cur_R038AFA.DiaJus;
+      
+        @--- Verifica se o afastamento ocorreu no primeiro periodo do contrato ou no segundo ---@
+        Se (xDatAfaJus <= (FPrazo1)) {
+          xPrazo1 = xPrazo1 + xDiaAfa; 
+        }        
+        Senao Se ((xDatAfaJus > (FPrazo1)) e (xDatAfaJus <= (FPrazo2))) {
+          xPrazo2 = xPrazo2 + xDiaAfa;
+        }
+  
+        @--- Soma os dias afastados com os prazos cadastaados na ficha complementar ---@  
+        FPrazo1 = FPrazo1 + xPrazo1;
+        @--- Os Afastamentos do primeiro periodo afetam a data final da prorrogação do contrato ---@
+        FPrazo2 = FPrazo2 + xPrazo1; @--- Calcula a data de INICIO da prorrogação ---@
+        FPrazo2 = FPrazo2 + xPrazo2; @--- Calcula a data de FIM da prorrogação ---@  
+  
+      Fim;
+      @--- Se o Afastamento ainda estiver em andamento ---@
+      Senao 
+      Inicio
+        AlteraControle("FDatPre","Imprimir","Falso");
+      Fim;
+      Cur_R038AFA.Proximo();
+    Fim;
+  Fim;
+Fim;

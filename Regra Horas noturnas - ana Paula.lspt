@@ -1,0 +1,1041 @@
+Definir Numero nHorNot;
+Definir Numero nCodsfi;
+Definir Data  dDatPro;
+Definir Data  dDatPro2;
+Definir Cursor Cur_R066Sit; 
+Definir Cursor CR038APU; 
+@ Primeiro trata a Mobilidade Diária (ver regra 303).@
+Regra(303); 
+
+/*@@@@@@@@@@@@@@@@@@@@@@@@@@*/
+@        definições         @
+/*@@@@@@@@@@@@@@@@@@@@@@@@@@*/
+Definir cursor Cur_r66sit; 
+                  
+
+xnumemp = R034FUN.NumEmp;
+xtipcol = R034FUN.TipCol;
+xnumcad = R034FUN.NumCad;
+
+xHoraPrevistadaMarcacao = 0;
+xHoraPrimeiraMarcacao = 0;
+xToleranciaAnterior = 0;
+nQtdMinAnt = 0;
+xHoraMarcacaoSaida = 0;
+xToleranciaPosterior = 0;
+xFaixaMoveldaMarcacao = 0;
+nTotSitHE = 0;
+nHorNot = 0;
+nCodDsi = 0;
+
+/*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*/
+@        adicional noturno          @
+/*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*/
+
+@Cursor conta quantidade de marcaçoes nececárias beste escala@
+Definir Cursor Cur_QtdMar;
+
+@Hora inicio 22:00 22*60 = 1320@
+HoraNoturnaInicio = 0;
+@Hora fim 5:00 5*60 = 300@
+HoraNoturnaFim    = 0;
+
+RetSinEmp(R034FUN.NumEmp, R034FUN.TipCol, R034FUN.NumCad, datpro);
+vsinemp = CodSinEmp;
+
+definir cursor cur_sindicato;
+cur_sindicato.Sql"Select IniNot, FimNot from R014SIN \
+                   where codsin=:vsinemp "; 
+          
+cur_sindicato.abrircursor();
+
+Se(cur_sindicato.achou)
+     Inicio
+      HoraNoturnaInicio   = cur_sindicato.IniNot;
+      HoraNoturnaFim      = cur_sindicato.FimNot;
+     Fim
+cur_sindicato.fecharcursor();
+
+
+Se (( vsinemp = 70 ) ou ( vsinemp = 80 ) ou ( vsinemp = 90 ) ou ( vsinemp = 160 ))@ após limite 70 % @
+{
+  @ 50 % @
+  xhor50   = 400;
+  @ 50 % not @
+  xhor50n  = 450;
+  @ 70 % @
+  xhor100  = 401;
+  @ 70 % not @
+  xhor100n = 451;  
+}
+Senao
+    Se ( vsinemp = 110 ) @ sindicato tratato por banco @
+    {
+        @ 50 % @
+        xhor50   = 901;
+        @ 50 % not @
+        xhor50n  = 904;
+        @ 100 % @
+        xhor100  = 305;
+        @ 100 % not @
+        xhor100n = 306;
+          
+    }
+    Senao
+    {
+        @ 50 % @
+        xhor50   = 301;
+        @ 50 % not @
+        xhor50n  = 302;
+        @ 100 % @
+        xhor100  = 305;
+        @ 100 % not @
+        xhor100n = 306;
+    }
+ 
+
+
+@Codigo do horário utilizado@
+xCodHorario = codhor;
+QtdeMarcacoes = 0;
+
+Cur_QtdMar.Sql"select * from R004MHR\
+         WHERE codHor =:xCodHorario";
+Cur_QtdMar.abrircursor();
+Enquanto(Cur_QtdMar.achou)
+{
+  QtdeMarcacoes++;
+  Cur_QtdMar.proximo();
+}
+Cur_QtdMar.fecharCursor();
+
+TotalMarcacao= QtdeMarcacoes;
+
+@Segundo parametro desta funcao é um porque queremos saber o primeiro horário previsto do ponto@
+xtembat = RetornaBatidaHorario(xCodHorario,1,xUsoMarcacao,xHoraPrevistadaMarcacao,xToleranciaAnterior,xToleranciaPosterior,xFaixaMoveldaMarcacao);
+            
+conger = 0;
+vret = FLeMar;
+
+xMarRea = 0;
+
+Se(vret <> 0)
+  Inicio
+  
+    /* ___________________________________________________________________________________________________
+    */
+    
+    @ Lê o horário da primeira e da última marcação @
+    vret = FPxMar;
+    Enquanto (vret <> 0)
+     Inicio
+        
+       Se (xMarRea = 0)
+       {
+          xHoraPrimeiraMarcacao = HorMar; @---- Primeira Marcação Entrada ------@
+          dataPrimeiraMarcacao = DatMar;
+       }
+       xHoraMarcacaoSaida = HorMar;@----- Quarta Batida Saída da Jornada de Trabalho -------@
+       dataSegundaMarcacao = Datmar;
+       xMarRea++;
+       vret = FPxMar;
+     Fim;
+    
+    
+    
+    
+   Se( xHoraPrevistadaMarcacao <> xHoraPrimeiraMarcacao )
+   {
+         @Se a tolerancia compreender outro dia...@
+        Se( xToleranciaAnterior > xHoraPrevistadaMarcacao)
+        {
+               Se(xToleranciaAnterior <= xHoraPrimeiraMarcacao)
+               {
+                    nQtdMinAnt = (1440 - xHoraPrimeiraMarcacao) + xHoraPrevistadaMarcacao;
+                    Se( nQtdMinAnt <= ((1440 - xToleranciaAnterior) + xHoraPrevistadaMarcacao) )
+                        Se( xHoraPrimeiraMarcacao > HoraNoturnaInicio)
+                               horsit[51] =  horsit[51] + nQtdMinAnt; 
+               }
+               Senao
+                    Se(xHoraPrimeiraMarcacao <= xToleranciaPosterior)
+                        horsit[51] =  horsit[51] - (xHoraPrimeiraMarcacao - xHoraPrevistadaMarcacao);    
+        }
+        Senao
+        {
+            @descobrir se a hora ponto marcada esta entre as tolerancias de entrada e é diferente do horário do ponto normal@
+            Se(  ( (xHoraPrimeiraMarcacao >= xToleranciaAnterior) e (xHoraPrimeiraMarcacao <= xToleranciaPosterior) ) e (xHoraPrimeiraMarcacao <> xHoraPrevistadaMarcacao)  )
+              {
+                @descobrir se a data do ponto marcada é maior que a primeira tolerancia e menor que o ponto normal@
+                  Se((xHoraPrimeiraMarcacao >= xToleranciaAnterior) e (xHoraPrimeiraMarcacao < xHoraPrevistadaMarcacao))
+                  {
+                    @descobrir se o horário do ponto marcado esta dentro do horário de horas noturnas@
+                    Se((xHoraPrimeiraMarcacao >= HoraNoturnaInicio) ou (xHoraPrimeiraMarcacao <= HoraNoturnaFim))           
+                        horsit[51] =  horsit[51] + (xHoraPrevistadaMarcacao - xHoraPrimeiraMarcacao);
+                    
+                    Senao
+                       @descobir se não estiver dentro das horas noturnas mas o horário previsto estiver dentro das horas noturnas@
+                          Se((xHoraPrevistadaMarcacao > HoraNoturnaInicio))
+                            horsit[51] =  horsit[51] + (xHoraPrevistadaMarcacao - HoraNoturnaInicio);  
+                  }
+                  @descobrir caso seja tratado a questão de entrada fora do horário@   
+                  Senao
+                     Se((xHoraPrimeiraMarcacao <= xToleranciaPosterior) e (xHoraPrimeiraMarcacao > xHoraPrevistadaMarcacao) e (xHoraPrevistadaMarcacao >= HoraNoturnaInicio) )
+                          horsit[51] =  horsit[51] - (xHoraPrimeiraMarcacao - xHoraPrevistadaMarcacao);         
+              }                        
+        }
+   }           
+   
+   nQtdMinAnt = 0;
+   xtembat = RetornaBatidaHorario(xCodHorario,QtdeMarcacoes,xUsoMarcacao,xHoraPrevistadaMarcacao,xToleranciaAnterior,xToleranciaPosterior,xFaixaMoveldaMarcacao);
+   
+   Se(xHoraMarcacaoSaida <> xHoraPrevistadaMarcacao)
+   {     
+        Se( xToleranciaAnterior > xHoraPrevistadaMarcacao)
+        {
+            Se(xToleranciaAnterior <= xHoraMarcacaoSaida)
+               {
+                    nQtdMinAnt = (1440 - xHoraMarcacaoSaida) + xHoraPrevistadaMarcacao;
+                    Se( nQtdMinAnt <= ((1440 - xToleranciaAnterior) + xHoraPrevistadaMarcacao) )
+                        Se( xHoraMarcacaoSaida > HoraNoturnaInicio)
+                               horsit[51] =  horsit[51] - nQtdMinAnt; 
+               }
+               Senao
+                    Se(xHoraMarcacaoSaida <= xToleranciaPosterior)
+                        horsit[51] =  horsit[51] + (xHoraMarcacaoSaida - xHoraPrevistadaMarcacao);
+        }
+        Senao
+        {
+             Se(  ( (xHoraMarcacaoSaida <= xToleranciaPosterior) e (xHoraMarcacaoSaida >= xToleranciaAnterior) ) )
+              {
+                 Se((xHoraMarcacaoSaida <= xToleranciaPosterior) e (xHoraMarcacaoSaida > xHoraPrevistadaMarcacao))
+                 {
+                      Se((xHoraMarcacaoSaida >= HoraNoturnaInicio) ou (xHoraMarcacaoSaida <= HoraNoturnaFim))
+                           horsit[51] =  horsit[51] + (xHoraMarcacaoSaida - xHoraPrevistadaMarcacao);           
+                      Senao
+                           Se((xHoraPrevistadaMarcacao < HoraNoturnaFim))
+                               horsit[51] =  horsit[51] + (HoraNoturnaFim - xHoraPrevistadaMarcacao);
+                 }
+                 Senao
+                      Se((xHoraMarcacaoSaida >= xToleranciaAnterior) e (xHoraMarcacaoSaida < xHoraPrevistadaMarcacao) e (xHoraPrevistadaMarcacao < HoraNoturnaFim) )
+                          horsit[51] =  horsit[51] - (xHoraPrevistadaMarcacao - xHoraMarcacaoSaida);
+              }
+        }       
+    }
+    
+    
+Fim;
+
+    Se ((horsit[xhor50n] > 0 ) ou (horsit[xhor100n] > 0))
+  {
+        horsit[51] = horsit[51] + horsit[xhor50n] + horsit[xhor100n];    
+        @horsit[51] = horsit[xhor50n] + horsit[xhor100n];@ 
+  }   
+
+
+/*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*/
+@     feriado no compensado       @ 
+/*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*/
+
+
+definir data xdatfer;
+definir data xdataux;
+xhordia  = 0;
+xHorCmp  = 0;
+
+definir cursor cur_limdir;
+definir alfa Msg;
+
+vcodesc = EscAtu;
+
+
+cur_limdir.sql"select USU_HorCmp from R006ESC \
+                where codesc =:vcodesc        \
+                  and USU_HorCmp > 0 ";
+
+cur_limdir.abrircursor();
+
+Se (cur_limdir.achou)
+     xHorCmp = cur_limdir.USU_HorCmp;
+    
+cur_limdir.fecharcursor();
+
+xtemfercomp = 0;
+xdatfer = datpro;
+  
+Se ( xHorCmp > 0 )  @início horas compensadas@
+{ 
+
+      Se (diasem = 0) @dom@
+         xdataux = datpro + 6;
+      senao
+      Se (diasem = 1) @seg@
+         xdataux = datpro + 5;
+      senao
+      Se (diasem = 2) @ter@
+         xdataux = datpro + 4;
+      senao
+      Se (diasem = 3) @qua@
+         xdataux = datpro + 3;
+      senao
+      Se (diasem = 4) @qui, sexta não desconta @
+         xdataux = datpro + 2;
+      
+      Enquanto( xdatfer <= xdataux )
+      {       
+          xhordia = 0;
+          xDiaFer = VerDatFer (xNumEmp, xTipCol, xNumCad,xdatfer);
+          Se (xDiaFer = 1)
+            RetornaHorario(xNumEmp, xTipCol, xNumCad,xdatfer,"N",xhordia);
+      
+          Se (xhordia = 9998)
+            xtemfercomp = 1;
+      
+           xdatfer++;
+      }
+      Se ( xtemfercomp = 1) @tem feriado no compensado na semana@
+      {
+          @ deduz a compensação das horas trabalhadas e e paga nas extras@
+          Se (( horsit[1] > 0 ) e  (horsit[1] > xHorCmp ))
+          { 
+              horsit[1] = horsit[1] - xHorCmp;
+              horsit[xhor50] = horsit[xhor50] + xHorCmp;      
+          }
+          Senao  
+          Se (( horsit[51] > 0 ) e (horsit[51] > xHorCmp ))
+          {
+              horsit[51] = horsit[51] - xHorCmp;
+              horsit[xhor50] = horsit[xhor50] + xHorCmp; 
+          } 
+      }
+
+} @fim tem horas compensadas@   
+
+
+
+/****************************************************************
+trecho de regra para tratar o dia 21/4 
+Para determinadas escalas(turnos e turninhos) o sistema deverá entender
+que o dia 21/04 é dia normal e que os funcionários que não trabalharam 
+deverá descontar falta e DSR. Lembrando também que foi acordado com o 
+Sindicato que para esse dia os funcionários deverão receber um adicional
+de 50% referente a hora trabalhada;
+*****************************************************************/
+               
+definir Alfa Mens;
+
+xnumemp = R034FUN.NumEmp;
+xtipcol = R034FUN.TipCol;
+xnumcad = R034FUN.NumCad;
+
+
+RetornaEscala(xNumEmp, xTipCol, xNumCad, datpro, xCodEsc, xCodTma, xTurInt, xCodEqp,xCodCat,Mens);
+
+
+definir cursor cur_esc;
+
+xferesp = 0;
+xQtdDia = 0;
+xtotdia = 0;
+
+definir data dDatcmp;
+definir data dDatfer;
+montadata(03,04,2010,dDatcmp);
+montadata(21,04,2010,dDatfer);
+
+
+cur_esc.sql"select * from R006ESC where codesc=:xCodEsc and TipFer = 'P ' ";
+
+
+cur_esc.abrircursor();
+
+Se(cur_esc.achou)
+    {
+      xferesp = 1;
+    }
+cur_esc.fecharcursor();
+
+
+BuscaDiaSit (xNumEmp, xTipCol, xNumCad,dDatcmp,dDatcmp,2,xQtdDia);
+xtotdia = xtotdia + xQtdDia; 
+BuscaDiaSit (xNumEmp, xTipCol, xNumCad,dDatcmp,dDatcmp,3,xQtdDia);
+xtotdia = xtotdia + xQtdDia; 
+BuscaDiaSit (xNumEmp, xTipCol, xNumCad,dDatcmp,dDatcmp,4,xQtdDia);
+xtotdia = xtotdia + xQtdDia; 
+BuscaDiaSit (xNumEmp, xTipCol, xNumCad,dDatcmp,dDatcmp,5,xQtdDia);
+xtotdia = xtotdia + xQtdDia; 
+
+
+
+
+Se (( xferesp = 1 ) e (dDatfer = datpro))  @se for feriado próprio @
+ {
+ 
+  Se ((xtotdia > 0 ) ou  ( R034FUN.DatAdm > dDatcmp ))
+    {
+  
+      
+      xlimite = 480;
+      xsomame = horsit[303] + horsit[16];
+      xsomama = horsit[304] + horsit[66];
+      
+      
+      
+      Se ((xsomame + xsomama  ) <= xlimite )
+       {
+
+         horsit[303] = horsit[303] + horsit[16];
+         horsit[304] = horsit[304] + horsit[66];
+          
+         horsit[016] = 0;
+         horsit[066] = 0;
+       
+       }
+       Senao
+       {
+       
+         Se ((xsomama > 0 ) e  (xsomame > 0))
+          {
+          
+             horsit[303] = horsit[303] + horsit[16];
+             
+             xdif = xlimite - ( horsit[303] + horsit[304]) ;
+             horsit[304] = xdif;
+             horsit[603] = xsomama - xdif;
+             
+             horsit[016] = 0;
+             horsit[066] = 0;
+             
+          }
+          senao
+            Se ((xsomame > 0 ) e  (xsomama = 0))
+             {
+              horsit[303] = xlimite;
+              horsit[339] = xsomame - xlimite; 
+              
+              horsit[016] = 0;
+              horsit[066] = 0;
+             
+             }
+             senao
+               Se ((xsomama > 0 ) e  (xsomame = 0))
+                {
+                
+                  horsit[304] = xlimite;
+                  horsit[603] = xsomame - xlimite; 
+                  
+                   horsit[016] = 0;
+                  horsit[066] = 0;
+                }
+       }
+      
+    
+    }
+    senao
+    { 
+      horsit[301] =  horsit[301] + horsit[001];
+      horsit[302] =  horsit[302] + horsit[051];
+    }   
+ }
+   
+@Trecho da Regra para tratar dia 08/09/2010@
+
+Definir data eDatFer;
+
+montadata(08,09,2010,eDatfer);
+
+
+Se ((eDatfer = datpro) e (vsinemp = 10))  @se for feriado próprio @
+
+    {
+     HorSit[307] = (HorSit[001] + HorSit[051]);
+     }
+             
+@ Regra para atender o Sindicato 170 @
+@ Trecho inserido pela consultora Marílis Boaron em 13-09-2016 - Chamado: 59393 - Apuração quantidade de horas@
+Se ((vsinemp = 170) e (CodHor <> 9998) e (CodHor <> 9999))
+   Inicio
+ 
+   nHorTra = HorSit[030] + HorSit[031] + HorSit[301] + HorSit[302] + HorSit[910] + HorSit[912] +  HorSit[911] + HorSit[070]  + HorSit[071] ;
+
+   Se (nHorTra > 600)
+   {
+      HorSit[051] = HorSit[302] + HorSit[912]; 
+      HorSit[301] = nHorTra - 600;
+      HorSit[910] = 600 - (HorSit[030] + HorSit[031] + HorSit[070] + HorSit[071] + HorSit[911] );
+      HorSit[912] = 0;
+      HorSit[302] = 0;
+   }
+Fim;
+/********************
+@ Trecho eliminado pela consultora Marílis Boaron em 13-09-16 - Chamado: 59393 - Apuração quantidade de horas@
+*********************
+Se ((vsinemp = 170) e (CodHor <> 9998) e (CodHor <> 9999))
+    Inicio
+        Se ((HorSit[030] + HorSit[031] + HorSit[301] + HorSit[302] + HorSit[910] + HorSit[912]) > 600)
+        Inicio
+        HorSit[051] =  HorSit[302] + HorSit[912]; 
+        HorSit[301] = (HorSit[030] + HorSit[031] + HorSit[301] + HorSit[302] + HorSit[910] + HorSit[912]) - 600;
+        HorSit[910] =  120 ;
+        HorSit[912] =  0;
+        HorSit[302] =  0;
+        Fim    
+    Fim
+********************/   
+  
+Senao
+Se ((vsinemp = 170) e (CodHor = 9999) ou (CodHor = 9997) ou (CodHor = 9996))
+    Inicio
+        HorSit[303] = HorSit[303] + HorSit[304];
+        Se (HorSit[303] > 480)
+            Inicio 
+             HorSit[403] = HorSit[303] - 480;
+             HorSit[303] = 480;
+             HorSit[304] = 0;
+             HorSit[453] = 0;
+           Fim
+    Fim     
+Senao
+Se ((vsinemp = 170) e (CodHor = 9998))
+  Inicio
+    Definir Data xDatBas;
+    xBhrDat = 0;
+    xDatBas = DatPro - 1;
+    /*RetBHRDat(xnumemp, xtipcol, xnumcad,3, xdatbas, xbhrdat);*/
+    RetBHRDat(xnumemp, xtipcol, xnumcad,4, xdatbas, xbhrdat);
+    @ Trecho eliminado pelo consultor Vitor Corrêa em 22-03-17 - Chamado: 66291 - Banco de Horas@
+    /*Se (xBhrDat >= 1080) 
+        Inicio
+           HorSit[303] = (HorSit[910] + HorSit[912] + HorSit[303] + HorSit[304] );
+           HorSit[910] = 0;
+           HorSit[912] = 0;
+           HorSit[304] = 0;
+           Se (HorSit[303] > 480)
+               Inicio 
+                  HorSit[403] = HorSit[303] - 480;
+                  HorSit[303] = 480;
+                  HorSit[304] = 0;
+                  HorSit[453] = 0;
+               Fim 
+        
+        Fim 
+    Senao*/
+    Se (xBhrDat <= 480)
+        Inicio
+           HorSit[303] = HorSit[303] + HorSit[304];
+           HorSit[304] = 0;
+           Se (HorSit[303] > 480)
+               Inicio 
+                  HorSit[403] = HorSit[303] - 480;
+                  HorSit[303] = 480;
+                  HorSit[453] = 0;
+               Fim 
+        Fim     
+    @ Trecho eliminado pelo consultor Vitor Corrêa em 22-03-17 - Chamado: 66291 - Banco de Horas@
+    /*Senao
+    Se ((xBhrDat > 480) e (xBhrDat > 1080)) 
+        Inicio
+           HorSit[303] = HorSit[303] + HorSit[304] + HorSit[910] + HorSit[912];
+           HorSit[910] = 1080 - xBhrDat;
+           HorSit[912] = 0;
+           HorSit[303] = HorSit[303] - HorSit[910];
+           Se (HorSit[303] > 480)
+               Inicio 
+                  HorSit[403] = HorSit[303] - 480;
+                  HorSit[303] = 480;
+                  HorSit[453] = 0;
+               Fim 
+        Fim*/     
+
+  Fim
+  
+Definir Cursor Cur_R064CMP;
+
+
+xQtdHor = 0;
+xCodSit = 0;
+
+dDatPro2 = DatPro;
+
+Cur_R064CMP.SQL"SELECT * FROM R064CMP           \
+                        WHERE NumEmp = :xNumEmp \
+                          AND TipCol = :xTipCol \
+                          AND NumCad = :xNumCad \
+                          AND DatIni = :dDatPro2 \
+                          AND TipCmp = 1" ;
+
+      Cur_R064CMP.AbrirCursor();
+
+      Se (Cur_R064CMP.Achou)
+         {
+            xQtdHor = Cur_R064CMP.QtdHor;
+            xCodSit = Cur_R064CMP.CodSit;
+            
+            Se ((HorSit[303] + HorSit[304] + HorSit[914] + HorSit[403] + HorSit[453] + HorSit[xCodSit]) < xQtdHor)
+                Inicio
+                   HorSit[913] = xQtdHor - (HorSit[303] + HorSit[304] + HorSit[914] + HorSit[403] + HorSit[453] + HorSit[xCodSit]);
+                Fim 
+         }
+      Cur_R064CMP.FecharCursor();   
+
+ 
+se(vsinemp = 150)
+{
+
+  TotHorTrab = TotSit[8]; 
+  
+  se((codhor <> 9999) e (codhor <> 9997) e (codhor <> 9996) e (codhor <> 9998))
+    
+    {
+      se(TotalMarcacao = 4)
+      {
+        RetornaBatidaHorario(xCodHorario,4,xUsoMarcacao,xHoraPrevistadaMarcacao4,xToleranciaAnterior,xToleranciaPosterior,xFaixaMoveldaMarcacao);
+        RetornaBatidaHorario(xCodHorario,3,xUsoMarcacao,xHoraPrevistadaMarcacao3,xToleranciaAnterior,xToleranciaPosterior,xFaixaMoveldaMarcacao);
+        RetornaBatidaHorario(xCodHorario,2,xUsoMarcacao,xHoraPrevistadaMarcacao2,xToleranciaAnterior,xToleranciaPosterior,xFaixaMoveldaMarcacao);
+        RetornaBatidaHorario(xCodHorario,1,xUsoMarcacao,xHoraPrevistadaMarcacao1,xToleranciaAnterior,xToleranciaPosterior,xFaixaMoveldaMarcacao);
+        
+        QtdHorPre = (xHoraPrevistadaMarcacao4-xHoraPrevistadaMarcacao3)+(xHoraPrevistadaMarcacao2-xHoraPrevistadaMarcacao1);  @-- 8 --@
+                             /* (17:00                    13:00 )  4                     (12:00                   08:00 ) 4    */
+      }
+      senao se(TotalMarcacao = 2)
+            {
+                RetornaBatidaHorario(xCodHorario,2,xUsoMarcacao,xHoraPrevistadaMarcacao2,xToleranciaAnterior,xToleranciaPosterior,xFaixaMoveldaMarcacao);
+                RetornaBatidaHorario(xCodHorario,1,xUsoMarcacao,xHoraPrevistadaMarcacao1,xToleranciaAnterior,xToleranciaPosterior,xFaixaMoveldaMarcacao);
+                
+                QtdHorPre = (xHoraPrevistadaMarcacao2-xHoraPrevistadaMarcacao1);  @ -- 4 -- @       
+              }
+    }
+  senao
+    QtdHorPre = 0;
+  
+  Se(totHorTrab > 600)
+  {
+   DifHorPre =  600 - QtdHorPre;
+   
+     se((codhor <> 9999) e (codhor <> 9997) e (codhor <> 9996) e (codhor<> 9998))
+     {
+       horsit[901] = DifHorPre;
+       HorSit[301]  = HorSit[301] + totHorTrab-600;
+     }
+     senao
+     {
+       horsit[914] = DifHorPre;
+       HorSit[303]  = totHorTrab-600 + HorSit[51];
+       HorSit[51]  = 0;
+       HorSit[305] = 0;
+       HorSit[306] = 0;
+       Se (HorSit[303] > 480)
+       Inicio
+         HorSit[339] = HorSit[303] - 480; 
+         HorSit[303] = 480;
+       Fim   
+     }  
+  
+  }
+  Senao
+  Se(totHorTrab <= 600)
+  {
+   Se (TotHorTrab > QtdhorPre)
+     {
+       DifHorPre = 600 - QtdHorPre;
+     }
+   Senao
+   Se (nTotHorTrab < QtdHorPre)
+   {
+      DifHorPre =  600 - QtdhorPre/*QtdHorPre*/;
+   }
+   
+     se((codhor <> 9999) e (codhor <> 9997) e (codhor <> 9996) e (codhor <> 9998))
+     {
+       nDifHE = HorSit[901] - DifHorPre;
+       Se (nDifHE < 0)
+         {
+           HorSit[901] = HorSit[901];
+           HorSit[301] = 0;
+         }
+       Senao
+         {
+           Horsit[901] = DifHorPre;
+           HorSit[301]  = HorSit[301] + nDifHE;
+         }
+     }
+     senao
+     {
+       HorSit[914] = totHorTrab;
+       HorSit[301] = 0;
+       HorSit[305] = 0;   
+     }  
+  
+  }
+
+}
+                           
+x=0;
+
+RetSinEmp(R034FUN.NumEmp, R034FUN.TipCol, R034FUN.NumCad, DatPro);
+nSinEmp = CodSinEmp;
+Se ((R034Fun.CodFil = 20) e (nSinEmp = 150) e (DiaSem = 0))
+Inicio
+  HorSit[914] = HorSit[339] + HorSit[914] + HorSit[603];
+  HorSit[339] = 0;
+  HorSit[603] = 0; 
+  Se (HorSit[914] > 600) 
+  Inicio
+    HorSit[303] = HorSit[914] - 600; 
+    HorSit[914] = 600; 
+    Se (HorSit[303] > 480)
+    Inicio
+      HorSit[339] = HorSit[303] - 480;
+      HorSit[303] = 480;
+    Fim
+  Fim
+     
+Fim
+Se ((R034Fun.CodFil = 20)  e (nSinEmp = 150))  @ * TESTAR * @
+Inicio
+  nNumEmp = R034FUN.NumEmp;
+  nTipCol = R034FUN.TipCol;
+  nNumCad = R034FUN.NumCad;    
+  dDatPro2 = DatPro;
+  nCodSit301 = 0;
+  nCodSit302 = 0;  
+  Se ( DiaSem = 1 ) /*Segunda*/ 
+  Inicio     
+    Se (HorSit[301] > 600)
+    Inicio
+      HorSit[305] = HorSit[301] - 600;
+      HorSit[301] = 600;
+    Fim                  
+  Fim
+  Senao Se ( DiaSem = 2 ) /*Terça*/  
+  Inicio
+    dDatPro2 = DatPro - 1;
+    nDiaSem = DiaSem - 1;
+    Enquanto (nDiaSem > 0)
+    Inicio 
+      Cur_R066Sit.Sql"Select CodSit,QtdHor From R066Sit \
+                       Where NumEmp = :nNumEmp   \
+                         And TipCol = :nTipCol   \ 
+                         And NumCad = :nNumCad   \
+                         And DatApu = :dDatPro2   \
+                         And CodSit In (301,302)        ";
+      Cur_R066Sit.AbrirCursor();
+      Enquanto(Cur_R066Sit.Achou)
+      Inicio
+        nCodSit = CUR_R066SIT.CodSit;
+          Se (nCodSit = 301)
+            {
+              nCodSit301 = nCodSit301 + CUR_R066SIT.QtdHor;
+            }
+          Senao
+          Se (nCodSit = 302)
+            {
+              nCodSit302 = nCodSit302 + CUR_R066SIT.QtdHor;
+            }
+        /*nCodSit301 = nCodSit301 + Cur_R066Sit.QtdHor;*/
+        Cur_R066Sit.Proximo();
+      Fim
+      Cur_R066Sit.FecharCursor(); 
+      nDiaSem = nDiaSem - 1;
+      dDatPro2 = dDatPro2 - 1;
+    Fim   
+    nCodSit301 = nCodSit301 + HorSit[301];
+    nCodSit302 = nCodSit302 + HorSit[302];
+    nTotSitHE = nCodSit301 + nCodSit302;
+    Se (nTotSitHE > 600)
+    Inicio
+      /*HorSit[305] = nCodSit301 - 600;
+      HorSit[301] = HorSit[301] - HorSit[305];*/
+      HorSit[305] = nTotSitHE - 600;
+      HorSit[301] = HorSit[301] - HorSit[305];
+      Se (HorSit[301] < 0)
+        {
+          HorSit[302] = 0;
+        }
+
+      /*HorSit[302] = HorSit[302] - HorSit[305];*/
+    Fim                     
+  Fim  
+  Senao Se ( DiaSem = 3 ) /*Quarta*/  
+  Inicio
+    dDatPro2 = DatPro - 1;
+    nDiaSem = DiaSem - 1;
+    Enquanto (nDiaSem > 0)
+    Inicio 
+      Cur_R066Sit.Sql"Select CodSit,QtdHor From R066Sit \
+                       Where NumEmp = :nNumEmp   \
+                         And TipCol = :nTipCol   \ 
+                         And NumCad = :nNumCad   \
+                         And DatApu = :dDatPro2   \
+                         And CodSit In (301,302)        ";
+      Cur_R066Sit.AbrirCursor();
+      Enquanto(Cur_R066Sit.Achou)
+      Inicio
+        nCodSit = CUR_R066SIT.CodSit;
+          Se (nCodSit = 301)
+            {
+              nCodSit301 = nCodSit301 + CUR_R066SIT.QtdHor;
+            }
+          Senao
+          Se (nCodSit = 302)
+            {
+              nCodSit302 = nCodSit302 + CUR_R066SIT.QtdHor;
+            }
+        /*nCodSit301 = nCodSit301 + Cur_R066Sit.QtdHor;*/
+        Cur_R066Sit.Proximo();
+      Fim
+      Cur_R066Sit.FecharCursor(); 
+      nDiaSem = nDiaSem - 1;
+      dDatPro2 = dDatPro2 - 1;
+    Fim
+    nCodSit301 = nCodSit301 + HorSit[301];
+    nCodSit302 = nCodSit302 + HorSit[302];
+    nTotSitHE = nCodSit301 + nCodSit302;   
+    /*nCodSit301 = nCodSit301 + HorSit[301] + HorSit[302];*/
+    Se (nTotSitHE > 600)
+    Inicio
+      /*HorSit[305] = nCodSit301 - 600;
+      HorSit[301] = HorSit[301] - HorSit[305];*/
+      HorSit[305] = nTotSitHE - 600;
+      HorSit[301] = HorSit[301] - HorSit[305];
+      Se (HorSit[301] < 0)
+        {
+          HorSit[302] = 0;
+        }
+      /*HorSit[302] = HorSit[302] - HorSit[305];*/
+    Fim                     
+  Fim 
+  Senao Se ( DiaSem = 4 ) /*Quinta*/  
+  Inicio
+    dDatPro2 = DatPro - 1;
+    nDiaSem = DiaSem - 1;
+    Enquanto (nDiaSem > 0)
+    Inicio 
+      Cur_R066Sit.Sql"Select CodSit,QtdHor From R066Sit \
+                       Where NumEmp = :nNumEmp   \
+                         And TipCol = :nTipCol   \ 
+                         And NumCad = :nNumCad   \
+                         And DatApu = :dDatPro2   \
+                         And CodSit In (301,302)        ";
+      Cur_R066Sit.AbrirCursor();
+      Enquanto(Cur_R066Sit.Achou)
+      Inicio
+        nCodSit = CUR_R066SIT.CodSit;
+          Se (nCodSit = 301)
+            {
+              nCodSit301 = nCodSit301 + CUR_R066SIT.QtdHor;
+            }
+          Senao
+          Se (nCodSit = 302)
+            {
+              nCodSit302 = nCodSit302 + CUR_R066SIT.QtdHor;
+            }
+        /*nCodSit301 = nCodSit301 + Cur_R066Sit.QtdHor;*/
+
+        Cur_R066Sit.Proximo();
+      Fim
+      Cur_R066Sit.FecharCursor(); 
+      nDiaSem = nDiaSem - 1;
+      dDatPro2 = dDatPro2 - 1;
+    Fim   
+    nCodSit301 = nCodSit301 + HorSit[301];
+    nCodSit302 = nCodSit302 + HorSit[302];
+    nTotSitHE = nCodSit301 + nCodSit302;   
+    /*nCodSit301 = nCodSit301 + HorSit[301] + HorSit[302];*/
+    Se (nTotSitHE > 600)
+    Inicio
+      /*HorSit[305] = nCodSit301 - 600;
+      HorSit[301] = HorSit[301] - HorSit[305];*/
+      HorSit[305] = nTotSitHE - 600;
+      HorSit[301] = HorSit[301] - HorSit[305];
+      Se (HorSit[301] < 0)
+        {
+          HorSit[302] = 0;
+        }
+
+      /*HorSit[302] = HorSit[302] - HorSit[305];*/
+    Fim                     
+  Fim    
+  Senao Se ( DiaSem = 5 ) /*Sexta*/  
+  Inicio
+    dDatPro2 = DatPro - 1;
+    nDiaSem = DiaSem - 1;
+    Enquanto (nDiaSem > 0)
+    Inicio 
+      Cur_R066Sit.Sql"Select CodSit,QtdHor From R066Sit \
+                       Where NumEmp = :nNumEmp   \
+                         And TipCol = :nTipCol   \ 
+                         And NumCad = :nNumCad   \
+                         And DatApu = :dDatPro2   \
+                         And CodSit In (301,302)        ";
+      Cur_R066Sit.AbrirCursor();
+      Enquanto(Cur_R066Sit.Achou)
+      Inicio
+        nCodSit = CUR_R066SIT.CodSit;
+          Se (nCodSit = 301)
+            {
+              nCodSit301 = nCodSit301 + CUR_R066SIT.QtdHor;
+            }
+          Senao
+          Se (nCodSit = 302)
+            {
+              nCodSit302 = nCodSit302 + CUR_R066SIT.QtdHor;
+            }
+        /*nCodSit301 = nCodSit301 + Cur_R066Sit.QtdHor;*/
+
+        Cur_R066Sit.Proximo();
+      Fim
+      Cur_R066Sit.FecharCursor(); 
+      nDiaSem = nDiaSem - 1;
+      dDatPro2 = dDatPro2 - 1;
+    Fim   
+    nCodSit301 = nCodSit301 + HorSit[301];
+    nCodSit302 = nCodSit302 + HorSit[302];
+    nTotSitHE = nCodSit301 + nCodSit302;   
+    /*nCodSit301 = nCodSit301 + HorSit[301] + HorSit[302];*/
+
+    Se (nTotSitHE > 600)
+    Inicio
+      /*HorSit[305] = nCodSit301 - 600;
+      HorSit[301] = HorSit[301] - HorSit[305];*/
+      HorSit[305] = nTotSitHE - 600;
+      HorSit[301] = HorSit[301] - HorSit[305];
+      Se (HorSit[301] < 0)
+        {
+          HorSit[302] = 0;
+        }
+
+      /*HorSit[302] = HorSit[302] - HorSit[305];*/
+    Fim                     
+  Fim       
+Fim
+
+/* Trecho inserido em 13/02/2019 para tratativa de "Limite Mensal de 30h" no BH 
+01) Até 30h mensais (pelo período de apuração) lançadas em BH, devem ser lançadas
+em regime de 1 x 1;
+02) A partir da 31ª hora extra mensal (pelo período de apuração) lançadas em BH,
+devem ser lançadas em regime de 1 x 1,5. */
+
+Se ((HorSit[901] > 0) ou (HorSit[904] > 0))
+  {
+    Definir Cursor CUR_R011LAN;
+    Definir Data dIniApu;
+    Definir Data dFimApu;
+    Definir Data dDatApu;
+    
+    nHorPos = 0;
+    nTotBhr = 0;
+    
+    dIniApu = IniApu;
+    dFimApu = FimApu;
+    dDatApu = DatPro-1;
+    
+    CUR_R011LAN.Sql "Select * from R011LAN where NumEmp = :nNumEmp 
+                      and TipCol = :nTipCol 
+                      and NumCad = :nNumCad 
+                      and CodBhr = 5 
+                      and DatLan >= :dIniApu 
+                      and DatLan <= :dDatApu 
+                      and CodSit in (901,902,904) 
+                      and OriLan = 'A'";
+    
+    CUR_R011LAN.AbrirCursor();
+    Enquanto (CUR_R011LAN.Achou)
+      {
+        nCodSit = CUR_R011LAN.CodSit;
+          Se ((nCodSit = 901) ou (nCodSit = 904))
+          {
+            nHorPos = nHorPos + CUR_R011LAN.QtdHor;
+          }
+          Senao
+          Se (nCodSit = 902)
+          {
+            nHorNeg = nHorNeg + CUR_R011LAN.QtdHor;
+          }
+        CUR_R011LAN.Proximo();
+      }
+    CUR_R011LAN.FecharCursor();
+    
+
+
+    /* Horas positivas (3 hrs ) MENOS  Horas neagtivas (2hrs ) */
+    /* Total banco de horas - nTotBhr*/
+    nTotBhr = nHorPos - nHorNeg; /* 1hr  */
+
+
+    /* 907 recebe Total banco de horas ( Horas positivas MENOS as horas negativas (1HR ) + 901 (Horas positivas) 00:15 + 904 (Credito banco de horas noturno)00:00 )
+    Bedito banco de horas 00:40 
+
+    Acumulador Total de 00:35 
+    
+    
+    */
+    HorSit[907] = (nTotBhr + HorSit[901] + HorSit[904]) - HorSit[902];
+    
+    Se (HorSit[907] > 1800) /* 1800 = 00:30 */
+    {
+     nBhrExc = HorSit[907] - 1800; /* 00:05 */
+     HorSit[908] = nBhrExc; /* 908 = Credito banco de horas de 1,5       908 = 00:05 */
+
+     /* 00:15 = 00:15 - 00:05 = 00:10 */
+     HorSit[901] = HorSit[901] - HorSit[908];
+    }
+  }
+
+
+
+
+/********************
+@ Trecho incluido pelo consultor Idomar Renato Mayer em 13-10-22 - Chamado: 193954 - Apuração Hrs. Not. Reduzidas @
+*********************/
+
+
+/* Procura IniApu = Inicio da apuração e CodDsi = Codigo da definição da situação*/
+CR038APU.Sql"Select IniApu, CodDsi From R038Apu Where NumEmp = :xNumEmp And \
+                                                      TipCol = :xTipCol And \
+                                                      NumCad = :xNumCad     \
+                                                      Order by IniApu Desc"; 
+CR038APU.abrircursor();
+  Se(CR038APU.achou)
+    Inicio
+      nCodDsi = CR038APU.CodDsi;
+    Fim
+CR038APU.fecharcursor();
+
+Se (nCodDsi = 008)
+/*
+Inicio
+  Se (HorSit[051] > 0)
+  Inicio
+    HorSit[071] = HorSit[071] + HorSit[051];
+    HorSit[051] = 0;
+  Fim
+Fim
+*/
+Se (HorSit[071] > 0)
+Inicio
+  nHorNot = ((HorSit[071] * 100)/109.811320);
+Fim
+
+Se (nHorNot > 0)
+Inicio
+  HorSit[079] = (nHorNot * 0.142857);
+  HorSit[071] = (HorSit[071] + HorSit[051]) - HorSit[079];
+  HorSit[051] = 0;
+Fim
+
+x = 1;
+
+/*nHorTrb = 0;
+nDifTrb = 0;
+
+Se (HorSit[904] > 0)
+  {
+    nHorTrb = HorSit[904] + HorSit[1];
+    Se (nHorTrb > 600)
+      {
+        nDifTrb = HorSit[904] - (600 - HorSit[1]);
+        HorSit[904] = 600 - HorSit[1];
+        HorSit[302] = HorSit[302] + nDifTrb;
+      }
+  }
+*/

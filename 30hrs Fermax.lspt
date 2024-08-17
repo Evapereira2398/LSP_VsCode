@@ -1,0 +1,170 @@
+@ REGRA DE INTEGRACAO - CALCULO FINAL              @
+@ Tratamento Banco de Horas - chamado 160988 @
+@ Pontos chaves - 1801 de todo ano é integrado todo o banco (fechamento), as horas positivas vão pra folha e negativas zera (perdoado) @
+@               - há fechamento mensal, onde no mínimo 6h devem ser mantidas no banco para próximo mês e restante são integradas @
+@               - sabado é hora dobrada (200%), 12 compensação, para folha é 100%, 11 @
+@               - hora semana é 100% compensação e 50% pagamento @
+
+@ --- DEFINIÇÃO DE VARIÁVEIS --- @
+Definir Cursor C011BHR;
+Definir Cursor C011LAN;
+Definir Data dIniApu;
+Definir Data dFimApu;
+Definir Data dDatIni;
+Definir Data dDatCmp;
+
+@ --- INICIALIZAÇÃO DAS VARIÁVEIS --- @
+xNumEmp = R034FUN.NumEmp;
+xTipCol = R034FUN.TipCol;
+xNumCad = R034FUN.NumCad;
+dIniApu = IniApu;
+dFimApu = FimApu;
+xCodBhr = 0;
+xColBhr = 0;
+xCodSit = 0;
+vBhrDat = 0;
+vHor50p = 0;
+vHo100p = 0;
+vHorNeg = 0;
+vTotHor = 0;
+vTotGer = 0;
+
+@ --- Encontra o BHR do colaborador --- @
+C011BHR.Sql SELECT R011BHR.CodBhr, 
+                    R011PER.DATINI  
+               FROM R011BHR, R011PER 
+              WHERE R011BHR.CODBHR = R011PER.CODBHR 
+           ORDER BY R011PER.DATINI DESC;
+C011BHR.AbrirCursor ();
+Enquanto(C011BHR.Achou)
+Inicio
+   xCodBhr = C011BHR.CodBhr;
+   dDatIni = C011BHR.DatIni;
+   
+   VerAbrBHR(xNumEmp, xTipCol, xNumCad, xCodBhr, dFimApu, xColBhr);
+   Se (xColBhr = 1) {
+     VaPara sair;  
+   }
+   dDatini = 0;
+
+   C011BHR.Proximo();  
+Fim;
+sair
+C011BHR.FecharCursor();
+
+@ Exclui lançamento do fechamento mensal previamente existente para não duplicar @
+ExcLanBhr(xNumEmp, xTipCol, xNumCad, xCodBhr, dFimApu, 902);
+
+@ --- Busca as horas para o fechamento mensal --- @
+C011LAN.Sql SELECT CodSit, QtdHor, DatCmp 
+               FROM R011LAN 
+              WHERE NumEmp = xNumEmp 
+                AND TipCol = xTipCol 
+                AND NumCad = xNumCad 
+                AND CodBhr = xCodBhr 
+                AND DatLan = dIniApu 
+                AND DatLan = dFimApu 
+                AND CodSit in(901,902,903);
+
+C011LAN.AbrirCursor();
+  Enquanto(C011LAN.Achou) {
+    xCodSit = C011LAN.CodSit;
+    dDatCmp = C011LAN.DatCmp;
+    Se(xCodSit = 901) {
+      vHor50p = vHor50p + C011LAN.QtdHor;
+    }
+
+    Se(xCodSit = 903) {
+      vHo100p = vHo100p + C011LAN.QtdHor;
+    }
+
+    Se(xCodSit = 902) {
+      vHorNeg = vHorNeg + C011LAN.QtdHor;      
+    }
+    
+    C011LAN.Proximo();
+  }
+C011LAN.FecharCursor();
+
+@ Retorna o saldo anterior - soma na negativa ou positiva conforme saldo @
+RetBHRDat(xNumEmp, xTipCol, xNumCad, xCodBhr, dIniApu, vBhrDat);
+Se(vBhrDat  0) {
+  vBhrDat = vBhrDat  -1;
+  vHorNeg = vHorNeg + vBhrDat;
+} Senao {
+  vHor50p = vHor50p + vBhrDat;
+}
+
+vTotHor = (vHor50p + vHpo100) - vHorNeg;
+
+@ Distribui as horas negativas @
+Se ((vHor50p + vHo100p) > vHorNeg) {
+  Se(vHor50p = vHorNeg) {
+    vHor50p = vHor50p - vHorNeg;
+    vHorNeg = 0;
+  } Senao {
+    vHorNeg = vHorNeg - vHor50p;
+    vHor50p = 0;
+    vHo100p = vHo100p - vHorNeg;    
+  }
+}
+
+@ No mínimo 30h devem permanecer no banco, restante integra @
+xSobra = 1800;
+Se((vTotHor >= xSobra) e (dDatCmp <> dFimApu)) { @ se data compensação for igual a fim do período atual a integração é pela rotina padrão (fechamento anual) @
+  Se(vHor50p = xSobra) {
+    vHor50p = vHor50p - xSobra;
+    CodEvt[049] = vHor50p;                              /* nhor50p = 1491 */ 
+    CodEvt[051] = vHo100p;                              /* nho100p = 1835 */                                            
+  } Senao {
+    xSobra = xSobra - vHor50p; 
+    CodEvt[049] = 0;
+    vHo100p = vHo100p - xSobra;
+    CodEvt[051] = vHo100p;
+  }
+  
+  @ Sit 901 integra 50% de 100% e Sit 903 integra 100% de 200% @
+  CodEvt[049] = CodEvt[049];
+  CodEvt[051] = CodEvt[051] / 2;                                                 
+
+  @ Retira do banco o valor integrado no mês @
+  vTotGer = vHor50p + vHo100p;
+  IncLanBhr(xNumEmp, xTipCol, xNumCad, xCodBhr, dFimApu, 902, vTotGer, dDatCmp);
+}
+
+@  REVENDA GCI - SOLUCOES PARA GESTAO EMPRESARIAL  @
+@  CLIENTE FERMAX COMPONENTES PARA ESQUADRIAS      @
+@  DATA DA ULTIMA ALTERACAO 09022001.            @
+@  @
+
+/* Se Horas Extras mensais forem maior que 60 horas, sendo 20h a 50%, 20h a 70%, 20h a 80% e o resto a 100% */
+Se (YExt050 = 3600)
+   Inicio
+   CodEvt[034] = CodEvt[034] + 1200;
+   CodEvt[032] = CodEvt[032] + 1200;
+   CodEvt[040] = CodEvt[040] + 1200;
+   CodEvt[036] = CodEvt[036] + (YExt050 - 3600);
+   Fim;
+Senao
+
+/* Se Horas Extras mensais forem maior que 40 horas, sendo 20h a 50%, 20h a 70%, e o resto a 80% */
+Se (YExt050 = 2400)
+   Inicio
+   CodEvt[034] = CodEvt[034] + 1200;
+   CodEvt[032] = CodEvt[032] + 1200;
+   CodEvt[040] = CodEvt[040] + (YExt050 - 2400);
+   Fim;
+Senao
+
+/*Se Horas Extras mensais forem maior que 20 horas, sendo 20h a 50%, e o resto a 70% */
+Se (YExt050 = 1200)
+   Inicio
+   CodEvt[034] = CodEvt[034] + 1200;
+   CodEvt[032] = CodEvt[032] + (YExt050 - 1200);
+   Fim;
+
+Senao {
+    YExt050 = 0;
+}
+
+@ regra (200); regra de integração BH anterior @

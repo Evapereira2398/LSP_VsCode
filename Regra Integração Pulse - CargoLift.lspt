@@ -1,0 +1,299 @@
+/* Definição dos cursores */
+Definir Cursor cR034FUN;
+Definir Cursor cR034CPL;
+Definir Cursor cR030FIL;
+Definir Cursor cR024CAR;
+Definir Cursor cR016ORN;
+Definir Cursor cR022GRA;
+Definir Cursor cR018CCU;
+Definir Cursor cR034CHE;
+
+/* Definição das variáveis */ 
+Definir Alfa xValorbase64;
+Definir Alfa xJson;
+Definir Alfa vHTTPPulse;
+Definir Alfa vURLPulse;
+Definir Alfa xJsonRetorno;
+Definir Alfa xTeste;
+Definir Alfa vURLPulseGet;
+Definir Alfa xJsonRetornoGet;
+
+/* Variaveis principais */
+Definir Alfa aNomFun;
+Definir Alfa aNomLan;
+Definir Alfa aTipSex;
+Definir Alfa aSigUfs;
+Definir Alfa aCodCar;
+Definir Alfa aNomFil;
+Definir Alfa aCodEst;
+Definir Alfa aEmaPae;
+Definir Alfa aGraIns;
+Definir Alfa aCodCar;
+Definir Alfa aDatNas;
+Definir Alfa aDatAdm;
+Definir Alfa aDatAfa;
+Definir Alfa aNumTel;
+Definir Alfa aEmaCom;
+Definir Alfa aTitCar;
+Definir Alfa aNumCpf;
+Definir Alfa aNomLoc;
+Definir Alfa aNomCcu;
+Definir Alfa aCodCcu;
+Definir Alfa aGrpPul;
+Definir Alfa aPosTra;
+Definir Alfa aNomChe;
+Definir Alfa aCodSit;
+Definir Alfa aTipDes;
+Definir Alfa aIdPerson;
+Definir Alfa aPosPaiAux;
+Definir Alfa xNumEmpAux;
+Definir Alfa xTipColAux;
+Definir Alfa xNumCadAux;
+
+/* Variaveis do tipo data */
+Definir Data dDatNas;
+Definir Data dDatAdm;
+Definir Data dDatAfa;
+Definir Data dDatHoj;
+Definir Data dDatAux;
+
+/* Função para montar a data 01/07/2022 e guardar na variavel dDatAux */
+MontaData (1, 7, 2022, dDatAux);
+
+/* Atricuindo valores as variáveis */ 
+xJson = "";
+xValorbase64 = "e218df92617a43260cbda9bee21764cb"; /* Essa variável guarda o token de autenticação da request do Pulse */
+vURLPulseGet = "";
+xJsonRetornoGet = "";
+aIdPerson = "";
+dDatHoj = DatSis;
+nPosIni = 0;
+nPosFim = 0;
+nNumEmp = R034Fun_NumEmp;
+nTipCol = R034Fun_TipCol;
+nNumCad = R034Fun_NumCad;
+
+
+/* Cursor para buscar dados na r034fun */
+cR034FUN.SQL "SELECT NUMEMP, TIPCOL, NUMCAD, NOMFUN, NUMCPF     \
+                     TIPSEX, CODCAR, ESTCAR, CODFIL, SITAFA     \
+                     GRAINS, DATNAS, DATADM, DATAFA, TABORG     \
+                     NUMLOC, CODCCU, ESTPOS, POSTRA, USU_GRPPUL \
+                     FROM R034FUN                               \
+                     WHERE NUMEMP = 1                           \
+                     AND TIPCOL = 1                             \
+                     AND NUMCAD = :nNumCad";      
+cR034FUN.AbrirCursor();               
+Enquanto(cR034FUN.Achou) {
+
+    /* Atribuindo os valores encontrados pelo cursor da R034FUN nas variáveis */
+    XJSON = "";
+    XJSONRETORNO = "";
+    nNumEmp = cR034FUN.NumEmp;
+    nTipCol = cR034FUN.TipCol;
+    nNumCad = cR034FUN.NumCad;
+    aNomFun = cR034FUN.NomFun;
+    nNumCpf = cR034FUN.NumCpf;
+    aTipSex = cR034FUN.TipSex;
+    aCodCar = cR034FUN.CodCar;
+    nEstCar = cR034FUN.EstCar;
+    nCodFil = cR034FUN.CodFil;
+    nSitAfa = cR034FUN.SitAfa;
+    nGraIns = cR034FUN.GraIns;
+    nTabOrg = cR034FUN.TabOrg;
+    nNumLoc = cR034FUN.NumLoc;
+    aCodCcu = cR034FUN.CodCcu;
+    nEstPos = cR034FUN.EstPos;
+    aPosTra = cR034FUN.PosTra;
+    aGrpPul = cR034FUN.USU_GrpPul;
+    aTipDes = "I";
+    aNomLan = "pt-BR";
+    
+    /* Convertendo os valores do tipo "inteiro" para o tipo "Alfa" */ 
+    IntParaAlfa(nNumEmp, xNumEmpAux);
+    IntParaAlfa(nTipCol, xTipColAux);  
+    IntParaAlfa(nNumCad, xNumCadAux);  
+    xNumCadAux = xNumEmpAux + xTipColAux + xNumCadAux;    
+    
+    IntParaAlfa (nNumCpf, aNumCpf);
+    
+    /* Atricuindo os valores encontrados pelo cursor da r034fun para as váriaveis do tipo "Data"*/
+    dDatNas = cR034FUN.DatNas;
+    dDatAdm = cR034FUN.DatAdm;
+    dDatAfa = cR034FUN.DatAfa;
+    
+    /* Conversão das datas para o tipo "Alfa" */ 
+    ConverteMascara (3,dDatNas,aDatNas,"YYYY-MM-DD");
+    ConverteMascara (3,dDatAdm,aDatAdm,"YYYY-MM-DD");
+    ConverteMascara (3,dDatAfa,aDatAfa,"YYYY-MM-DD");
+    ConverteMascara (1,nSitAfa,aCodSit,"999");
+    
+
+    /* Cursor para buscar dados na R034CPL */
+    cR034CPL.SQL "SELECT NUMTEL, EMACOM FROM R034CPL WHERE NUMEMP = :NNUMEMP AND TIPCOL =:NTIPCOL AND NUMCAD = :NNUMCAD";
+    cR034CPL.AbrirCursor();
+    Se (cR034CPL.Achou)
+    {
+        aNumTel = cR034CPL.NumTel;
+        aEmaCom = cR034CPL.EmaCom;
+    }
+    cR034CPL.FecharCursor();
+    
+    /* Cursor para buscar dados na R030FIL */
+    cR030FIL.SQL "SELECT NOMFIL, CODEST FROM R030FIL WHERE NUMEMP = :NNUMEMP AND CODFIL = :NCODFIL";
+    cR030FIL.AbrirCursor();
+    Se (cR030FIL.Achou)
+    {
+        aNomFil = cR030FIL.NomFil;
+        aCodEst = cR030FIL.CodEst;
+    }
+    cR030FIL.FecharCursor();
+    
+    /* Cursor para buscar dados na R024CAR */
+    cR024CAR.SQL "SELECT TITCAR FROM R024CAR WHERE ESTCAR = :NESTCAR AND CODCAR = :ACODCAR";
+    cR024CAR.AbrirCursor();
+    Se (cR024CAR.Achou)
+    {
+        aTitCar = cR024CAR.TitCar;
+    }
+    cR024CAR.FecharCursor();
+    
+    /* Cursor para buscar dados na R016ORN */
+    cR016ORN.SQL "SELECT NOMLOC FROM R016ORN WHERE TABORG = :NTABORG AND NUMLOC = :NNUMLOC";
+    cR016ORN.AbrirCursor();
+    Se (cR016ORN.Achou)
+    {
+        aNomLoc = cR016ORN.NomLoc;
+    }
+    cR016ORN.FecharCursor();
+    
+    /* Cursor para buscar dados na R022GRA */
+    cR022GRA.SQL "SELECT DESGRA FROM R022GRA WHERE GRAINS = :NGRAINS";
+    cR022GRA.AbrirCursor();
+    Se (cR022GRA.Achou)
+    {
+        aGraIns = cR022GRA.DesGra;
+    }
+    cR022GRA.FecharCursor();
+    
+    /* Cursor para buscar dados na R018CCU */
+    cR018CCU.SQL "SELECT NOMCCU FROM R018CCU WHERE NUMEMP = :NNUMEMP AND CODCCU = :ACODCCU";
+    cR018CCU.AbrirCursor();
+    Se (cR018CCU.Achou)
+    {
+        aNomCcu = cR018CCU.NomCcu;
+        aNomCcu = aCodCcu + " - " + aNomCcu;   
+    }
+    cR018CCU.FecharCursor();
+    
+    /* Função para retornar o chefe do posto do colaborador */ 
+    RetornaChefePosto(1, nEstPos, 1, DatSis, aPosTra, nEmpChe, nTipChe, nCadChe);
+
+    Se (nCadChe = 0) {
+        RetornaPostoPai(aPostra, nEstPos, 1, DatHoj, aPosPaiAux);
+        RetornaChefePosto(1, nEstPos, 1, DatSis, aPosPaiAux, nEmpChe, nTipChe, nCadChe);
+        Se (nCadChe = 0) {
+            RetornaPostoPai(aPostra, nEstPos, 1, DatHoj, aPosPaiAux);
+            RetornaChefePosto(1, nEstPos, 1, DatSis, aPosPaiAux, nEmpChe, nTipChe, nCadChe);
+        }
+    }
+    
+    /* Cursor para buscar dados na R034CHE */
+    cR034CHE.SQL "SELECT NOMFUN FROM R034FUN WHERE NUMEMP = :nEmpChe AND TIPCOL =:nTipChe AND NUMCAD = :nCadChe";
+    cR034CHE.AbrirCursor();
+        Se (cR034CHE.Achou) {
+            aNomChe = cR034CHE.NomFun;
+        }
+    cR034CHE.FecharCursor();
+    
+    /* Esta função retorna um objeto HTTP inicializado com as configurações definidas na tela de Configurações
+    de Internet da Central de Configurações. A referência deve ser armazenada em uma variável do tipo Alfa para poder ser 
+    usada nas demais funções HTTP. */
+    HttpObjeto(vHTTPPulse);
+
+    /* Altera os valores de cabeçalhos HTTP que serão enviados junto com a requisição */
+    HttpAlteraCabecalhoRequisicao(vHTTPPulse, "authorization", xValorbase64); 
+    HttpAlteraCabecalhoRequisicao(vHTTPPulse, "Content-Type", "application/json");  
+    vURLPulseGet = "https://www.pulses.com.br/api/engage/v1/employees/?cpf="+aNumCpf;
+
+    /*Desabilita a geração automática de erros de execução. Após esta chamada, nenhum erro será gerado caso a resposta do servidor seja diferente 
+    de 200 ou 204. Nas situações de erro, em que o servidor retorna um código diferente, o usuário deverá realizar o tratamento apropriado. 
+    Para consultar o código de retorna do servidor, deve-se utilizar a função HttpLeCodigoResposta.*/
+    HttpDesabilitaErroResposta(vHTTPPulse); 
+    
+    /* Executa uma requisição HTTP (inclusive HTTPS) de acordo com a URL passada como parâmetro e salva a resposta da requisição, 
+    por exemplo, uma página HTML, no parâmetro de retorno HTML. */ 
+    HttpGet(vHTTPPulse, vURLPulseGet, xJsonRetornoGet);
+    
+    /* Verifica o tamanho do campo Alfa especificado em Origem */
+    TamanhoAlfa (xJsonRetornoGet, nTamAlf);
+    
+    /* Procura por uma parte de texto dentro de um campo/variável do tipo Alfa, retornando a posição em que o texto inicia. */ 
+    PosicaoAlfa ("unit_geography",xJsonRetornoGet, nPosIni);
+    
+    aIdPerson = xJsonRetornoGet;
+    
+    /* Esta função copia parte do conteúdo de uma variável/campo alfanumérico para a variável alfanumérica Retorno.*/ 
+    CopiarAlfa (aIdPerson, nPosIni, nTamAlf - nPosIni);
+    
+    /* Procura por uma parte de texto dentro de um campo/variável do tipo Alfa, retornando a posição em que o texto inicia. */ 
+    PosicaoAlfa ("id_person",aIdPerson, nPosIni);
+    
+    /* Procura por uma parte de texto dentro de um campo/variável do tipo Alfa, retornando a posição em que o texto inicia. */ 
+    PosicaoAlfa ("photo",aIdPerson, nPosFim);
+    
+    /* Esta função copia parte do conteúdo de uma variável/campo alfanumérico para a variável alfanumérica Retorno.*/ 
+    CopiarAlfa (aIdPerson, nPosIni+11, nPosFim-12-nPosIni);
+    
+    /* Procura por um trecho específico dentro de um texto e o substitui, retornando um novo texto. */
+    TrocaString(aIdPerson, ",", "", aIdPerson);
+
+    /* Essa função retorna um xString sem espaços à direita e à esquerda. */ 
+    TiraEspacos (aIdPerson, aIdPerson);
+    
+    vURLPulse = "https://www.pulses.com.br/api/engage/v1/employees/" + aIdPerson + "/" ;
+        
+    Se ((aEmaCom <> " ") e (aNumTel <> " ") e (aDatNas <> "0000-00-00") e (aIdPerson <> "") e (aIdPerson <> " ")) 
+    {
+        xJson = xJson + "{";
+        xJson = xJson +  "\"name\":"          + "\""+ aNomFun +"\",";
+        xJson = xJson +  "\"email\":" + "\""+ aEmaCom +"\",";
+        xJson = xJson +  "\"cpf\":"            + "\""+ aNumCpf +"\",";
+        xJson = xJson +  "\"internal_number\":"            + "\""+ xNumCadAux +"\",";
+        xJson = xJson +  "\"cell_phone\":"            + "\""+ aNumTel +"\",";
+        xJson = xJson +  "\"language\":"            + "\""+ aNomLan +"\",";
+        xJson = xJson +  "\"sex\":"            + "\""+ aTipSex +"\",";
+        xJson = xJson +  "\"birthday\":"            + "\""+ aDatNas +"\",";
+        xJson = xJson +  "\"hiring_date\":"            + "\""+ aDatAdm +"\",";
+        Se ((nSitAfa = 3) ou (nSitAfa = 4) ou (nSitAfa = 6) ou (nSitAfa = 7) ou (nSitAfa = 25))
+        {
+        xJson = xJson +  "\"resignation_date\":"            + "\""+ aDatAfa +"\",";
+        xJson = xJson +  "\"resignation_reason\":"            + "\""+ aTipDes +"\",";
+        }
+        xJson = xJson +  "\"position\":"            + "\""+ aTitCar +"\",";
+        xJson = xJson +  "\"scholarity\":"            + "\""+ aGraIns +"\",";
+        @xJson = xJson +  "\"unit_business\":"            + "\""+ aNomLoc +"\",";@
+        xJson = xJson +  "\"unit_business\":"            + "\""+ aNomCcu +"\",";
+        xJson = xJson +  "\"unit_geography\":"       + "\""+ aNomFil +"\",";
+        xJson = xJson +  "\"groups\":"       + "\""+ aGrpPul +"\",";
+        xJson = xJson +  "\"leaders\":"       + "\""+ aNomChe +"\"";
+        xJson = xJson + "}";
+        
+        /* Executa uma requisição HTTP usando o método PUT. O método de requisição PUT, somente no 
+        formato texto e sem suporte para envio de arquivos, é usado quando é necessário enviar dados ao servidor 
+        para alterar informações de uma URL já conhecida.*/
+        HttpPut(vHTTPPulse,vURLPulse,xJson,xJsonRetorno);
+        vCodigo = 0;
+
+        /*Consulta o código de resposta de uma requisição enviada ao servidor. Está 
+        disponível para todos os verbos HTTP (GET, POST, PUT, PATCH e DELETE). 
+        O código apenas fica disponível após a execução e retorno de uma requisição HTTP.*/
+        HttpLeCodigoResposta(vHTTPPulse, vCodigo);
+        
+        Mensagem(Retorna, vCodigo);
+        
+        EXECSQL "UPDATE R034FUN SET USU_INTPUL = 'S', USU_ALTPUL = :XJSONRETORNO WHERE NUMEMP = :NNUMEMP AND TIPCOL = :NTIPCOL AND NUMCAD = :NNUMCAD";        
+    }
+    cR034FUN.Proximo();
+}
+cR034FUN.FecharCursor();          

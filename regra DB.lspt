@@ -1,0 +1,258 @@
+/*
+   Regra para o Cálculo do Valor do Desconto do Colaborador e do Valor 
+         Subsidiado da Empresa
+    Por: Emerson Valério Pechiski, em: 17/04/2015
+ Motivo: Calcular o Valor do Desconto do Colaborador, sendo o valor do plano por
+         faixa etária, o desconto do dependente é integral e o desconto do 
+         colaborador por faixa salarial, conforme tabelas abaixo:
+         - Idade               Valor do Plano
+         - Até 18 anos             77,55
+         - De 19 a 23 anos        104,18
+         - De 24 a 28 anos        125,74
+         - De 29 a 33 anos        135,67
+         - De 34 a 38 anos        152,14
+         - De 39 a 43 anos        163,06
+         - De 44 a 48 anos        190,01
+         - De 49 a 53 anos        232,90
+         - De 54 a 58 anos        294,70
+         - Acima de 59 anos       465,06
+
+          O desconto do Colaborador é definido de acordo com as faixas da 
+          tabela de IRRF vigente, sendo:
+          -  Faixa	              Desconto
+          - Até R$ 1.903,98	      10%
+          - Até R$ 2.826,65	      15%
+          - Até R$ 3.751,05	      20%
+          - Até R$ 4.664,68	      25%
+          - Acima de R$ 4.664,68	30%
+
+          O desconto do colaborador é um percentual sobre o valor do plano.
+*/
+Definir Cursor C006ESC;
+Definir Cursor CLIMIRF;
+definir cursor cur_aux;
+Definir Numero nNumEmp;
+Definir Numero nTipCol;
+Definir Numero nNumCad;
+Definir Numero nCodOem;
+Definir Numero nCodPla;
+Definir Numero nTipSal;
+Definir Numero nValSal;
+Definir Numero nCodEsc;
+Definir Numero nPerDes;
+Definir Numero nValCol;
+Definir Data   dDatFim;
+Definir Data   dDatSep;
+
+
+nNumEmp = R164ASS.NumEmp;
+nTipCol = R164ASS.TipCol;
+nNumCad = R164ASS.NumCad;
+nCodOem = R164ASS.CodOem;
+nCodPla = R164ASS.CodPla;
+dDatFim = DatFim;
+nPerDes = 0;
+nValCol = 0;
+
+
+/*buscar a idade do funcionário*/
+nIdade = CalIdaEmp (nNumEmp, nTipCol, nNumcad, dDatFim);
+/*buscar a idade do funcionário*/
+
+/*--------------------------------------------------------
+   19/11/2020
+   157021 - Consultor: Ramon Jordão
+   Problema relatado com o valor buscado de acordo com a faixa etária.
+   
+   Os planos 1 e 2 estão com plano marcados como tipo A - Mês seguinte ao aniversário,
+   ao buscar o valor da enfermaria(por cursor), colabs aniversariantes irão buscar com a idade do
+   aniver, ex: 24, porém ao buscar o valor do apartamento e se não for operadora 30 - Amil,
+   será buscado com RGRVALCOL, como o tipo do plano está marcado com A, RGRVALCOL irá retornar
+   o valor para a faixa de 23 anos.
+
+--------------------------------------------------------*/
+Definir Alfa aTipPla;
+Definir Data dDatAni;
+Definir Cursor cR164PLA;
+
+dDatAni = R034FUN.DatNas;
+
+DesMontaData (dDatAni, nDiaAni, nMesAni, na);
+DesMontaData (dDatFim, nDiaSis, nMesSis, na);
+
+@- Verificar se o mes do calculo e o mes do ani são iguais -@
+@- E verificar se o dia do calculo é > que o dia do ani -@
+Se((nMesAni=nMesSis) E (nDiaAni<nDiaSis))
+inicio
+    @- Verificar se os planos são tipo A ou E -@
+    cR164PLA.SQL "SELECT TIPPLA FROM R164PLA WHERE CODOEM=20 AND CODPLA=1";
+    cR164PLA.AbrirCursor();
+    Se(cR164PLA.Achou){
+      aTipPla = cR164PLA.TIPPLA;
+    }
+    cR164PLA.FecharCursor();
+    @- Se o tipo do plano for A ou E - adicionado o trecho codoem <> 1 devido ao chamado 174051@
+    Se(((aTipPla="A")OU(aTipPla="E")) e (R164ASS.CodOem <> 1)){
+       nIdade--;
+    }    
+fim
+
+@- incluído em 23/11/2020, por Jefferson Reisdorfer -@
+@ - Alteração ch 212887 (Remoção da codição para seguradora Amil) - @
+Se (R164ASS.CodOem = 1) @- Sul América -@
+Inicio
+    DesmontaData(DatIni,nDia,nMes,nAno);
+    Se (nMes <= 9) @-- Tratamento até Setembro --@
+    Inicio
+        nAno = nAno - 1;
+        MontaData(01,10,nAno,dDatSep);  
+    Fim
+    Senao
+        MontaData(01,10,nAno,dDatSep);
+    Fim;
+Senao   
+    dDatSep = DatFim;
+
+/*Buscar valor do plano de saude enfermaria, para fazer calculo de desconto*/
+cur_aux.sql "Select PerRef, FaiSal, TotTit from R164PRE \
+              where CodOem = 20 \
+                and CodPla = 1 \
+                and FaiSal >= :nIdade \
+                and PerRef <= :dDatSep \
+              order by FaiSal, PerRef desc";
+cur_aux.abrircursor();
+se(cur_aux.achou)
+{
+  nValorEnfer = cur_aux.TotTit;
+}                
+cur_aux.Fecharcursor();
+/*Buscar valor do plano de saude enfermaria, para fazer calculo de desconto*/
+
+@ --- Função para Buscar o Salário do Colaborador na Data Final --- @
+RetSalEmp (nNumEmp, nTipCol, nNumCad, dDatFim);
+nTipSal = TipSalEmp;
+nValSal = SalEmp;
+
+@ --- Salário do Horista --- @
+Se (nTipSal = 2)
+{
+
+   @ --- Função para Buscar a Escala Claborador na Data Final --- @
+   RetEscEmp (nNumEmp, nTipCol, nNumCad, dDatFim);
+   nCodEsc = EscEmp; 
+   
+   
+   @ --- Cursor para Buscar as Horas Mensais --- @
+   C006ESC.SQL "SELECT HorMes \
+                  FROM R006ESC \
+                 WHERE CodEsc = :nCodEsc ";
+   C006ESC.AbrirCursor();
+   Se (C006ESC.Achou)
+      nValSal = nValSal * (C006ESC.HorMes / 60);
+   C006ESC.FecharCursor();                   
+}
+
+@ --- Cursor para Verificar se o Salário é Menor que o Limite de Isenção --- @
+CLIMIRF.SQL "SELECT LimIse, USU_Perc \
+               FROM R026IRR \
+              WHERE LimIse >= :nValSal \  
+                AND PerRef = (SELECT MAX(TAB.PerRef) \
+                                FROM R026IRR TAB \
+                               WHERE TAB.PerRef <= :dDatFim )";
+CLIMIRF.AbrirCursor();
+Se (CLIMIRF.Achou)
+   nPerDes = CLIMIRF.USU_Perc;
+CLIMIRF.FecharCursor();              
+                                                                                 
+
+@ --- Cursor para Buscar % de Desconto quando Salário > que Limite de Isenção --- @                  
+Se (nPerDes = 0)
+{
+CLIMIRF.SQL "SELECT LimFai, USU_Perc \
+               FROM R026IRF \                       
+              WHERE LimFai > :nValSal \
+                AND PerRef = (SELECT MAX(TAB.PerRef) \
+                                FROM R026IRF TAB \
+                               WHERE TAB.PerRef <= :dDatFim )\
+           ORDER BY LimFai ";                 
+CLIMIRF.AbrirCursor();
+Se (CLIMIRF.Achou)
+   nPerDes = CLIMIRF.USU_Perc;
+CLIMIRF.FecharCursor();              
+}
+
+/*
+nNumEmp = R164ASS.NumEmp;
+nTipCol = R164ASS.TipCol;
+nNumCad = R164ASS.NumCad;
+*/
+
+/*buscar a idade do funcionário*/
+@nIdade = CalIdaEmp (nNumEmp, nTipCol, nNumcad, datsis);@
+/*buscar a idade do funcionário*/
+
+/*Quando for o Operadora 30(Amil) deve buscar os valores da Operadora 20(Unimed)*/
+Se(R164ASS.CodOem = 303){
+  /*Buscar valor do plano de saude enfermaria, para fazer calculo de desconto*/
+  /*Independente do plano de saude(Amil ou Unimed) o desconto é com base na unimed*/
+  cur_aux.sql "Select PerRef, FaiSal, TotTit from R164PRE \
+                where CodOem = 20 \
+                  and CodPla = 2 \
+                  and FaiSal >= :nIdade \
+                order by FaiSal, PerRef desc";
+  cur_aux.abrircursor();
+  se(cur_aux.achou)
+  {
+    nValorApt = cur_aux.TotTit;
+  }                
+  cur_aux.Fecharcursor();
+  /*Buscar valor do plano de saude enfermaria, para fazer calculo de desconto*/
+} Senao {
+
+  nValorApt = RgrValCol;
+  
+  @- Verificar se o mes do calculo é > que o mes do ani -@
+  Se(nMesAni<nMesSis){
+    
+    @- Verificar se os planos são tipo A ou E -@
+    cR164PLA.SQL "SELECT TIPPLA FROM R164PLA WHERE CODOEM=:nCodOem AND CODPLA=:nCodPla";
+    cR164PLA.AbrirCursor();
+    Se(cR164PLA.Achou){
+      aTipPla = cR164PLA.TIPPLA;
+    }
+    cR164PLA.FecharCursor();
+    @- Se o tipo do plano for A ou E -@
+    @- Buscar o valor de acordo com a faixa -@
+    Se((aTipPla="A")OU(aTipPla="E")){
+      cur_aux.sql "Select PerRef, FaiSal, TotTit from R164PRE \
+                    where CodOem = :nCodOem                         \
+                      and CodPla = :nCodPla                         \
+                      and FaiSal >= :nIdade                         \
+                    order by FaiSal, PerRef desc";
+      cur_aux.abrircursor();
+      Se(cur_aux.achou){
+        nValorApt = cur_aux.TotTit;
+      }                
+      cur_aux.Fecharcursor();
+    }    
+  }
+}
+  
+@ --- Executa somente para Percentuais maiores que a primeira faixa --- @
+Se (nPerDes > 0)
+{
+   nValEnfer = nValorEnfer * (nPerDes / 100);
+   ArredondarValor(nValCol, 2);
+   
+   @nValCol = RgrValCol * (nPerDes / 100);@
+   @ArredondarValor(nValCol, 2);@
+   @Valor para apartamento é: Valor do plano menor valor da enfermaria mais valor parte colaborador enfermaria@
+   nValCol = nValorApt - nValorEnfer +  nValEnfer;
+   ArredondarValor(nValCol, 2);
+  
+   RgrValCol = nValCol;
+   RgrValRub = nValCol;
+}
+
+
+x = 0;

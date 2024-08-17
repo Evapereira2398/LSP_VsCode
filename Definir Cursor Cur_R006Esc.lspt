@@ -1,0 +1,475 @@
+Definir Cursor Cur_R006Esc;
+Definir Cursor Cur_R018Ccu;
+Definir Cursor Cur_R010Sit;
+Definir Cursor Cur_R030Fil;
+Definir Cursor Cur_R016Orn;
+Definir Cursor Cur_R064Cmp;
+Definir Cursor Cur_R066Sit;
+Definir Cursor Cur_R040Feg;
+Definir Cursor Cur_R038Afa;
+Definir Data EDatIni;
+Definir Data EDatRef;
+Definir Data dDatApu;
+Definir Data dIniFer;
+Definir Data dIniFer1;
+Definir Data dTerFer;
+Definir Data dTerFer1;
+Definir Data dIniFer3;
+Definir Data dIniFer4;
+Definir Data dTerFer3;
+Definir Data dTerFer4;
+Definir Data dDiaAnt;
+Definir Data dDatIniAux;
+Definir Data dDatTerAux;
+Definir Data dDatIniAuxTra;
+Definir Data dDatTerAuxTra;
+Definir Data dDatIniMat;
+Definir Data dDatTerMat;
+Definir Alfa aCodCCu;
+Definir Alfa aNomCcu;
+Definir Alfa aDesCcu;
+Definir Alfa aCodEsc;
+Definir Alfa aNomEsc;
+Definir Alfa aDesEsc;
+Definir Alfa aDesSit;
+Definir Alfa aNomSit;
+Definir Alfa aCodSit;
+Definir Alfa aTipFer;
+Definir Alfa aDiaSem;
+
+nNumEmp = 0;
+nTipCol = 0;
+nNumCad = 0;
+nCodEsc = 0;
+aCodCcu = "";
+nSitEmp = 0;
+nQtdDiaUti = 0;
+nQtdDiaTra = 0;
+nQtdDiaFal = 0;
+nTabFer = 0;
+nFilEmp = 0;
+nLocEmp = 0;
+nTabOrgEmp = 0;
+nHorSab = 0;
+nQtdDiaAte = 0;
+nDayOff = 0;
+nSabCom = 0;
+nQtdDiaAteNot = 0;
+nQtdDiapat = 0;
+nQtdDiaPatNot = 0;
+nQtdDiaCas = 0;
+nQtdDiaMor = 0;
+nQtdDiaSus = 0;
+dDatApu = 0;
+aDiaSem = "";
+nQtdDiaFerCol = 0;
+nQtdDiaFer = 0;
+nQtdDiaUtiFer = 0;
+nQtdDiaUtiFer1 = 0;
+nQtdDiaUtiFerAnt = 0;
+nDiaFer = 0;
+dIniFer = 0;
+dTerFer = 0;
+dIniFer1 = 0;
+dTerFer1 = 0;
+dIniFer3 = 0;
+dTerFer3 = 0;
+dIniFer4 = 0;
+dTerFer4 = 0;
+nQtdDiaAux = 0;
+nQtdDiaAuxTra = 0;
+nQtdDiaMat = 0;
+nDia = 0;
+dDatIniAux = 0;
+dDatTerAux = 0;
+dDatIniAuxTra = 0;
+dDatTerAuxTra = 0;
+dDatIniMat = 0;
+dDatTerMat = 0;
+nDiaAux = 0;
+nDiaAuxTra = 0;
+nDiaMat = 0;
+nQtdDayOff = 0;
+
+nNumEmp = R034Fun.NumEmp;
+nTipCol = R034Fun.TipCol;
+nNumCad = R034Fun.NumCad;
+
+RetEscEmp(nNumEmp, nTipCol, nNumCad, EDatRef);
+{
+  nCodEsc = EscEmp;
+  IntParaAlfa(nCodEsc, aCodEsc);
+  nHorSab = HorSabEmp;
+}
+
+RetCcuEmp(nNumEmp, nTipCol, nNumCad, EDatRef);
+aCodCcu = CcuEmp;
+
+RetSitEmp(nNumEmp, nTipCol, nNumCad, EDatRef);
+nSitEmp = SitEmp;
+IntParaAlfa(nSitEmp, aCodSit);
+
+RetFilEmp(nNumEmp, nTipCol, nNumCad, EDatRef);
+nFilEmp = FilEmp;
+
+RetLocEmp(nNumEmp, nTipCol, nNumCad, EDatRef);
+{
+  nLocEmp = LocEmp;
+  nTabOrgEmp = TabOrgEmp;
+}
+
+Cur_R018Ccu.Sql "Select NomCcu From R018Ccu Where NumEmp = :nNumEmp\
+                                              and CodCcu = :aCodCcu";
+                                              
+Cur_R018Ccu.AbrirCursor()
+Se(Cur_R018Ccu.Achou)
+aNomCcu = Cur_R018Ccu.NomCcu;
+Cur_R018Ccu.FecharCursor();
+
+Cur_R006Esc.Sql "Select NomEsc, TipFer, TabFer From R006Esc Where CodEsc = :nCodEsc";
+
+Cur_R006Esc.AbrirCursor()
+Se(Cur_R006Esc.Achou)
+{
+  aNomEsc = Cur_R006Esc.NomEsc;
+  aTipFer = Cur_R006esc.TipFer;
+  Se(Cur_R006esc.TipFer = "P")
+  {
+    nTabFer = Cur_R006Esc.TabFer;
+  }
+}
+Cur_R006Esc.FecharCursor();
+
+Cur_R010Sit.Sql "Select DesSit From R010Sit Where CodSit = :nSitEmp";
+
+Cur_R010Sit.AbrirCursor()
+Se(Cur_R010Sit.Achou)
+aNomSit = Cur_R010Sit.DesSit;
+Cur_R010Sit.FecharCursor();
+
+Se(aTipFer = "F")
+{
+  Cur_R030Fil.Sql "Select TabFed From R030Fil Where NumEmp = :nNumEmp\
+                                                and CodFil = :nFilEmp";
+                                                
+  Cur_R030Fil.AbrirCursor()
+  Se(Cur_R030Fil.Achou)
+  nTabFer = Cur_R030Fil.TabFed;
+  Cur_R030Fil.FecharCursor();
+}
+
+Se(aTipFer = "L")
+{
+  Cur_R016Orn.Sql "Select TabFed From R016Orn Where TabOrg = :nTabOrgEmp\
+                                                and NumLoc = :nLocEmp";
+                                                
+  Cur_R016Orn.AbrirCursor()
+  Se(Cur_R016Orn.Achou)
+  nTabFer = Cur_R016Orn.TabFed;
+  Cur_R016Orn.FecharCursor(); 
+}
+
+aDesCcu = aCodCcu + " - " + aNomCcu;
+aDesEsc = aCodEsc + " - " + aNomEsc;
+aDesSit = aCodSit + " - " + aNomSit;
+
+/*CalculaDias(0, 1, 1, 1, 1, 1, 0, nTabFer, EDatIni, EDatRef, nQtdDiaUti); */
+
+/* Situação 18 - Day Off diminui dia util
+Situação 24 - Sábado Produtivo Aumenta Dia util */
+
+Cur_R064Cmp.Sql "Select * From R064Cmp Where NumEmp = :nNumEmp\
+                                         and TipCol = :nTipCol\
+                                         and NumCad = :nNumCad\
+                                         and DatIni Between :EDatIni\
+                                         and :EDatRef\
+                                         and CodSit in (18,24)\
+                                         Or  NumEmp = :nNumEmp\
+                                         and TipCol = :nTipCol\
+                                         and NumCad = :nNumCad\
+                                         and DatFim Between :EDatIni\
+                                         and :EDatRef\
+                                         and CodSit in (18,24)";
+                                         
+Cur_R064Cmp.AbrirCursor()
+Enquanto(Cur_R064Cmp.Achou)
+{
+  Se(Cur_R064Cmp.CodSit = 18)
+  {
+    Se((Cur_R064Cmp.DatFim <= EDatRef) e (Cur_R064Cmp.DatIni >= EDatIni))
+    {
+      nQtdDayOff = Cur_R064Cmp.DatFim - Cur_R064Cmp.DatIni + 1;
+    }
+    Senao
+    {
+      Se(Cur_R064Cmp.DatFim > EDatRef)
+      {
+        nQtdDayOff = EDatRef - Cur_R064Cmp.DatIni + 1;
+      }
+      Se(Cur_R064Cmp.DatIni < EDatIni)
+      {
+        nQtdDayOff = Cur_R064Cmp.DatFim - EDatIni + 1;
+      }
+    }
+    nDayOff = nDayOff + nQtdDayOff;
+  }
+  Se(Cur_R064Cmp.CodSit = 24)
+  {
+    nSabCom = nSabCom + 1;
+  }
+  Cur_R064Cmp.Proximo();
+}
+Cur_R064Cmp.FecharCursor();
+
+Cur_R066Sit.Sql "Select * From R066Sit Where NumEmp = :nNumEmp\
+                                        and TipCol = :nTipCol\
+                                        and NumCad = :nNumCad\
+                                        and DatApu Between :EDatIni\
+                                        and :EDatRef\
+                                        and CodSit in (20,15,65,11,61,33,32,35)";
+                                        
+Cur_R066Sit.AbrirCursor()
+Enquanto(Cur_R066Sit.Achou)
+{
+  /*RetornaDiaSemana(Cur_R066Sit.DatApu, aDiaSem);   */
+  Se(Cur_R066Sit.DatApu <> dDatApu)
+  {
+    nQtdDiaFal = nQtdDiaFal + 1;
+    dDatApu = Cur_R066Sit.DatApu;
+  } 
+  Cur_R066Sit.Proximo();
+}
+Cur_R066Sit.FecharCursor();
+
+Cur_R066Sit.Sql "Select * From R066Sit Where NumEmp = :nNumEmp\
+                                        and TipCol = :nTipCol\
+                                        and NumCad = :nNumCad\
+                                        and DatApu Between :EDatIni\
+                                        and :EDatRef\
+                                        and CodSit in (1,14,38,64)\
+                                        Order By DatApu, CodSit";
+                                        
+Cur_R066Sit.AbrirCursor()
+Enquanto(Cur_R066Sit.Achou)
+{
+  /*RetornaDiaSemana(Cur_R066Sit.DatApu, aDiaSem);   */
+  Se(Cur_R066Sit.DatApu <> dDatApu)
+  {
+    Se(Cur_R066Sit.CodSit = 1)
+    {
+      dDatApu = Cur_R066Sit.DatApu;
+    }
+    Senao
+    {
+      Se(Cur_R066Sit.DatApu <> dDatApu)
+        {
+        nQtdDiaFal = nQtdDiaFal + 1;
+        dDatApu = Cur_R066Sit.DatApu;
+        }
+    }
+  } 
+  Cur_R066Sit.Proximo();
+}
+Cur_R066Sit.FecharCursor();
+
+BuscaDiaSit(nNumEmp, nTipCol, nNumCad, EDatIni, EDatRef, 12, nQtdDiaFerCol);
+BuscaDiaSit(nNumEmp, nTipCol, nNumCad, EDatIni, EDatRef, 2, nQtdDiaFer);
+
+Se((nQtdDiaFerCol > 0) ou (nQtdDiaFer > 0))
+{
+  Cur_R040Feg.Sql "Select iniFer, TerAfa From R040Feg Where NumEmp = :nNumEmp\
+                                                        and TipCol = :nTipCol\
+                                                        and NumCad = :nNumCad\
+                                                        and IniFer >= :EdatIni\
+                                                        and IniFer <= :EDatRef"; 
+                                                        
+  Cur_R040Feg.AbrirCursor()
+  Enquanto(Cur_R040Feg.Achou)
+  {
+    Se(dIniFer = 0)
+    {    
+      dIniFer = Cur_R040Feg.IniFer;
+      dTerFer = Cur_R040Feg.TerAfa;
+      Se(dTerFer > EDatRef)
+      {
+        dTerFer = EDatRef;
+      }
+      RetQtdDiasUtil(dIniFer, dTerFer, nTabFer, nQtdDiaUtiFer);
+    }
+    Senao
+    {  
+      dIniFer1 = Cur_R040Feg.IniFer;
+      dTerFer1 = Cur_R040Feg.TerAfa;
+      Se(dTerFer1 > EDatRef)
+      {
+        dTerFer1 = EDatRef;
+      } 
+      RetQtdDiasUtil(dIniFer1, dTerFer1, nTabFer, nQtdDiaUtiFer1);
+    }
+    Cur_R040Feg.Proximo();
+  } 
+  Cur_R040Feg.FecharCursor();
+  
+  Cur_R040Feg.Sql "Select iniFer, TerAfa From R040Feg Where NumEmp = :nNumEmp\
+                                                        and TipCol = :nTipCol\
+                                                        and NumCad = :nNumCad\
+                                                        and IniFer < :EdatIni\
+                                                        and TerAfa >= :EDatIni\
+                                                        and TerAfa <= :EDatRef"; 
+                                                        
+  Cur_R040Feg.AbrirCursor()
+  Se(Cur_R040Feg.Achou)
+  {
+    dTerFer3 = Cur_R040Feg.TerAfa;
+    RetQtdDiasUtil(EDatIni, dTerFer3, nTabFer, nQtdDiaUtiFerAnt);
+  } 
+  Cur_R040Feg.FecharCursor();
+}
+
+nDiaFer = nQtdDiaUtiFer + nQtdDiaUtiFer1 + nQtdDiaUtiFerAnt;   
+
+BuscaDiaSit(nNumEmp, nTipCol, nNumCad, EDatIni, EDatRef, 3, nQtdDiaAux);
+BuscaDiaSit(nNumEmp, nTipCol, nNumCad, EDatIni, EDatRef, 4, nQtdDiaAuxTra);
+BuscaDiaSit(nNumEmp, nTipCol, nNumCad, EDatIni, EDatRef, 6, nQtdDiaMat);
+
+nDia = EDatRef - EDatIni + 1;
+
+Se((nQtdDiaAux > 0) ou (nQtdDiaAuxTra > 0) ou (nQtdDiaMat > 0)) 
+{
+  Se(nQtdDiaAux < nDia)
+  {
+    Cur_R038Afa.Sql "Select DatAfa, DatTer From R038Afa Where NumEmp = :nNumEmp\
+                                                          and TipCol = :nTipCol\
+                                                          and NumCad = :nNumCad\
+                                                          and SitAfa = 3\
+                                                          and DatAfa in (Select Max (DatAfa)\
+                                                          From R038Afa Where NumEmp = :nNumEmp\
+                                                                         and TipCol = :nTipCol\
+                                                                         and NumCad = :nNumCad\
+                                                                         and SitAfa = 3)"; 
+                                                                         
+     Cur_R038Afa.AbrirCursor()
+     Se(Cur_R038Afa.Achou)
+     {
+       dDatIniAux = Cur_R038Afa.DatAfa;
+       dDatTerAux = Cur_R038Afa.DatTer;
+     }
+     Cur_R038Afa.FecharCursor();
+     Se(dDatIniAux >= EDatIni)
+     {
+       Se((dDatTerAux = 0) ou (dDatTerAux > EDatRef)) 
+       {
+         RetQtdDiasUtil(dDatTerAux, EDatRef, nTabFer, nDiaAux);
+       }
+     }
+     Se(dDatTerAux <= EDatRef)
+     {
+       Se(dDatIniAux < EDatIni)
+       {
+         RetQtdDiasUtil(EDatIni, dDatTerAux, nTabFer, nDiaAux);
+       }
+       Se(dDatIniAux > EDatIni)
+       {
+         RetQtdDiasUtil(dDatIniAux, dDatTerAux, nTabFer, nDiaAux);
+       }
+     }
+  }
+  Se(nQtdDiaAuxTra < nDia)
+  {
+    Cur_R038Afa.Sql "Select DatAfa, DatTer From R038Afa Where NumEmp = :nNumEmp\
+                                                          and TipCol = :nTipCol\
+                                                          and NumCad = :nNumCad\
+                                                          and SitAfa = 3\
+                                                          and DatAfa in (Select Max (DatAfa)\
+                                                          From R038Afa Where NumEmp = :nNumEmp\
+                                                                         and TipCol = :nTipCol\
+                                                                         and NumCad = :nNumCad\
+                                                                         and SitAfa = 4)"; 
+                                                                         
+     Cur_R038Afa.AbrirCursor()
+     Se(Cur_R038Afa.Achou)
+     {
+       dDatIniAuxTra = Cur_R038Afa.DatAfa;
+       dDatTerAuxTra = Cur_R038Afa.DatTer;
+     }
+     Cur_R038Afa.FecharCursor();
+     Se(dDatIniAuxTra >= EDatIni)
+     {
+       Se((dDatTerAuxTra = 0) ou (dDatTerAuxTra > EDatRef)) 
+       {
+         RetQtdDiasUtil(dDatTerAuxTra, EDatRef, nTabFer, nDiaAuxTra);
+       }
+     }
+     Se(dDatTerAuxTra <= EDatRef)
+     {
+       Se(dDatIniAuxTra < EDatIni)
+       {
+         RetQtdDiasUtil(EDatIni, dDatTerAuxTra, nTabFer, nDiaAuxTra);
+       }
+       Se(dDatIniAuxTra > EDatIni)
+       {
+         RetQtdDiasUtil(dDatIniAuxTra, dDatTerAuxTra, nTabFer, nDiaAuxTra);
+       }
+     }
+  }
+  Se(nQtdDiaMat < nDia)
+  {
+    Cur_R038Afa.Sql "Select DatAfa, DatTer From R038Afa Where NumEmp = :nNumEmp\
+                                                          and TipCol = :nTipCol\
+                                                          and NumCad = :nNumCad\
+                                                          and SitAfa = 3\
+                                                          and DatAfa in (Select Max (DatAfa)\
+                                                          From R038Afa Where NumEmp = :nNumEmp\
+                                                                         and TipCol = :nTipCol\
+                                                                         and NumCad = :nNumCad\
+                                                                         and SitAfa = 6)"; 
+                                                                         
+     Cur_R038Afa.AbrirCursor()
+     Se(Cur_R038Afa.Achou)
+     {
+       dDatIniMat = Cur_R038Afa.DatAfa;
+       dDatTerMat = Cur_R038Afa.DatTer;
+     }
+     Cur_R038Afa.FecharCursor();
+     Se(dDatIniMat >= EDatIni)
+     {
+       Se((dDatTerMat = 0) ou (dDatTerMat > EDatRef)) 
+       {
+         RetQtdDiasUtil(dDatTerMat, EDatRef, nTabFer, nDiaMat);
+       }
+     }
+     Se(dDatTerMat <= EDatRef)
+     {
+       Se(dDatIniMat < EDatIni)
+       {
+        RetQtdDiasUtil(EDatIni, dDatTerMat, nTabFer, nDiaAuxMat);
+       }
+       Se(dDatIniMat > EDatIni)
+       {
+         RetQtdDiasUtil(dDatIniMat, dDatTerMat, nTabFer, nDiaMat);
+       }
+     }
+  }
+}
+
+/*BuscaDiaSit (nNumEmp, nTipCol, nNumCad, EDatIni, EDatRef, 14, nQtdDiaAte);
+BuscaDiaSit (nNumEmp, nTipCol, nNumCad, EDatIni, EDatRef, 64, nQtdDiaAteNot);
+BuscaDiaSit (nNumEmp, nTipCol, nNumCad, EDatIni, EDatRef, 11, nQtdDiaPat);
+BuscaDiaSit (nNumEmp, nTipCol, nNumCad, EDatIni, EDatRef, 61, nQtdDiaPatNot);
+BuscaDiaSit (nNumEmp, nTipCol, nNumCad, EDatIni, EDatRef, 33, nQtdDiaCas);
+BuscaDiaSit (nNumEmp, nTipCol, nNumCad, EDatIni, EDatRef, 32, nQtdDiaMor);
+BuscaDiaSit (nNumEmp, nTipCol, nNumCad, EDatIni, EDatRef, 35, nQtdDiaSus); 
+
+nQtdDiaFal = nQtdDiaFal + nQtdDiaAte + nQtdDiaAteNot + nQtdDiaPat + nQtdDiaPatNot +
+nQtdDiaCas + nQtdDiaMor + nQtdDiaSus; */
+
+
+
+
+
+RetQtdDiasUtil(EDatIni, EDatRef, nTabFer, nQtdDiaUti);
+nQtdDiaUti = nQtdDiaUti + nSabCom - nDayOff - nDiaFer - nDiaAux - nDiaAuxTra - nDiaMat;
+
+nQtdDiaTra = nQtdDiaUti - nQtdDiaFal;
+
+x = 0;

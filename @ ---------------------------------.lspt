@@ -1,0 +1,739 @@
+@ Regra Desenvolvida para Modelo 135 - Atrio Hotéis - Colaboradores > Ficha Cadastral > Relação de cadastro @
+
+
+@ ------------------------------------------------------------------- @
+@ ---------------------  Retorna Chefe do posto --------------------- @
+@ ------------------------------------------------------------------- @
+Definir Alfa aNomChe;
+Definir Data dDatRef;
+Definir Alfa aPosTra;
+Definir Alfa aDesPos;
+Definir Alfa aNomFun;
+Definir Alfa aNumCad;
+Definir Alfa aNomFun;
+Definir Alfa aMensagem;
+Definir Alfa aDesPos;
+
+dDatRef = DatSis;
+nNumEmp = R034FUN.NumEmp;
+nTipCol = R034FUN.TipCol;
+nNumCad = R034FUN.NumCad;
+aNomFun = R034FUN.NomFun;
+aNomChe = "";
+
+IntParaAlfa(nNumCad, aNumCad);
+
+RetornaPostoColaborador(nNumEmp, nTipCol, nNumCad, dDatRef, nEstPos, aPosTra, aDesPos);
+RetornaChefePosto(1, nEstPos, 2, dDatRef, aPosTra, nEmpChe, nTipChe, nCadChe);
+
+@ - Para depuração - @
+@ aMensagem = "Colaborador: " + aNumCad + " - " + aNomFun + " está no posto: " + aDesPos; @
+
+@ ----- Cursor para buscar o nome do chefe do posto ----- @
+Definir Cursor C_R034FUN;
+
+C_R034FUN.SQL"Select Nomfun from R034FUN \
+              Where NumEmp = :nEmpChe    \
+              and TipCol = :nTipChe      \
+              and NumCad = :nCadChe      \
+              and sitafa <> 7";
+
+C_R034FUN.AbrirCursor()
+Se(C_R034FUN.Achou) {
+    aNomChe = C_R034FUN.NomFun; 
+}
+C_R034FUN.FecharCursor();
+
+
+Se(aNomChe <> ""){
+    AlteraControle("DGestor", "Descrição", aNomChe);
+}
+Senao {
+    AlteraControle("DGestor", "Descrição", " ");
+}
+
+
+@ --------------------------------------------------------------------- @
+@ --------- Se não houver data de afastamento, imprime vazio ---------- @
+@ --------------------------------------------------------------------- @
+Definir Data dDatAfa;
+Definir Alfa aDatAfa;
+
+dDatAfa = R034FUN.DATAFA;
+nSitAfa = R034FUN.SITAFA;
+
+Se ((dDatAfa <> 0) e ((nSitAfa = 7) ou (nSitAfa = 22))) {
+    ConverteMascara(3, dDatAfa, aDatAfa, "DD/MM/YYYY");
+    AlteraControle("DDatAfa", "Descrição", aDatAfa);  
+} 
+Senao {
+    AlteraControle("DDatAfa", "Descrição", " ");   
+} 
+
+
+
+
+
+@ ------------------------------------------------------------------- @
+@ --------- Se não houver causa de demissão, imprime vazio ---------- @
+@ ------------------------------------------------------------------- @
+Definir Cursor C_R042CAU;
+Definir Alfa aDesDem;
+
+nCauDem = R034FUN.CauDem;
+
+C_R042CAU.SQL"SELECT DesDem FROM R042CAU WHERE CauDem = :nCauDem";
+
+C_R042CAU.AbrirCursor()
+Se(C_R042CAU.Achou){
+    aDesDem = C_R042CAU.DesDem;    
+}
+C_R042CAU.FecharCursor();
+
+
+Se(nCauDem <> 0){
+    AlteraControle("DCauDem", "Descrição", aDesDem);
+}
+Senao {
+    AlteraControle("DCauDem", "Descrição", " ");
+}
+
+
+
+
+@ ------------------------------------------------------------------- @
+@ ----------------- Se não houver RG, imprime vazio ----------------- @
+@ ------------------------------------------------------------------- @
+Definir Alfa aNumRg;
+aNumRg = R034CPL.NumCid;
+
+Se(aNumRg <> ""){
+    AlteraControle("DNumRg", "Descrição", aNumRg);
+}
+Senao{
+    AlteraControle("DNumRg", "Descrição", " ");  
+}
+
+
+
+
+@ ------------------------------------------------------------------- @
+@ -------------------- Nome do Pai / Nome da mãe -------------------- @
+@ ------------------------------------------------------------------- @
+Definir Alfa aNomPai;
+Definir Alfa aNomMae;
+Definir Cursor Cur_dep;
+
+aNomPai = "";
+aNomMae = "";
+
+@ - Cusror para vetificar o grau de parentesco na tabela de dependentes - @
+Cur_dep.SQL "SELECT * FROM R036dep     \
+             WHERE NumEmp = :nNumEmp   \
+               AND TipCol = :nTipCol   \
+               AND NumCad = :nNumCad   \
+               AND GraPar = 3";
+             
+Cur_dep.AbrirCursor()
+Enquanto(Cur_dep.achou) {
+    Se(cur_dep.tipsex = "M"){
+        aNomPai = cur_dep.Nomdep;   
+    }
+  
+    Se(cur_dep.tipsex = "F") {
+        aNomMae = cur_dep.Nomdep;
+    }
+  
+    Cur_dep.Proximo();
+}
+Cur_dep.FecharCursor();
+
+@ ----- Listar nome do Pai ----- @
+Se (aNomPai = "") {
+  AlteraControle("ANomPai", "Descrição", " ");
+} 
+Senao {
+  AlteraControle("ANomPai", "Descrição", aNomPai);
+}
+
+@ ----- Listar nome da Mãe ----- @
+Se (aNomMae = ""){
+  AlteraControle("ANomMae", "Descrição", " ");
+} 
+Senao {
+  AlteraControle("ANomMae", "Descrição", aNomMae);
+}
+
+
+
+@ ------------------------------------------------------------------- @
+@ ---------------- Retorna o sindicato do colaborador --------------- @
+@ ------------------------------------------------------------------- @
+RetSinEmp (nNumEmp, nTipCol, nNumCad, dDatRef);
+Definir Alfa aSocSin;
+Definir Alfa aCodSin;
+
+nCodSin = CodSinEmp;
+aSocSin = SocSinEmp;
+
+IntParaAlfa(nCodSin, aCodSin);
+
+Se(aSocSin <> "") {
+    AlteraControle("DCodSin", "Descrição", aCodSin); 
+  
+    Definir Cursor C_R014SIN;
+    Definir Alfa aNomSin;
+  
+    C_R014SIN.SQL"SELECT NomSin FROM R014SIN WHERE CodSin = :nCodSin";
+  
+    C_R014SIN.AbrirCursor()
+    Se (C_R014SIN.Achou) {
+        aNomSin = C_R014SIN.NomSin; 
+        AlteraControle("DNomSin", "Descrição", aNomSin); 
+    }
+    C_R014SIN.FecharCursor();
+}
+
+Senao {
+    AlteraControle("DCodSin", "Descrição", " "); 
+}
+
+
+
+@ --------------------------------------------------------------------- @
+@ --- Estado, Cidade, Bairro do colaborador de acordo com a R034CPL --- @
+@ --------------------------------------------------------------------- @
+
+@ ----- Estado ----- @
+Definir Cursor C_R074EST;
+Definir Alfa aDesEst;
+Definir Alfa aCodEst;
+
+aCodEst = R034CPL.CodEst;
+
+C_R074EST.SQL"SELECT DesEst FROM R074EST WHERE CodEst = :aCodEst";
+
+C_R074EST.AbrirCursor()
+Se(C_R074EST.Achou){
+    aDesEst = C_R074EST.DesEst;
+}
+C_R074EST.FecharCursor();
+
+Se(aDesEst <> ""){
+    AlteraControle("DNomEstCol","Descrição", aDesEst);
+}
+Senao{
+    AlteraControle("DNomEstCol", "Descrição", " ");
+}
+
+
+@ ----- Cidade ----- @
+Definir Cursor C_R074CID;
+Definir Alfa aNomCid;
+
+nCodCid = R034CPL.CodCid;
+
+C_R074CID.SQL"SELECT NomCid FROM R074CID WHERE CodCid = :nCodCid";
+
+C_R074CID.AbrirCursor()
+Se(C_R074CID.Achou){
+    aNomCid = C_R074CID.NomCid;
+}
+C_R074CID.FecharCursor();
+
+Se(aNomCid <> ""){
+    AlteraControle("DNomCidCol","Descrição", aNomCid);
+}
+Senao {
+    AlteraControle("DNomCidCol", "Descrição", " ");
+}
+
+
+@ ----- Bairro ----- @
+Definir Cursor C_R074BAI;
+Definir Alfa aNomBai;
+
+nCodBai = R034CPL.CodBai;
+
+C_R074BAI.SQL"SELECT NomBai FROM R074BAI WHERE CodCid = :nCodCid AND CodBai = :nCodBai";
+
+C_R074BAI.AbrirCursor()
+Se(C_R074BAI.Achou){
+    aNomBai = C_R074BAI.NomBai;
+}
+C_R074BAI.FecharCursor();
+
+
+Se(aNomBai <> ""){
+    AlteraControle("DNomBaiCol","Descrição", aNomBai);
+}
+Senao {
+    AlteraControle("DNomBaiCol", "Descrição", " ");
+}
+
+
+
+
+
+@ ------------------------------------------------------------------- @
+@ ---------------- Duranção/Vencimento do contrato ------------------ @
+@ ------------------------------------------------------------------- @
+
+@ ----- Duração ----- @
+Definir Alfa aTotCon;
+
+nDurCon = R034CPL.DurCon;
+nProCon = R034CPL.ProCon;
+
+Se ((nDurCon = 0) ou (nProCon = 0)) {
+    AlteraControle("DDurCon","Descrição", " ");
+} 
+Senao {
+    nTotCon = nDurCon + nProCon;
+    IntParaAlfa(nTotCon, aTotCon);
+    AlteraControle("DDurCon","Descrição", aTotCon);
+}
+
+@ ---- Vencimento ---- @
+Definir Data dVenCon;
+Definir Data dDatAdm; 
+Definir Alfa aVenCon;
+
+dDatAdm = R034FUN.DatAdm;
+
+Se ((nDurCon = 0) ou (nProCon = 0)) {
+    AlteraControle("DVencCon","Descrição", " ");
+} 
+Senao {
+    dVenCon =  dDatAdm + nTotCon;
+    ConverteMascara(3, dVenCon, aVenCon, "DD/MM/YYYY");
+    AlteraControle("DVencCon","Descrição", aVenCon); 
+}
+
+
+
+
+
+@ ------------------------------------------------------------------- @
+@ ---------- Trazer o CID em caso de colaboradores afatados --------- @ 
+@ ------------------------------------------------------------------- @
+nSitAfa = R034FUN.SitAfa;
+
+Se (nSitAfa <> 1) {
+    Definir Cursor C_R038AFA; 
+    Definir Alfa aCodDoe;
+
+    /*  
+        Ordena os registros pela data de afastamento em ordem decrescente
+        Retorna apenas o primeiro registro, que será o mais recente  
+    */
+    C_R038AFA.SQL"SELECT CodDoe, DatAfa    \ 
+                    FROM R038AFA           \
+                   WHERE NumEmp = :nNumEmp \
+                     AND TipCol = :nTipCol \
+                     AND NumCad = :nNumCad \
+                ORDER BY DatAfa Desc       \    
+                FETCH FIRST 1 Rows Only";
+                  
+    C_R038AFA.AbrirCursor()
+    Se(C_R038AFA.Achou){
+        aCodDoe = C_R038AFA.CodDoe;
+    }
+    C_R038AFA.FecharCursor();
+      
+    @ - Lista o CID no modelo (Se o campo não estiver preenchido, fica em branco) - @
+    Se(aCodDoe <> ""){
+        AlteraControle("DCodDoe", "Descrição", aCodDoe);
+    }
+    Senao {
+        AlteraControle("DCodDoe", "Descrição", " ");
+    }  
+}
+Senao {
+    AlteraControle("DCodDoe", "Descrição", " ");
+}
+
+
+
+
+@ ------------------------------------------------------------------- @
+@ ------------------------- Valor da Recisão ------------------------ @
+@ ------------------------------------------------------------------- @
+Se (nSitAfa = 7) {
+    Definir Cursor C042RCV;
+    Definir Data dDatPag;
+    Definir Alfa aValLiq;
+  
+    nSomaProv = 0;
+    nSomaDesc = 0;
+    nEveDesc = 0;
+    nEvePro = 0;
+    nValEve = 0;
+    nValLiq = 0;
+  
+    C042RCV.sql"SELECT R042RCV.DatPag, R042RCV.TclRcs,  \
+                       R042RCV.TabEve, R042RCV.CodEve,  \
+                       R042RCV.RefEve, R042RCV.ValEve,  \
+                       R008EVC.TipEve                   \
+                  FROM R042RCV, R008EVC                 \
+                 WHERE R042RCV.TabEve = R008EVC.CodTab  \
+                   AND R042RCV.CodEve = R008EVC.CodEve  \
+                   AND NumEmp = :nNumEmp \
+                   AND TipCol = :nTipCol \
+                   AND NumCad = :nNumCad";
+  
+    C042RCV.AbrirCursor()
+    Enquanto(C042RCV.Achou){
+        dDatPag = C042RCV.DatPag;
+        nTclRcs = C042RCV.TclRcs;
+        nTabEve = C042RCV.TabEve;
+        nCodEve = C042RCV.CodEve;
+        nRefEve = C042RCV.RefEve;
+        nValEve = C042RCV.ValEve;
+        nTipEve = C042RCV.TipEve;
+    
+        Se ((nTipEve  = 1) ou (nTipEve = 2) ou (nTipEve = 5) ou (nTipEve = 4)){
+            nEvePro = nValEve;
+            
+            Se ((nTipEve  = 1) ou (nTipEve = 2)) {
+                nSomaProv = nSomaProv + nEvePro;
+            }
+                
+            Se(nTipEve = 4) {
+                nEvePro = 0;
+                nSomaProv = nSomaProv + nEvePro;
+            }
+        } 
+        
+        Senao { 
+            Se ((nTipEve = 3) ou (nTipEve = 6)){ 
+                nEveDesc = nValEve;
+            }  
+            
+            Se ((nTipEve = 3) e (nCodEve <> 503) e (nCodEve <> 264)){
+                nSomaDesc = nSomaDesc + nEveDesc;
+            }
+        }
+    
+        C042RCV.Proximo();   
+    }
+    C042RCV.FecharCursor();
+  
+    nValLiq = nSomaProv - nSomaDesc;
+    ConverteMascara(1, nValLiq, aValLiq, "#-#ZZZ.ZZZ.ZZ9,99");
+  
+    Se(nValLiq <> 0) { 
+        AlteraControle("DValRes", "Descrição", aValLiq);
+    } 
+    Senao {
+        AlteraControle("DValRes", "Descrição", "0,00"); 
+    } 
+}
+
+Senao {
+    AlteraControle("DValRes", "Descrição", " ");
+}  
+
+
+
+
+@ ------------------------------------------------------------------- @
+@ -------------- Se não houver DDD/DDD2, imprime vazio -------------- @
+@ ------------------------------------------------------------------- @
+
+@ --- DDD --- @
+Definir Alfa aNmDddTel;
+nNmDddTel = R034CPL.DddTel;
+IntParaAlfa(nNmDddTel, aNmDddTel);
+
+Se(nNmDddTel = 0){
+    AlteraControle("DNmDddTel","Descrição", " ");
+} 
+Senao {
+    AlteraControle("DNmDddTel","Descrição", aNmDddTel);
+}
+
+@ --- DDD2 --- @
+Definir Alfa aNmDdd2;
+nNmDdd2 = R034CPL.NmDdd2;
+IntParaAlfa(nNmDdd2, aNmDdd2);
+
+Se(nNmDdd2 = 0){
+  AlteraControle("DNmDdd2","Descrição", " ");
+} 
+Senao {
+  AlteraControle("DNmDdd2","Descrição", aNmDdd2);
+}
+
+
+
+
+@ -------------------------------------------------------------------------------------- @
+@ --- Se não houver Cód Banco / Agência / N° da conta / Dig. da conta, imprime vazio --- @
+@ -------------------------------------------------------------------------------------- @
+
+@ --- Codigo do Banco --- @
+Definir Alfa aCodBan;
+nCodBan = R034FUN.CODBAN;
+IntParaAlfa(nCodBan, aCodBan);
+
+Se (nCodBan = 0){
+  AlteraControle("DCodBan","Descrição", " ");
+} Senao {
+  AlteraControle("DCodBan","Descrição", aCodBan);
+}
+
+@ --- Agência --- @
+Definir Alfa aCodAge;
+nCodAge = R034FUN.CODAGE;
+IntParaAlfa(nCodAge, aCodAge);
+
+Se(nCodAge = 0){
+  AlteraControle("DCodAge","Descrição"," ");
+} Senao {
+  AlteraControle("DCodAge", "Descrição", aCodAge);
+}
+
+@ --- Numero da conta --- @
+Definir Alfa aConBan;
+nConBan = R034FUN.CONBAN;
+IntParaAlfa(nConBan, aConBan);
+
+Se(nConBan = 0 ){
+  AlteraControle("DConBan","Descrição"," ");
+} Senao {
+  AlteraControle("DConBan","Descrição", aConBan);
+}
+
+@ --- Digito da Conta --- @
+Definir Alfa aDigBan;
+aDigBan = R034FUN.DigBan;
+
+Se((aDigBan = "") ou (aDigBan = " ")){
+  AlteraControle("DDigBan", "Descrição", " ");
+} Senao {
+  AlteraControle("DDigBan", "Descrição", aDigBan);
+}
+
+
+
+
+@ ------------------------------------------------------------------- @
+@ ------------- Se não houver N° do PIS, imprime vazio -------------- @
+@ ------------------------------------------------------------------- @
+Definir Alfa aNumPis;
+nNumPis = R034FUN.NumPis;
+
+ConverteMascara(1, nNumPis, aNumPis, "999.99999.99.9");
+
+Se(aNumPis <> ""){
+    AlteraControle("DPis", "Descrição", aNumPis);
+}
+Senao {
+    AlteraControle("DPis", "Descrição", " ");
+}
+
+
+
+
+@ ------------------------------------------------------------------- @
+@ --------- Se não houver Sexo do colaborador, imprime vazio -------- @
+@ ------------------------------------------------------------------- @
+Definir Alfa aTipSex;
+aTipSex = R034FUN.TipSex;
+
+Se(aTipSex <> ""){
+    AlteraControle("DSexo", "Descrição", aTipSex);
+}
+Senao {
+    AlteraControle("DSexo", "Descrição", " ");
+}
+
+
+
+
+@ ------------------------------------------------------------------- @
+@ ---------------- Se não houver PCD, imprime vazio ----------------- @
+@ ------------------------------------------------------------------- @
+Definir Alfa aDefFis;
+aDefFis = R034FUN.DefFis;
+
+
+Se(aDefFis <> ""){
+    AlteraControle("DPcd", "Descrição", aDefFis);
+}
+Senao {
+    AlteraControle("DPcd", "Descrição", " ");
+}
+
+
+
+
+@ ------------------------------------------------------------------- @
+@ ---------- Se não houver N°/Serie da CTPS, imprime vazio ---------- @
+@ ------------------------------------------------------------------- @
+Definir Alfa aNumCtp;
+Definir Alfa aSerCtp;
+
+nNumCtp = R034FUN.NumCtp;
+aSerCtp = R034FUN.SerCtp;
+
+
+@ --- N° CTPS ----- @
+ConverteMascara(1, nNumCtp, aNumCtp, "Z999999999");
+
+Se(aNumCtp <> "") {
+  AlteraControle("DNumCtps", "Descrição", aNumCtp);
+}
+Senao {
+  AlteraControle("DNumCtps", "Descrição", " ");
+} 
+
+@ --- Serie CTPS ----- @
+Se(aSerCtp <> "") {
+  AlteraControle("DSerCtps", "Descrição", aSerCtp);
+}
+Senao {
+  AlteraControle("DSerCtps", "Descrição", " ");
+} 
+
+
+
+
+@ ---------------------------------------------------------------------------- @
+@ - CH - 224505 - Foi solicitado para que todos os campos fossem verificados - @
+@ - via regra, caso algum não esteja preenchido, não vai deixar de listar o  - @
+@ - colaborador                                                              - @
+@ ---------------------------------------------------------------------------- @
+
+Definir Cursor C34CPL;
+Definir Alfa aEmaCom;
+Definir Alfa aEmaPar;
+Definir Alfa aNumTel;
+Definir Alfa aNumTel2;
+Definir Alfa aEndRua;
+Definir Alfa aEndCpl;
+Definir Alfa aNumEnd;
+Definir Alfa aTitEle; 
+Definir Alfa aZonEle;
+Definir Alfa aSecEle;
+Definir Alfa aNumCep;
+
+
+C34CPL.SQL"SELECT * FROM R034CPL WHERE NUMEMP = :nNumEmp AND TIPCOL = :nTipCol AND NUMCAD = :nNumCad";
+C34CPL.AbrirCursor()
+Se(C34CPL.Achou){
+    aEmaCom = C34CPL.EmaCom;
+    aEmaPar = C34CPL.EmaPar;
+    aNumTel = C34CPL.NumTel;
+    aNumTel2 = C34CPL.NmTel2;
+    aEndRua = C34CPL.EndRua;
+    nNumCep = C34CPL.EndCep;
+    aEndCpl = C34CPL.EndCpl;
+    aNumEnd = C34CPL.EndNum;
+    aTitEle = C34CPL.NumEle;
+    aZonEle = C34CPL.ZonEle;
+    aSecEle = C34CPL.SecEle;
+}
+C34CPL.FecharCursor();
+
+
+@ -------- E-mail Comercial ------- @
+Se(aEmaCom <> "") {
+  AlteraControle("DEmailCorp", "Descrição", aEmaCom);
+}
+Senao {
+  AlteraControle("DEmailCorp", "Descrição", " ");
+} 
+
+
+@ -------- E-mail Pessoal --------- @
+Se(aEmaPar <> "") {
+  AlteraControle("DEmailPes", "Descrição", aEmaPar);
+}
+Senao {
+  AlteraControle("DEmailPes", "Descrição", " ");
+} 
+
+
+@ -------- N° de Telefone --------- @
+Se(aNumTel <> "") {
+  AlteraControle("DTel1", "Descrição", aNumTel);
+}
+Senao {
+  AlteraControle("DTel1", "Descrição", " ");
+} 
+
+
+@ -------- N° de Telefone 2 ------- @
+Se(aNumTel2 <> "") {
+  AlteraControle("Dtel2", "Descrição", aNumTel2);
+}
+Senao {
+  AlteraControle("Dtel2", "Descrição", " ");
+} 
+
+
+@ ---------- Endereço ------------- @
+Se(aEndRua <> "") {
+  AlteraControle("DEndCol", "Descrição", aEndRua);
+}
+Senao {
+  AlteraControle("DEndCol", "Descrição", " ");
+} 
+
+
+@ ----------- Complemento --------- @
+Se(aEndCpl <> "") {
+  AlteraControle("DCompEnd", "Descrição", aEndCpl);
+}
+Senao {
+  AlteraControle("DCompEnd", "Descrição", " ");
+} 
+
+
+@ -------- N° do Endereço --------- @
+Se(aNumEnd <> "") {
+  AlteraControle("DNumEnd", "Descrição", aNumEnd);
+}
+Senao {
+  AlteraControle("DNumEnd", "Descrição", " ");
+} 
+
+
+@ -------- Titulo de eleitor --------- @
+Se(aTitEle <> "") {
+  AlteraControle("DTitEleitor", "Descrição", aTitEle);
+}
+Senao {
+  AlteraControle("DTitEleitor", "Descrição", " ");
+} 
+
+
+@ -------- Zona Eleitoral --------- @
+Se(aZonEle <> "") {
+  AlteraControle("DZonaEle", "Descrição", aZonEle);
+}
+Senao {
+  AlteraControle("DZonaEle", "Descrição", " ");
+} 
+
+
+@ -------- Seção Eleitoral --------- @
+Se(aSecEle <> "") {
+  AlteraControle("DSecaoEle", "Descrição", aSecEle);
+}
+Senao {
+  AlteraControle("DSecaoEle", "Descrição", " ");
+} 
+
+
+@ -------- N° CEP --------- @
+ConverteMascara(1, nNumCep, aNumCep, "Z99.999-999");
+
+Se(aNumCep <> "") {
+  AlteraControle("DCepCol", "Descrição", aNumCep);
+}
+Senao {
+  AlteraControle("DCepCol", "Descrição", " ");
+}

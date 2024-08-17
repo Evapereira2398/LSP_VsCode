@@ -1,0 +1,67 @@
+Definir Numero hor; @ Declaracao Criada na Conversao @
+Definir alfa string; 
+valStr = "";  @ nicialização da variável valStr com uma string vazia @
+x = 1; @ Inicialização da variável x com o valor 1 @
+
+/* Retorna a hora das marcações do colaborador na data apurada (DatPro),
+inclusive de marcações geradas e digitadas. Deve ser informada entre os 
+colchetes a marcação do dia que a variável deverá listar. Ou seja, HorApg[1] 
+corresponde à hora da primeira marcação do dia. */
+
+/* Um loop Enquanto é iniciado, que continuará enquanto o valor da variável
+horapg[x] for diferente de zero. Esse loop irá processar um conjunto de dados 
+armazenados no array horapg.*/
+Enquanto(horapg[x] <> 0)
+   inicio
+      hor = horapg[x]; @A variável hor recebe o valor do elemento horapg[x].@
+      string = ""; @ A variável string é inicializada como uma string vazia. @  
+   
+      Se (hor <> 0)
+         inicio
+            Se (hor = 1440) @ Se hor for igual a 1440, a string string recebe "00:00".@
+               string = string + "00:00";
+            Senao
+               inicio
+                  Enquanto (hor >= 60) @O código faz um loop Enquanto enquanto hor for maior ou igual a 60 para converter as horas@
+                     inicio
+                        hor = hor-60; 
+                        horas = horas + 1;
+                     Fim;
+          
+                  Se (horas >= 10)
+                     string = string + " " + formatar(horas,"%2.0f"); 
+                  
+                  senao
+                     string = string + " 0" + formatar(horas,"%1.0f"); 
+         
+                  Se (hor >= 10)
+                     string = string + ":" + formatar(hor,"%2.0f");
+                  
+                  senao
+                     string = string + ":0" + formatar(hor,"%1.0f");
+                     horas = 0;
+               Fim;
+         Fim;
+
+
+         ValStr  = ValStr + string;
+         x = x + 1;
+   Fim;
+
+Se (x > 1) 
+   inicio
+      Se (DesDia <> "Sem Marcação")  
+         ValStr = ValStr + "    " + DesDia;
+      Senao 
+         ValStr = ValStr;
+      Fim;  
+
+Senao
+   Valstr = " " + DesDia;
+Cancel(2);
+
+/* Esse código parece ser responsável por converter os valores de horapg em uma 
+representação de hora e minuto, concatenando-os na variável valStr, e, em alguns 
+casos, anexando o valor de DesDia a essa representação, dependendo das condições 
+especificadas. Tenha em mente que a funcionalidade exata pode depender de partes 
+do código que não foram fornecidas. */

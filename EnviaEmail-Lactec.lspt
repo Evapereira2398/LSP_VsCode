@@ -1,0 +1,115 @@
+Definir Alfa vNumEmp;
+Definir Alfa vTipCol;
+Definir Alfa vNumCad;
+Definir Alfa vNomFun;
+Definir Alfa EConIrf;
+Definir Alfa ECon13s;
+Definir Alfa EConLim;
+Definir Alfa EGraTab;
+Definir Alfa ELisEve;
+Definir Alfa ESomTit;
+Definir Alfa EArqDirf;
+Definir Alfa vEmaPar;
+Definir Alfa vEmaCom;
+Definir Alfa vEmaFun;
+Definir Alfa vEmaAss;
+Definir Alfa vMsgNEm;
+Definir Alfa xMsg;
+Definir Alfa xAsc013;
+Definir Alfa xAsc010;
+Definir Alfa xQueLin;
+Definir Alfa vRetEma;
+Definir Alfa vAnoBas;
+Definir Alfa vAnoDec;
+Definir Alfa ELinRem;
+Definir Alfa ELinDep;
+Definir Alfa aEnviaEmail;
+
+/* --- Limpa Variáveis Globais --- */
+GlbLimpaVars();
+
+/* --- Inicialização de Variáveis --- */
+xNumEmp = R034FUN.NumEmp;
+xTipCol = R034FUN.TipCol;
+xNumCad = R034FUN.NumCad;
+vNomFun = R034FUN.NomFun;
+xSitAfa = R034FUN.SitAfa;
+IntParaAlfa(xNumEmp,vNumEmp);
+IntParaAlfa(xTipCol,vTipCol);
+IntParaAlfa(xNumCad,vNumCad);
+vEmaFun = "";
+vEmaPar = "";
+vEmaCom = "";
+vMsgNEm = "";
+xMsg = "";
+xQueLin = "";
+xAsc013 = "";
+xAsc010 = "";
+aEnviaEmail = "lorena.cunha@lactec.org.br"
+
+/* --- Carrega Variáveis Globais --- */
+GlbAdiVarNumDat("DIRAnoBas", EAnoBase);
+GlbAdiVarNumDat("DIRDatEnt", EDatEnt);
+GlbAdiVarNumDat("DIRTipNot", ETipNot);
+GlbAdiVarNumDat("DIRLisAut", ELisAut);
+GlbAdiVarStr("DIRConIrf", EConIrf);
+GlbAdiVarStr("DIRConLim", EConLim);
+GlbAdiVarNumDat("DIRRenAci", ERenAci);
+GlbAdiVarStr("DIRCon13s", ECon13s);
+GlbAdiVarStr("DIRGraTab", EGraTab);
+GlbAdiVarNumDat("DIRNivOrd", ENivOrd);
+GlbAdiVarNumDat("DIREndFon", EEndFon);
+GlbAdiVarStr("DIRLisEve", ELisEve);
+GlbAdiVarStr("DIRSomTit", ESomTit);
+GlbAdiVarStr("DIRArqDirf", EArqDirf);
+GlbAdiVarStr("DIRAbrEmp", vNumEmp);
+GlbAdiVarStr("DIRAbrCol", vTipCol);
+GlbAdiVarStr("DIRAbrCad", vNumCad);
+
+/* --- Executa o relatório para envio do Anexo --- */
+ExecutaRelatorio("FPIN103.ANU", "N"); 
+
+/* --- Busca o email do Colaborador --- */
+BusEmailFunc(xNumEmp,xTipCol,xNumCad,vEmaPar,vEmaCom);
+Se ((vEmaCom <> "") e (xSitAfa <> 7))
+  vEmaFun = vEmaCom;
+Senao
+Se ((vEmaPar <> "") e (xSitAfa = 7))
+  vEmaFun = vEmaPar;
+
+DesmontaData(EAnoBase,xdiabas,xmesbas,xanobas);
+xAnoDec = xanobas + 1;
+IntParaAlfa(xAnoBas,vAnoBas);
+IntParaAlfa(xAnoDec,vAnoDec);
+
+/* --- Definir o corpo do email --- */
+RetornaAscii(13,xAsc013);
+RetornaAscii(10,xAsc010);
+xQueLin = xAsc013 + xAsc010;
+xMsg = "Segue anexo o Informe de Rendimentos do ano base de " + vAnoBas + ", ";
+xMsg = xMsg + "para declaração de Imposto de Renda de " + vAnoDec + "." + xQueLin;
+xMsg = xMsg + xQueLin + xQueLin + "Att." + xQueLin + xQueLin + ELinRem;
+xMsg = xMsg + xQueLin + ELinDep;
+
+vEmaAss = "Informe de Rendimentos de " + vAnoBas + ".";
+
+/* --- Envia o email --- */
+Se (vEmaFun = "")
+  vMsgNEm = "Não enviado por falta de email.";
+Senao
+Se (vEmaFun <> "") {
+
+/*EnviaEmail ("lorena.cunha@lactec.org.br", vEmaFun, "", "", vEmaAss, xMsg, "\\\\lac-wap-srv01\senior\\vetorh\\informe\\InformeRendimentos.pdf", 0); */
+EnviaEmail (aEnviaEmail, vEmaFun, "", "", vEmaAss, xMsg, "\\\\lac-wap-srv01\\senior\\vetorh\\informe\\InformeRendimentos.pdf", 0); 
+  Se (MsgErroEnviaEmail <> "") 
+    {
+      Definir Alfa xErro2;
+      vMsgNEm = "Erro: " + MsgErroEnviaEmail + ". Email não enviado.";
+    }                 
+  } 
+
+/* Altera o controle de impressão da linha de base da Seção Detalhe --- */
+Se (vMsgNEm <> "")
+  AlteraControle("Desenho_1","Imprimir","Falso");
+Senao
+  AlteraControle("Desenho_1","Imprimir","Verdadeiro");

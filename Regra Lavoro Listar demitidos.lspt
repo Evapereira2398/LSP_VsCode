@@ -1,0 +1,42 @@
+Definir Cursor C_R038AFA;
+Definir Cursor C_R034FUN;
+Definir Numero xSitAfa; 
+
+Definir Data dDatIni;
+Definir Data dDatFim; 
+
+dDatIni = EDatIni;
+dDatFim = EDatFim;
+nNumEmp = R034FUN.NUMEMP;
+nTipCol = R034FUN.TIPCOL;
+nNumCad = R034FUN.NUMCAD;
+
+C_R034FUN.sql "SELECT SITAFA FROM R034FUN  \ 
+            WHERE NUMEMP = :nNumEmp      \
+            AND TIPCOL = :nTipCol        \
+            AND NUMCAD = :nNumCad        \
+            AND SITAFA IN (7, 8)"; 
+
+C_R034FUN.AbrirCursor() 
+
+    Se (C_R034FUN.Achou) {
+        xSitAfa = R034FUN.SITAFA;
+
+        C_R038AFA.sql "SELECT DATAFA FROM R038AFA     \
+                    WHERE NUMEMP = :nNumemp         \
+                    AND TIPCOL = :nTipCol           \
+                    AND NUMCAD = :nNumCad           \
+                    AND SITAFA = :xSitAfa"; 
+        
+        C_R038AFA.AbrirCursor()        
+            Se (C_R038AFA.Achou) {
+                dDatAfa = r038afa.datafa;
+
+                Se ((dDatAfa < dDatini) e (dDatAfa > dDatFim)) {
+                    Cancel(2); 
+                }
+            }
+        C_R038AFA.FecharCursor(); 
+    }
+        
+C_R034FUN.FecharCursor(); 

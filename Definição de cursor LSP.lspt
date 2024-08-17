@@ -1,0 +1,21 @@
+Definição de cursor LSP
+
+Definir Cursor C44CAL;
+C44CAL.SQL"";
+C44CAL.AbrirCursor()
+Se(C44CAL.Achou){
+
+}
+C44CAL.FecharCursor();
+
+---------------------------------------------
+
+Definir Cursor C44CAL;
+C44CAL.SQL"";
+C44CAL.AbrirCursor()
+Enquanto(C44CAL.Achou){
+
+}
+C44CAL.Proximo();
+
+C44CAL.FecharCursor();

@@ -1,0 +1,442 @@
+
+/* Definições das variaveis */
+
+Definir Cursor cPlano;
+
+Definir Data dDatDes;
+Definir Data dCmpRef;
+Definir Data dDatZer;
+
+Definir Alfa eDatDes;
+Definir Alfa eCmpRef;
+Definir Alfa eNumCad;
+Definir Alfa eCodDep;
+Definir Alfa eValTot;
+Definir Alfa eDesPro;
+Definir Alfa aDesPro; 
+Definir Alfa aNomDep;
+Definir Alfa aParDes;
+Definir Alfa aTipRee;
+Definir Alfa aOriDes;
+Definir Alfa aDatDes;
+Definir Alfa aDia;
+Definir Alfa aMes;
+Definir Alfa aAno;
+Definir Alfa aMsg; 
+
+MontaData(31, 12, 1900, dDatZer);
+
+eNumCad = ReembolsoBeneficios.Matricula;
+eDatDes = ReembolsoBeneficios.Data;                                        
+eDesPro = ReembolsoBeneficios.Procedimento;
+eCodDep = ReembolsoBeneficios.Dependente;
+eValTot = ReembolsoBeneficios.Valor;
+eNumPar = ReembolsoBeneficios.Parcelas;
+eCmpRef = ReembolsoBeneficios.Competencia; 
+
+/* Condições para verificações de possiveis erros por conta do não preenchimento dos campos */
+/* Se n tiver matricula */
+Se(eNumCad = "") {
+  ReembolsoBeneficios.erroExecucao = "É obrigatório informar a matrícula do colaborador.";
+  Cancel(1);
+}
+
+
+/* Se não tiver data */
+Se(eDatDes = "") {
+  ReembolsoBeneficios.erroExecucao = "É obrigatório informar a data da despesa.";
+  Cancel(1);
+}
+
+/* Se b tiver um valor */
+
+Se(eValTot = "") {
+  ReembolsoBeneficios.erroExecucao = "É obrigatório informar o valor.";
+  Cancel(1);
+}
+
+
+/* Descriçaõ do procedimento */ 
+Se(eDesPro = "") {
+  ReembolsoBeneficios.erroExecucao = "É obrigatório a descrição do procedimento.";
+  Cancel(1);
+}
+
+/* ========================================== // =============================================== */
+
+xNumEmp = 1;
+xTipCol = 1;
+xNumPar = 0;
+
+AlfaParaInt(eNumCad, xNumCad);
+AlfaParaInt(eCodDep, xCodDep);
+AlfaParaInt(eValTot, xValTot);
+xNumPar = eNumPar;
+
+aDia = eDatDes;
+CopiarAlfa(aDia, 9, 2);
+aMes = eDatDes;
+CopiarAlfa(aMes, 6, 2);
+aAno = eDatDes;
+CopiarAlfa(aAno, 1, 4);
+AlfaParaInt(aDia, xDia);
+AlfaParaInt(aMes, xMes);
+AlfaParaInt(aAno, xAno);
+MontaData(xDia, xMes, xAno, dDatDes);
+
+Se(eCmpRef <> "null") {
+  aDia = eCmpRef;
+  CopiarAlfa(aDia, 9, 2);
+  aMes = eCmpRef;
+  CopiarAlfa(aMes, 6, 2);
+  aAno = eCmpRef;
+  CopiarAlfa(aAno, 1, 4);
+  AlfaParaInt(aDia, xDia);
+  AlfaParaInt(aMes, xMes);
+  AlfaParaInt(aAno, xAno);
+  MontaData(xDia, xMes, xAno, dCmpRef);
+}
+
+aDesPro = eDesPro;
+
+@ busca se já existe para incrementar sequência @
+xSeqDes = 1;
+cReembolso.Sql "SELECT USU_SEQDES FROM USU_T009DES \
+                 WHERE USU_NUMEMP = :xNumEmp \
+                   AND USU_TIPCOL = :xTipCol \
+                   AND USU_NUMCAD = :xNumCad \
+                   AND USU_DATDES = :dDatDes";
+cReembolso.AbrirCursor();
+Enquanto(cReembolso.Achou) {
+  xSeqDes++;
+  cReembolso.Proximo();
+}
+
+cReembolso.FecharCursor();
+
+@ define benefício, fornecedor e procedimento cfe a descrição @  
+Se(aDesPro = "AssistÃªncia MÃ©dica (Consultas)") {
+  xCodBen = 11;
+  xCodFor = 250;
+  xCodPro = 9000000011;
+
+} Senao Se(aDesPro = "Medicamentos") {
+  xCodBen = 3;
+  xCodFor = 405;
+  xCodPro = 9000000005;
+
+} Senao Se(aDesPro = "Incentivo a SaÃºde") {
+  xCodBen = 7;
+  xCodFor = 200;
+  xCodPro = 9000000002;
+
+} Senao Se(aDesPro = "AssistÃªncia Ã“tica - ArmaÃ§Ã£o") {
+  xCodBen = 6;
+  xCodFor = 105;
+  xCodPro = 9000000001;
+
+} Senao Se(aDesPro = "AssistÃªncia Ã“tica - Lente") {
+  xCodBen = 5;
+  xCodFor = 105;
+  xCodPro = 9000000001;
+
+} Senao Se(aDesPro = "Cirurgia Ã“tica") {
+  xCodBen = 17;
+  xCodFor = 250;
+  xCodPro = 9000000017;
+
+} Senao Se(aDesPro = "Vacina") {
+  xCodBen = 9;
+  xCodFor = 250;
+  xCodPro = 9000000005;
+
+} Senao Se(aDesPro = "Implante DentÃ¡rio") {
+  xCodBen = 16;
+  xCodFor = 250;
+  xCodPro = 9000000014;
+
+} Senao Se(aDesPro = "Terapia") {
+  xCodBen = 8;
+  xCodFor = 250;
+  xCodPro = 9000000004;
+
+} Senao Se(aDesPro = "Material OrtopÃ©dico") {
+  xCodBen = 10;
+  xCodFor = 250;
+  xCodPro = 9000000010;
+
+} Senao Se(aDesPro = "InstrumentaÃ§Ã£o CirÃºrgica") {
+  xCodBen = 12;
+  xCodFor = 250;
+  xCodPro = 9000000012;
+}
+
+@ definição competência se zerada @
+Se(dCmpRef = dDatZer) {
+  DesMontaData(dDatDes, xDia, xMes, xAno);
+  Se(xDia < 20)
+    MontaData(01, xMes, xAno, dCmpRef);
+  Senao
+    MontaData(01, xMes+1, xAno, dCmpRef);
+}                         
+  
+@ busca definições plano e calcula valor reembolso @
+xPerCol = 0;
+xTetCol = 0;
+xPerDep = 0;
+xTetDep = 0;
+
+cPlano.Sql "SELECT USU_SUBCOL, USU_TETCOL, USU_SUBDEP, USU_TETDEP \
+              FROM USU_T009CON \
+             WHERE USU_CODBEN = :xCodBen \ 
+               AND USU_DATALT = (SELECT MAX(USU_DATALT) FROM USU_T009CON \
+                                  WHERE USU_CODBEN = :xCodBen \ 
+                                    AND USU_DATALT <= :dDatDes)";
+cPlano.AbrirCursor();
+Se(cPlano.Achou) {
+  xPerCol = cPlano.USU_SUBCOL;
+  xTetCol = cPlano.USU_TETCOL;
+  xPerDep = cPlano.USU_SUBDEP;
+  xTetDep = cPlano.USU_TETDEP;
+}
+cPlano.FecharCursor(); 
+
+
+
+Se(aDesPro = "Terapia") {
+    Se(xNumPar = 0)
+      xNumPar = 1;
+    xValTot = xValTot / xNumPar;
+}
+
+Se(xCodDep = 0) {
+  xValRee = xValTot * (xPerCol/100);
+  Se((xValRee > xTetCol) e (xTetCol > 0))
+    xValRee = xTetCol;
+  xValCol = xValTot - xValRee;
+
+} Senao {
+  xValRee = xValTot * (xPerDep/100);
+  Se((xValRee > xTetDep) e (xTetDep > 0))
+    xValRee = xTetDep;
+  xValCol = xValTot - xValRee;
+} 
+
+Se((xNumPar > 1) e (aDesPro <> "Terapia")) {
+  aParDes = "S";
+  aTipRee = "N";
+  xQtdPar = xNumPar;
+  
+  @ Busca dados bancários do colaborador @
+  Definir Cursor cContaBanco;
+  Definir Alfa xDigCon;
+  Definir Alfa xModPag;
+  Definir Alfa xPgtChe;
+  
+  xCodBan = 0;
+  xCodAge = 0;
+  xNumCon = 0;
+  xDigCon = "";
+  xModPag = "D";
+  
+  cContaBanco.Sql "SELECT CodBan, CodAge, ConBan, DigBan, ModPag \
+                    FROM R034FUN \
+                    WHERE NumEmp = :xNumEmp \
+                    AND TipCol = :xTipCol \
+                    AND NumCad = :xNumCad";
+                
+  cContaBanco.AbrirCursor();
+    Se(cContaBanco.Achou) {
+      xCodBan = cContaBanco.CodBan;
+      xCodAge = cContaBanco.CodAge;
+      xNumCon = cContaBanco.ConBan;
+      xDigCon = cContaBanco.DigBan;
+      xModPag = cContaBanco.ModPag;
+    }                    
+  cContaBanco.FecharCursor();
+  
+  Se((xModPag = "O") ou (xModPag = "R"))
+    xPgtChe = "N";
+  Senao
+    xPgtChe = "S";
+  
+  @ Busca sequência do empréstimo e contrato @
+  Definir Cursor cEmprestimo;
+  Definir Cursor cContrato;
+  
+  xSeqEmp = 1;
+  xSeqCon = 0;
+  
+  cEmprestimo.Sql "SELECT USU_SeqSol FROM USU_T012EMP \
+                    WHERE USU_NumEmp = 0 AND USU_TipCol = 0 AND USU_NumCad = 0 \
+                    AND USU_DatSol = :dDatZer AND USU_SeqSol = 0 UNION \
+                    SELECT MAX(USU_SeqSol) FROM USU_T012EMP \
+                    WHERE USU_NumEmp = :xNumEmp AND USU_TipCol = :xTipCol AND USU_NumCad = :xNumcad \
+                    AND USU_DatSol = :dCmpRef";                      
+  
+  cEmprestimo.AbrirCursor();  
+    Se(cEmprestimo.Achou)
+      xSeqEmp = cEmprestimo.USU_SeqSol + 1;      
+  cEmprestimo.FecharCursor();
+  
+  cContrato.Sql "SELECT USU_NumCon FROM USU_T012EMP \
+                  WHERE USU_NumEmp = 0 AND USU_TipCol = 0 AND USU_NumCad = 0 \
+                  AND USU_DatSol = :dDatZer AND USU_SeqSol = 0 UNION \
+                  SELECT MAX(USU_NumCon) FROM USU_T012EMP";                
+  
+  cContrato.Abrircursor();
+    Se(cContrato.achou)
+      xSeqCon = cContrato.USU_NumCon + 1;
+  cContrato.FecharCursor();
+
+  @ Calcula juros @
+  Definir Interno.CAFUCOCA.TAB_PRICE JUROS;
+  
+  Definir Data dPriVnc;
+  Definir Data dDatVnc;
+  
+  xTaxJur = 0.72;  
+  xNumCom = 1;
+  xVlrTot = 0;
+  xVlrPar = 0;
+  xVlrJur = 0;
+  dPriVnc = dCmpRef;
+  UltimoDia(dPriVnc);
+
+  JUROS.EVlrCap = xValCol;
+  JUROS.ETaxJur = xTaxJur;
+  JUROS.EQtdTem = xQtdPar;
+  JUROS.EDatPag = dCmpRef;
+  JUROS.EPriVnc = dPriVnc;
+  JUROS.Executar();    
+
+  xVlrMon = JUROS.SVlrTot;
+  xVlrPar = JUROS.SVlrPar;
+  xVlrCor = JUROS.SVlrCor;
+  xVlrJur = xVlrTot - xValCol;
+  
+  @ Inclui empréstimo @
+  ExecSql "INSERT INTO USU_T012EMP \ 
+                      (USU_NUMEMP, USU_TIPCOL, USU_NUMCAD, USU_DATSOL, USU_SEQSOL, \
+                       USU_TIPSOL, USU_VLREMP, USU_QTDPAR, USU_DATPAG, USU_SITEMP, \
+                       USU_PGTCHE, USU_CODBAN, USU_CODAGE, USU_CONBAN, USU_DIGCON, \
+                       USU_MOTEMP, USU_OBSEMP, USU_DATDES, USU_SEQDES, USU_DATAPR, \ 
+                       USU_PERJUR, USU_NUMCON, USU_VLRCOR) \
+                        VALUES (:xNumEmp, :xTipCol, :xNumCad, :dCmpRef, :xSeqEmp, \
+                       2, :xValCol, :xQtdPar, :dCmpRef, 2, \
+                       :xPgtChe, :xCodBan, :xCodAge, :xNumCon, :xDigCon, \
+                       'Depesas Beneficios', '', :dDatDes, :xSeqDes, :dCmpRef, \
+                       :xTaxJur, :xSeqCon, :xVlrCor)";   
+
+  @ Incluir parcelas @
+  x = 1;
+  xVlrEmp = xVlrCor;
+  
+  Enquanto(x <= xQtdPar) {
+    @ Calcula o vencimento @
+    dDatVnc = dCmpRef;    
+    Se(x > 1) {
+      DesmontaData(dDatVnc, xDia, xMes, xAno);       
+      xMes = xMes + (x-1);       
+      Se(xMes > 12) {
+        xAnos = xMes / 12;
+        TruncarValor(xAnos);
+        xMes = xMes - (xAnos * 12);
+        Se(xMes = 0) {
+          xMes = 12;
+          xAno = xAno + xAnos - 1;            
+        } Senao {    
+          xAno = xAno + xAnos;
+        }
+      }       
+      MontaData(1, xMes, xAno, dDatVnc);
+    }           
+    UltimoDia(dDatVnc);
+    
+    @ Calcula o juros da Parcela @
+    xValPar = xVlrPar;
+    xJurPar = xVlrEmp * (xTaxJur / 100);
+    xVlrEmp = xVlrEmp - xVlrPar;
+    xVlrPri = xValPar - xJurPar;
+  
+    ExecSql "INSERT INTO USU_T012PAR \
+                        (USU_NUMEMP, USU_TIPCOL, USU_NUMCAD, USU_DATSOL, USU_SEQSOL, \
+                         USU_NUMPAR, USU_DATVNC, USU_VLRPAR, USU_VLRJUR, USU_SITPAR, \
+                         USU_CODCAL, USU_DATAMO, USU_VLRPRI, USU_VLRPGT) \
+                 VALUES (:xNumEmp, :xTipCol, :xNumCad, :dCmpRef, :xSeqEmp, \
+                         :x, :dDatVnc, :xValPar, :xJurPar, 1, \
+                         0, :dDatZer, :xVlrPri, 0)";
+          
+    x++;
+  }
+
+} Senao {
+  aParDes = "N";
+  aTipRee = "S";
+  xQtdPar = 1;  
+}
+
+@ demais campos @
+aOriDes = "I";
+xCodCal = 0;
+
+IniciarTransacao();
+  ExecSqlEx("INSERT INTO USU_T009DES (USU_NUMEMP, USU_TIPCOL, USU_NUMCAD, USU_DATDES, USU_SEQDES, \
+                                    USU_CODBEN, USU_CODFOR, USU_CODPRO, USU_VALTOT, USU_VALCOL, \
+                                    USU_VALREE, USU_CMPREF, USU_PARDES, USU_TIPREE, USU_CODCAL, \
+                                    USU_ORIDES, USU_QTDPAR, USU_CODDEP) \
+                            VALUES (:xNumEmp, :xTipCol, :xNumCad, :dDatDes, :xSeqDes, \
+                                    :xCodBen, :xCodFor, :xCodPro, :xValTot, :xValCol, \
+                                    :xValRee, :dCmpRef, :aParDes, :aTipRee, :xCodCal, \
+                                    :aOriDes, :xQtdPar, :xCodDep)", xErro, aMsg);
+
+
+
+
+@ Tratamento diferenciado quando procedimento é Terapia - lança parcelas como sequência @                                    
+Se((xNumPar > 1) e (aDesPro = "Terapia")) {
+  xNumPar--;
+  
+  Enquanto(xNumPar <> 0) {
+    xSeqDes++;
+    ExecSqlEx("INSERT INTO USU_T009DES (USU_NUMEMP, USU_TIPCOL, USU_NUMCAD, USU_DATDES, USU_SEQDES, \
+                                        USU_CODBEN, USU_CODFOR, USU_CODPRO, USU_VALTOT, USU_VALCOL, \
+                                        USU_VALREE, USU_CMPREF, USU_PARDES, USU_TIPREE, USU_CODCAL, \
+                                        USU_ORIDES, USU_QTDPAR, USU_CODDEP) \
+                                VALUES (:xNumEmp, :xTipCol, :xNumCad, :dDatDes, :xSeqDes, \
+                                        :xCodBen, :xCodFor, :xCodPro, :xValTot, :xValCol, \
+                                        :xValRee, :dCmpRef, :aParDes, :aTipRee, :xCodCal, \
+                                        :aOriDes, :xQtdPar, :xCodDep)", xErro, aMsg);
+    xNumPar--;
+  }                                    
+}
+
+
+
+Se(xErro = 0) {
+  FinalizarTransacao();
+  aMsg = "Reembolso integrado com sucesso!";  
+  
+  Definir Alfa aNomProcess;
+  Definir Alfa aObs;
+  Definir Alfa aEmailSolicitante;
+         
+  nNumSol = ReembolsoBeneficios.numsol;
+  aNomProcess = ReembolsoBeneficios.nompro;
+  aObs = ReembolsoBeneficios.observ;
+  aEmailSolicitante = ReembolsoBeneficios.emailsol;
+  
+  Definir Interno.integra_BPM.enviaemail mandaemail;
+
+  mandaemail.numsol = nnumsol;
+  mandaemail.nompro = aNomProcess;
+  mandaemail.observ = aObs;
+  mandaemail.emailsol = aEmailSolicitante;
+  mandaemail.Executar(); 
+  
+} Senao {
+  DesfazerTransacao();
+  aMsg = "Erro ao integrar reembolso: " + aMsg;
+}
+
+ReembolsoBeneficios.retorno = aMsg;13.BKP

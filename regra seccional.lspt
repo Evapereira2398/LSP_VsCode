@@ -1,0 +1,144 @@
+@ A regra vai enviar via WebService e-mail para cada Colaborador, com seu Holerite @
+@ Variáveis @
+Definir interno.com.senior.g5.rh.fp.relatorios.Relatorios vRelatorio;
+Definir Alfa   aEmaCol;
+Definir Alfa   Enter;
+Definir Alfa   aDatIni;
+Definir Alfa   aDatFim;
+Definir Alfa   aCodCal;
+Definir Alfa   aNumEmp;
+Definir Alfa   aQuery;
+Definir Alfa   aCursorInt;
+Definir Alfa   aNumCad;
+Definir Alfa   aTemp;
+Definir Cursor Cur_R034FUN;
+Definir Cursor Cur_R034CPL;
+Definir Cursor Cur_R046VER;
+Definir Data   dDatIni;
+Definir Data   dDatFim;
+Definir Numero nNumEmp;
+Definir Numero nNumCad;
+Definir Numero nTipCol;
+Definir Numero nCodCal;
+Definir Numero ENumEmp;
+Definir Numero ETipCol;
+Definir Alfa aLog;
+Definir Alfa xRem;
+Definir Alfa xDest;
+Definir Alfa xAss;
+Definir Alfa xMsg;
+Definir Alfa vsTipCal;
+
+@ Valores Iniciais @
+nNumEmp = ENumEmp;
+nTipCol = ETipCol;
+nNumCad = R034FUN.NumCad;
+aEmaCol = "";
+aQuery = "";
+aTemp = "";
+dDatIni = IniCmp;
+dDatFim = FimCmp;
+nCodCal = CodCal;
+viTipCal = TipCal;
+IntParaAlfa(viTipCal, vsTipCal);
+IntParaAlfa(nCodCal, aCodCal);
+IntParaAlfa(nNumEmp, aNumEmp);
+
+ConverteMascara(3,dDatIni, aDatIni, "DD/MM/YYYY");
+ConverteMascara(3,dDatFim, aDatFim, "DD/MM/YYYY");
+
+RetornaAscii(13,Enter);
+
+Se(NaoImprime = 1)                                                    
+  Cancel(1);
+
+@ Busca Colaborador que teve Folha Calculada @
+Cur_R046VER.SQL "Select NumCad From R046VER Where \
+                NumEmp = :nNumEmp And TipCol = :nTipCol And NuMCad = :nNumCad \
+                And CodCal = :nCodCal"
+Cur_R046VER.AbrirCursor();
+/*
+Se (Cur_R046VER.Achou)
+Inicio  */
+  Cur_R034CPL.SQL "Select EmaCom From R034CPL Where \
+                  NumEmp = :nNumEmp And TipCol = :nTipCol And NumCad = :nNumCad"
+  Cur_R034CPL.AbrirCursor();
+
+  aEmaCol = "";
+
+  Se (Cur_R034CPL.Achou)
+  Inicio
+    aEmaCol = Cur_R034CPL.EmaCom;
+    ListaSecao("Adicional_1");                                        
+  Fim
+  Cur_R034CPL.FecharCursor();
+
+  @ Definir o relatório a ser executado @ 
+  vRelatorio.prRelatorio = "FPEN103.ENV";
+
+  @ Definir Remetente @
+  vRelatorio.prRemetente  = "holerite@evangelizarepreciso.com.br"; 
+
+  @ Forma de execução do relatório (email) @ 
+  /*  vRelatorio.prFileName  = "Holerite";
+    vRelatorio.prExecFmt   = "tefFile";*/ 
+  vRelatorio.prExecFmt   = "tefMail";
+  vRelatorio.prAnexoBool = "T";
+
+  @ Assunto do email @ 
+  Definir Alfa xDatCmp;
+  ConverteMascara(3,dDatFim,xDatCmp,"MM/YYYY");
+  vRelatorio.prAssunto   = "Holerite "+xDatCmp;  
+
+  @ Mensagem do Email @
+  vRelatorio.prMensagem  = Enter + Enter;
+  vRelatorio.prMensagem  = vRelatorio.prMensagem + "Caro colaborador,<br><br>" + Enter + Enter;
+  vRelatorio.prMensagem  = vRelatorio.prMensagem + " A partir de agora, você receberá o seu holerite formato online.<br>" + Enter;
+  vRelatorio.prMensagem  = vRelatorio.prMensagem + " Além da economia e na agilidade em disponibilizar as informações de seu pagamento ainda contribuímos com o Meio Ambiente.<br><br>" +Enter+ Enter;
+  vRelatorio.prMensagem  = vRelatorio.prMensagem + " Qualquer dúvida entre em contato com RH.<br><br>" + Enter+ Enter;
+  vRelatorio.prMensagem  = vRelatorio.prMensagem + " Atenciosamente, <br>" + Enter;
+  vRelatorio.prMensagem  = vRelatorio.prMensagem + " RH <br>" + Enter;
+  
+  vRelatorio.prUniqueFile    = "S";
+  vRelatorio.prEntranceIsXML = "F";
+  vRelatorio.prTypeBmp = "N";
+  vRelatorio.prSaveFormat = "tsfPDF";
+  
+  /*vRelatorio.prDir = "C:\\Senior\\Vetorh\\temp";*/
+  vRelatorio.prPrintDest = "";
+  vRelatorio.prCC = "";
+  vRelatorio.prCCo = "";
+  vRelatorio.prFileExt = "pdf";
+  vRelatorio.prOrder = "";
+  vRelatorio.prFileLayout = "";
+  vRelatorio.prLayoutEXCEL = "";
+  vRelatorio.prLayoutSAGA = "";  
+
+  @ Parametros Entrada Relatorio @
+  IntParaAlfa(nNumCad, aNumCad);
+  
+  vRelatorio.prEntrada = "<EIncOca="+"S"+">"+
+                         "<EMarPon="+"N"+">"+
+                         "<EAbrEmp=" + aNumEmp +">" + 
+                         "<EAbrTcl=1>" +
+                         "<EAbrCad=" + aNumCad +">"+
+                         "<EAbrFil=1-9999>";
+  /*                       
+  vRelatorio.prEntrada = "<EIniPerCal=" + aDatIni +">" +
+                       "<EFimPerCal=" + aDatFim +">" +
+                       "<EAbrTipCal="+ vsTipCal + ">" +
+                       "<EAbrEmp=" + aNumEmp +">" +
+                       "<EAbrTcl=1>" +
+                       "<EAbrCad=" + aNumCad +">"+
+                       "<EAbrFil=1-9999>";
+  */
+  vRelatorio.prFileName  = aNumCad;
+   
+  @ Executa o relatório enviando por email @
+  /*vRelatorio.prDest = "marcos.rosa@seniorcuritiba.com.br";*/
+  /*vRelatorio.prDest = "victor.cunha@magnus.com.br";*/
+  vRelatorio.prDest = aEmaCol;
+  vRelatorio.ModoExecucao=1;
+  vRelatorio.Executar();
+/*Fim                       */
+Cur_R046VER.FecharCursor(); 

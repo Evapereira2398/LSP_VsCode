@@ -1,0 +1,465 @@
+Definir Alfa aNumTit;
+Definir Alfa aNumCad;
+Definir Alfa aDia;
+Definir Alfa aMes;
+Definir Alfa aAno;
+Definir Alfa aCodCal;
+Definir Alfa aNumEmp;
+Definir Alfa aCodFil;
+Definir Alfa aIniFer;
+Definir Alfa aCodCcu;
+Definir Alfa wCodCcu;
+Definir Alfa aDatDem;
+Definir Alfa aDatPag;
+Definir Alfa aCodCar;
+Definir Alfa aNewCodCcu;
+Definir Cursor CR018CCU;
+Definir Cursor CR024CAR;
+Definir Cursor CR018CCU2;
+Definir Cursor CR046VER;
+Definir Cursor Cur_R047EFI;
+
+
+ConverteMascara(1,R047PEN.CodCal,aCodCal,"9999");
+ConverteMascara(1,R047PEN.NumCad,aNumCad,"9999");
+ConverteMascara(1,R047PEN.CodFil,aCodFil,"99");
+ConverteMascara(1,R047PEN.NumEmp,aNumEmp,"99");
+ConverteMascara(3,R047PEN.VncTit,aDatPag,"MMYYYY");
+aCodCcu = "";
+
+/* Tabelas utilizadas na regra: 
+R047PEN - Tabela de "Pendencias integração financeira"
+R047EFI - Tabela de "Dados por empresa e Filial"
+*/
+
+nCodCif = R047PEN.CodCif; @ Codigo de integração financeira @
+nCodFil = R047PEN.CodFil; @ Codigo da Filial @
+nNumEmp = R047PEN.NumEmp; @ Codigo da Empresa @
+nCodCal = R047PEN.CodCal; @ Codigo de calculo @
+nTipCol = R047PEN.TipCol; @ Tipo Colaborador @
+nNumCad = R047PEN.NumCad; @ Cadastro do colaborador (MAtricula) @
+dVncTit = R047PEN.VncTit; @ Vencimento do titulo @
+aCodCcu = R047PEN.CodCcu; @ Codigo Centro de custo @
+nCodFor = 0;              @ Codigo do fornecedor (Inizializando zerada) @
+
+
+/*
+  Se a empresa for a 22 e o codigo de integração financeira for 4, 7, 8, 9, 10, 13, 14 ou 22
+  o cursor busca o codigo do fornecedor (codfor) na tabela R047EFI (Dados por empresa e Filial)
+  Se o cursor encontrar o codigo do fornecedor (codfor) ele insere o valor na variavel "nCodFor"
+  E o campo (codfor) da tabela R047PEN passa a ser o mesmo codigo encontrado anteriormente.
+
+
+  Ex: Se o cursor encontrar o codigo do fornecedor (codfor) na tabela R047EFI e se o codigo for 00047547
+  O campo codigo do fornecedor (codfor) da tabela R047PEN passa a possuir o mesmo valor 00047547.
+*/
+
+Se ((nNumEmp = 22) e ((nCodCif = 4) ou (nCodCif = 7) ou (nCodCif = 8) ou (nCodCif = 9) ou 
+    (nCodCif = 10) ou (nCodCif = 13) ou (nCodCif = 14)  ou (nCodCif = 22))) 
+  {
+    Cur_R047EFI.sql"Select CodFor             \
+                      From R047EFI            \
+                      Where CodCif = :nCodCif \
+                      And NumEmp = :nNumEmp   \
+                      And CodFil = :nCodFil";
+                       
+    Cur_R047EFI.AbrirCursor()
+    Se (Cur_R047EFI.Achou)
+      {
+        nCodFor = Cur_R047EFI.CodFor;
+        R047PEN.CodFor = nCodFor;
+      }
+    Cur_R047EFI.FecharCursor()
+  }
+
+ @ ---------------------------------- // ----------------------------------- // ----------------------------------- @
+
+/*
+  Se a empresa for a 22 e o Codigo de integração financeira for o 23 ou 21 
+*/
+Se ((nNumEmp = 22) e (nCodCif = 23) ou (nCodCif = 21))
+  {
+    /* Esta função retorna os dados do histórico de sindicato do colaborador 
+    em uma determinada data nas variáveis de sistema CodSinEmp e SocSinEmp, sendo, 
+    respectivamente, o código do sindicato e se o colaborador é sindicalizado (S/N).*/
+
+    @ - FimCmp = Data para retornar os dados do histórico de sindicato (código do sindicato e se o colaborador é sindicalizado) - @
+
+    @ CodSinEmp = Retorna o código do sindicato em determinada data @
+    @ SocSinEmp = Retorna se o colaborador é sócio de seu sindicato em determinada data @
+
+    @ https://documentacao.senior.com.br/gestao-de-pessoas-hcm/6.2.35/customizacoes/funcoes/funcao_retsinemp.htm @
+    RetSinEmp(nNumEmp,nTipCol,nNumCad,FimCmp); 
+    
+    
+    @ Se o codigo do sindicato for 67 o campo codigo do fornecer (codfor) da tabela R047PEN = 237 @
+    Se (CodSinEmp = 67)
+      {
+        R047PEN.CodFor = 237;
+      }
+
+    @ Se o codigo do sindicato for 68 o campo codigo do fornecer (codfor) da tabela R047PEN = 4923 @  
+    Se (CodSinEmp = 68)
+      {
+        R047PEN.CodFor = 4923;
+      }
+
+    @ Se o codigo do sindicato for 72 o campo codigo do fornecer (codfor) da tabela R047PEN = 8753 @
+    Se (CodSinEmp = 72)
+      {
+        R047PEN.CodFor = 8753;
+      }
+
+    @ Se o codigo do sindicato for 74 o campo codigo do fornecer (codfor) da tabela R047PEN = 6214 @
+    Se (CodSinEmp = 74)
+      {
+        R047PEN.CodFor = 6214;
+      }
+
+    @ Se o codigo do sindicato for 77 o campo codigo do fornecer (codfor) da tabela R047PEN = 2351 @
+    Se (CodSinEmp = 77)
+      {
+        R047PEN.CodFor = 2351;
+      }
+
+    @ Se o codigo do sindicato for 81 o campo codigo do fornecer (codfor) da tabela R047PEN = 5492 @
+    Se (CodSinEmp = 81)
+      {
+        R047PEN.CodFor = 5492;
+      }
+
+    @ Se o codigo do sindicato for 83 o campo codigo do fornecer (codfor) da tabela R047PEN = 5892 @
+    Se (CodSinEmp = 83)
+      {
+        R047PEN.CodFor = 5892;
+      }
+
+    @ Se o codigo do sindicato for 84 o campo codigo do fornecer (codfor) da tabela R047PEN = 5750 @
+    Se (CodSinEmp = 84)
+      {
+        R047PEN.CodFor = 5750;
+      }
+
+    @ Se o codigo do sindicato for 86 o campo codigo do fornecer (codfor) da tabela R047PEN = 8491 @
+    Se (CodSinEmp = 86)
+      {
+        R047PEN.CodFor = 8491;
+      }
+
+    @ Se o codigo do sindicato for 88 o campo codigo do fornecer (codfor) da tabela R047PEN = 8180 @
+    Se (CodSinEmp = 88)
+      {
+        R047PEN.CodFor = 8180;
+      }
+
+    @ Se o codigo do sindicato for 91 o campo codigo do fornecer (codfor) da tabela R047PEN = 10933 @
+    Se (CodSinEmp = 91)
+      {
+        R047PEN.CodFor = 10933;
+      }        
+    
+    @ Se o codigo do fornecedor da tabela R047PEN = 0, o codigo passa a ser = 237 @
+    Se (R047PEN.CodFor = 0)
+      {
+        R047PEN.CodFor = 237;
+      }
+  }
+
+
+
+
+
+
+@ ---------------------------------- // ----------------------------------- // ----------------------------------- @
+
+@ Condição caso o codigo de integração financeira seja 1 ou 2 @
+Se ((R047PEN.CodCif = 1) ou (R047PEN.CodCif = 2))
+  {
+    @ Se o "tipo do calculo" (Tabela R047PEN) for igual a 16 o "tipo do titulo" (Tabela R047PEN) = C10 @
+    @ E o numero do titulo = EP + Matricula + Codigo do calculo @
+    Se (R047PEN.TipCal = 12)
+      {
+        R047PEN.CodCif = 16;
+        R047PEN.TipTit = "C10";
+      }
+    R047PEN.NumTit = "FP" + aNumCad + aCodCal;
+  }
+
+@ Se o codigo de integração financeira for = 2 e o tipo do calculo for = 91 @
+@ O codigo de integração financeira passa a ser = 3 e o tipo do titulo = C09
+Se ((R047PEN.CodCif = 2) e (R047PEN.TipCal = 91))
+  {
+    R047PEN.CodCif = 3;
+    R047PEN.TipTit = "C09";
+  }
+
+@ Se o codigo de integração financeira = 6 e tipo do calculo for = 31 @
+@ Observação do titulo = 13o Salario - Adiantamento @
+Se ((R047PEN.CodCif = 6) e (R047PEN.TipCal = 31))
+  {
+    R047PEN.ObsTit = "13o Salario - Adiantamento";
+  }
+
+@ Se o codigo de integração financeira for = 6 e tipo do calculo = 32 @
+@ Observação do titulo = 13o Salario - Integral @
+Se ((R047PEN.CodCif = 6) e (R047PEN.TipCal = 32))
+  {
+    R047PEN.ObsTit = "13o Salario - Integral";
+  }
+
+@ Se o codigo de integração financeira for = 3 @
+@ Numero do titulo = "AD" + Matricula + Codigo do calculo @
+Se (R047PEN.CodCif = 3)
+  {
+    R047PEN.NumTit = "AD" + aNumCad + aCodCal;
+  }
+
+@ Se o codigo de integração financeira for = 16 @
+@ Numero do titulo = "PR" + Matricula + Codigo do calculo @
+Se (R047PEN.CodCif = 16)
+  {
+    R047PEN.NumTit = "PR"+aNumCad+aCodCal;
+  }
+
+
+/* 
+Se o codigo de integração financeira for = 4 @
+1. Realiza a convesão da "data do inicio das ferias" para o formato "DD/MM/YYY" 
+2. Após converter coloca o dia o mêS e o ano em variaveis separadas e faz a coversão dessas variavies para o tipo string
+3. Tira os caracteres do ano === Se a data de inicio das ferias for 20/10/2022 passa a ser 20/10/22
+4. Converte o numero da matricula para string
+5. NUmero do tirulo passa a ser === "F" + "Data de inicio das ferias" (aDia) (aMes) (aAno) + Matricula
+6. Observação do titulo = "Férias com inicio em" + Data de inicio das ferias
+7. Pega o centro de custo do colaborador de acordo com a data atual do sistema
+8. Insere o centro de custo atual na tabela R047PEN 
+*/
+Se (R047PEN.CodCif = 4)
+  {
+    aIniFer = ""; 
+    ConverteMascara(3,R047PEN.IniFer,aIniFer,"DD/MM/YYYY");
+    DesmontaData(R047PEN.IniFer,nDia,nMes,nAno);
+    ConverteMascara(1,nDia,aDia,"99");
+    ConverteMascara(1,nMes,aMes,"99");
+    ConverteMascara(1,nAno,aAno,"9999");
+    DeletarAlfa(aAno,1,2);
+    ConverteMascara(1,R047PEN.NumCad,aNumCad,"999");
+    R047PEN.NumTit = "F" + aDia + aMes + aAno + aNumCad;
+    R047PEN.ObsTit = "Férias com inicio em" + aIniFer;
+    RetCcuEmp(nNumEmp,nTipCol,nNumCad,DatHoj);
+    R047PEN.CodCcu = CcuEmp;
+  }
+
+/*
+Se o codigo de integração financeira for = 5
+1. Pega a data de demissão e coloca em variaveis separadas 
+2. Converte a data de demissão para string
+3. Converte o dia mes e ano para string
+4. Tira os dois primeiros caracteres do ano
+5. Numero do titulo = "RC" + Dia + Mes + Ano + Matricula
+6. Observação do titulo = "Rescisão Contratual em " + Data de demissão + " - colaborador " + Matricula
+*/
+Se (R047PEN.CodCif = 5)
+  {
+    DesmontaData(R047PEN.DatDem,nDia,nMes,nAno);
+    ConverteMascara(3,R047PEN.DatDem,aDatDem,"DD/MM/YYYY");
+    ConverteMascara(1,nDia,aDia,"99");
+    ConverteMascara(1,nMes,aMes,"99");
+    ConverteMascara(1,nAno,aAno,"99");
+    DeletarAlfa(aAno,1,2);
+    R047PEN.NumTit = "RC"+aDia+aMes+aAno+aNumCad;
+    R047PEN.ObsTit = "Rescisão Contratual em " + aDatDem + " - colaborador "+aNumCad;
+  }
+
+
+/*
+Se o codigo de integração financeira for = 7
+Numero do titulo = "F6" + Codigo do calculo + Matricula 
+Codigo do banco = 0
+Codigo da agencia = 0
+*/
+Se (R047PEN.CodCif = 7)
+  {
+    R047PEN.NumTit = "FG"+aCodCal+aNumCad;
+    R047PEN.CodBan = 0;
+    R047PEN.CodAge = 0;
+  }
+
+/*
+Se o codigo de integração financeira for = 8
+Numero do titulo = "IN" + Codigo do calculo + Matricula 
+Codigo do banco = 0
+Codigo da agencia = 0
+*/
+Se (R047PEN.CodCif = 8)
+  {
+    R047PEN.NumTit = "IN"+aCodCal+aNumCad;
+    R047PEN.CodBan = 0;
+    R047PEN.CodAge = 0;
+  }
+
+
+/*
+Se o codigo de integração financeira for = 9
+Numero do titulo = "IR" + Numero da empresa + Vencimento do titulo
+Codigo do banco = 0
+Codigo da agencia = 0
+Observação do titlulo = "IRRF - Colaboradores - Receita 0561 - Competência " + Vencimento do titulo 
+*/
+Se (R047PEN.CodCif = 9)
+  {
+    R047PEN.NumTit = "IR"+aNumEmp+aDatPag;
+    R047PEN.CodBan = 0;
+    R047PEN.CodAge = 0;
+    R047PEN.ObsTit = "IRRF - Colaboradores - Receita 0561 - Competência "+aDatPag; 
+  }
+
+
+/*
+Se o codigo de integração financeira for = 10
+Numero do titulo = "GR" + Codigo do calculo + Matricula
+Codigo do banco = 0
+Codigo da agencia = 0
+Observação do titlulo = "FGTS - GRRF - Rescisão Contratual em "+ Data de demissão +" - colaborador " + Matricula ; 
+*/
+Se (R047PEN.CodCif = 10)
+  {
+    R047PEN.NumTit = "GR"+aCodCal+aNumCad;
+    R047PEN.CodBan = 0;
+    R047PEN.CodAge = 0;
+    R047PEN.ObsTit = "FGTS - GRRF - Rescisão Contratual em "+aDatDem+" - colaborador "+aNumCad;
+  }
+
+Se (R047PEN.CodCif = 12)
+  {
+    R047PEN.NumTit = "PA"+aCodCal+aNumCad;
+    R047PEN.ObsTit = "Pensão Alimenticia Cadastro - "+aNumCad+", referente ao cálculo "+aCodCal;
+  }
+
+Se (R047PEN.CodCif = 14)
+  {
+    R047PEN.NumTit = "IT"+aNumEmp+aDatPag;
+    R047PEN.ObsTit = "IRRF - Terceiros - Receita 0588 - Cadastro - "+aNumCad+", referente ao cálculo "+aCodCal;
+  }
+
+Se (R047PEN.CodCif = 15)
+  {
+    R047PEN.NumTit = "TR"+aCodCal+aNumCad;
+    R047PEN.ObsTit = "RPA - Terceiros - "+aNumCad+", referente ao cálculo "+aCodCal;
+  }
+  
+Se (R047PEN.CodCif = 16)
+  {
+    CR046VER.sql"Select CodEve               \
+                   From R046VER              \
+                  Where NumEmp = :nNumEmp    \
+                    And TipCol = :nTipCol    \
+                    And NumCad = :nNumCad    \
+                    And CodCal = :nCodCal    \
+                    And CodEve = 2030";
+    CR046VER.AbrirCursor()
+    Se (CR046VER.Achou)
+      {
+        R047PEN.ObsTit = "Pagamento PPR - Bonus";
+      }
+    Senao
+      {
+        R047PEN.ObsTit = "Pagamento PLR";
+      }
+    CR046VER.FecharCursor() 
+  }
+
+
+
+
+@ --- Trata os pontos no centro de custo --- @
+Se (R047PEN.NumEmp = 1)
+  {
+    aCodCcu = R047PEN.CodCcu;
+    TrocaString(aCodCcu,".","",wCodCcu);
+    R047PEN.CodCcu = wCodCcu;
+  }
+  
+@ --- Trata os centros de custos - virada SAP --- @
+Se ((nCodCif = 1) ou (nCodCif = 2) ou (nCodCif = 16))
+  {
+    @ --- Busca a situação do colaborador --- @
+    RetSitEmp(nNumEmp,nTipCol,nNumCad,dVncTit);
+    @ --- Se for demitido, inicia o tratamento --- @
+    Se (SitEmp = 7)
+      {
+        @ --- Busca a filial cadastrada no Centro de Custo --- @
+        CR018CCU.sql"Select CodFil             \
+                       From R018CCU            \
+                      Where NumEmp = :nNumEmp  \
+                        And CodCcu = :aCodCcu";
+        CR018CCU.AbrirCursor()
+        Se (CR018CCU.Achou)
+          {
+            nFilCcu = CR018CCU.CodFil;
+            @ --- Se a filial do Centro de Custo for diferente da filial do título --- @
+            Se (nFilCcu <> nCodFil)
+              {
+                @ --- Busca o cargo do colaborador --- @
+                RetCarEmp(nNumEmp,nTipCol,nNumCad,dVncTit);
+                nEstCar = EstCarEmp;
+                aCodCar = CarEmp;
+                @ --- Busca a Natureza de Despesa do Cargo --- @
+                CR024CAR.sql"Select NatDes             \
+                               From R024CAR            \
+                              Where EstCar = :nEstCar  \
+                                And CodCar = :aCodCar";
+                CR024CAR.AbrirCursor()
+                Se (CR024CAR.Achou)
+                  {
+                    nNatDesCar = CR024CAR.NatDes;                    
+                  }
+                CR024CAR.FecharCursor()
+                @ --- Busca o Centro de Custo de Acordo com a Natureza do Cargo --- @
+                CR018CCU2.sql"Select CodCcu                   \
+                               From R018CCU                  \
+                              Where CodFil = :nCodFil        \
+                                And NumEmp = :nNumEmp        \
+                                And USU_NatDes = :nNatDesCar";
+                CR018CCU2.AbrirCursor()
+                Se (CR018CCU2.Achou)
+                  {
+                    aNewCodCcu = CR018CCU2.CodCcu;
+                    @ --- Atualiza o Centro de Custo no título --- @
+                    R047PEN.CodCcu = aNewCodCcu;
+                  }
+                CR018CCU2.FecharCursor()
+              }
+          }
+        CR018CCU.FecharCursor()
+      }
+  }
+  
+@- ajusta fornecedor conforme cadastro no R034FUN para SOLLO SUL/DISSUL -@
+Se ((R047PEN.NumEmp = 35) OU (R047PEN.NumEmp = 36))
+  {
+    Se ((R047PEN.CodCif = 1) OU (R047PEN.CodCif = 2) OU (R047PEN.CodCif = 4) OU (R047PEN.CodCif = 5))
+      {
+        Definir Cursor Cur_R034FUN;
+  
+        nNumEmp = R047PEN.NumEmp;
+        nTipCol = R047PEN.TipCol;
+        nNumCad = R047PEN.NumCad;
+  
+        Cur_R034FUN.Sql "SELECT CodFor \
+                        FROM R034FUN \
+                        WHERE NumEmp = :nNumEmp \
+                        AND TipCol = :nTipCol \
+                        AND NumCad = :nNumCad";
+        
+        Cur_R034FUN.AbrirCursor();
+          Se (Cur_R034FUN.Achou)
+            nCodFor = Cur_R034FUN.CodFor;
+            
+        Cur_R034FUN.FecharCursor();
+  
+        R047PEN.CodFor = nCodFor;
+      }
+    
+    Senao Se ((R047PEN.CodCif = 7) E (R047PEN.CodFor = 0))
+      R047PEN.CodFor = 10320;
+  }

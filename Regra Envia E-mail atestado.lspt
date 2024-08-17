@@ -1,0 +1,167 @@
+@ --------------------------------------------------------------------------- @
+@ ------------------------ Gravar Atestado Médico --------------------------- @
+@ --------------------------------------------------------------------------- @
+
+
+
+Definir Cursor Cur_R038AFA;
+Definir Cursor C_R034CPL;
+Definir Data dDatAfa;
+Definir Data wDatAfa;
+Definir Data dDatFim;
+
+Cur_R038AFA.sql "Select *from R038AFA where ObsAfa = 'ENE'";
+Cur_R038AFA.abrircursor();
+Enquanto (Cur_R038AFA.achou)
+ {
+	nNumEmp = Cur_R038AFA.NumEmp;
+	nTipCol = Cur_R038AFA.TipCol;
+	nNumCad = Cur_R038AFA.NumCad;
+      nSitAfa = Cur_R038AFA.SitAfa;
+	dDatAfa = Cur_R038AFA.DatAfa;
+	dDatFim = Cur_R038AFA.DatTer;
+	wDatAfa = Cur_R038AFA.DatAfa;
+      wDatTer = Cur_R038AFA.DatTer;
+      wHorAfa = Cur_R038AFA.HorAfa;
+      wHorTer = Cur_R038AFA.HorTer;
+
+@ --------------------------------------------------------------------------- @
+@ -------------------------- Envia E-Mail Lider ----------------------------- @
+@ --------------------------------------------------------------------------- @ 
+                        
+Definir Alfa aPosTra;
+Definir Alfa aDesPos;
+Definir Alfa aPosPai;
+Definir Alfa aAssEma;
+Definir Alfa sNumCad;
+Definir Alfa aPosPaiAux;
+
+xCodThp = 2; @ Código da Hierarquia @   
+
+RetornaPostoColaborador(nNumEmp,  nTipCol,  nNumCad, dDatAfa, xEstPos, aPosTra,aDesPos);
+
+RetornaPostoPai(aPostra, xEstPos, xCodThp, dDatAfa,aPosPai);
+
+Definir Cursor Cur_ColPos;
+
+Cur_ColPos.Sql"SELECT R034CPL.EMACOM  \
+                FROM R034FUN,R034CPL  \
+               WHERE R034FUN.NUMEMP=R034CPL.NUMEMP  \
+                 AND R034FUN.TIPCOL=R034CPL.TIPCOL   \
+                 AND R034FUN.NUMCAD=R034CPL.NUMCAD   \  
+                 AND R034FUN.ESTPOS=:XESTPOS  \
+                 AND R034FUN.POSTRA=:APOSPAI  \
+                 AND R034FUN.SITAFA<>7";  
+Cur_ColPos.AbrirCursor();
+Se(Cur_ColPos.Achou)
+Inicio
+ Definir Alfa aEmaCom;
+ Definir Alfa aMenLog;
+ 
+ aEmaCom = Cur_ColPos.EmaCom;
+ xRetMen = 0;
+ 
+ Se((aEmaCom<>"") ou (aEmaCom<>" "))
+  Inicio
+    Definir Alfa aTxtEma;
+    Definir Alfa aNomFun;
+    Definir Alfa aEnter;
+    
+    Definir Alfa aNomPos;
+    Definir Alfa aDesSit;
+    
+    Definir Alfa aDatAfa;
+    Definir Alfa aDatFim;
+    
+    @ Pula Linha @
+    RetornaAscII(10,aEnter);
+    RetornaAscII(13,aEnter);
+    
+    
+    Definir Cursor Cur_InfCol;
+    
+    @ Retorna nome do colaborador @
+    Cur_InfCol.Sql"SELECT NOMFUN  \
+                     FROM R034FUN  \
+                    WHERE NUMEMP=:NNUMEMP  \
+                      AND TIPCOL=:NTIPCOL  \
+                      AND NUMCAD=:NNUMCAD";
+    Cur_InfCol.AbrirCursor();
+    Se(Cur_InfCol.Achou)
+     aNomFun = Cur_InfCol.NomFun;        
+    Cur_InfCol.FecharCursor();
+    
+    Definir Cursor Cur_NomPos;
+    
+    Cur_NomPos.Sql"SELECT DESRED \
+                     FROM R017POS  \
+                    WHERE ESTPOS=:XESTPOS  \
+                      AND POSTRA=:APOSTRA";
+    Cur_NomPos.AbrirCursor();
+    Se(Cur_NomPos.Achou)
+    aNomPos = Cur_NomPos.DesRed;
+    Cur_NomPos.FecharCursor();
+    
+    IntParaAlfa(xNumCad,sNumCad);
+    
+    Definir Cursor Cur_DesSit;
+    
+    Cur_DesSit.Sql"SELECT DESSIT  \
+                     FROM R010SIT  \
+                    WHERE CODSIT=:NSITAFA";
+    Cur_DesSit.AbrirCursor();
+    Se(Cur_DesSit.Achou)
+     aDesSit = Cur_DesSit.DesSit;
+    Cur_DesSit.FecharCursor();
+     
+    ConverteMascara (3, dDatAfa, aDatAfa, "DD/MM/YYYY");
+    ConverteMascara (3, dDatFim, aDatFim, "DD/MM/YYYY"); 
+    
+    IntParaAlfa(nNumCad,sNumCad);
+    
+    @Implementação chamado 214698 Insere Email Lider superior em cópia@
+    RetornaPostoPai(aPostra, xEstPos, xCodThp, dDatAfa, aPosPaiAux);
+    RetornaChefePosto(1, xEstPos, xCodThp, dDatAfa, aPosPaiAux, nEmpChe, nTipChe, nCadChe);
+ 
+    Se (nCadChe = 0){
+      RetornaPostoPai(aPostra, xEstPos, xCodThp, dDatAfa, aPosPaiAux);
+      RetornaChefePosto(1, xEstPos, xCodThp, dDatAfa, aPosPaiAux, nEmpChe, nTipChe, nCadChe);
+      Se (nCadChe = 0){
+        RetornaPostoPai(aPostra, xEstPos, xCodThp, dDatAfa, aPosPaiAux);
+        RetornaChefePosto(1, xEstPos, xCodThp, dDatAfa, aPosPaiAux, nEmpChe, nTipChe, nCadChe);
+      }
+    }
+    C_R034CPL.SQL "SELECT EMACOM FROM R034CPL WHERE NUMEMP = :nEmpChe AND TIPCOL =:nTipChe AND NUMCAD = :nCadChe";
+    C_R034CPL.AbrirCursor();
+    Se (C_R034CPL.Achou){
+      Se ((aEmaCom <> "") e (aEmaCom <> " ")){
+        Se ((C_R034CPL.EmaCom <> "")e (C_R034CPL.EmaCom <> " "))
+          aEmaCom = aEmaCom + ";" + C_R034CPL.EmaCom;
+      } Senao {
+        aEmaCom = C_R034CPL.EmaCom;        
+      }
+    }
+    C_R034CPL.FecharCursor();
+    @Implementação chamado 214698@
+     
+    aTxtEma = "Informamos que o colaborador: "+aNomFun+", Prontuário: "+sNumCad+", "+aNomPos+" apresentou um documento de afastamento por "+aDesSit+", permanecendo afastado do dia "+aDatAfa+" ao dia "+aDatFim+".";
+    aAssEma = "Lançamento Atestado"; 
+    Se (nNumEmp = 8)
+      EnviaEmail ("senior@dbdiagnosticos.com.br", aEmaCom, "abonoslegais@hidrolabor.com.br", "", aAssEma, aTxtEma, "", 0);
+    Senao
+      EnviaEmail ("senior@dbdiagnosticos.com.br", aEmaCom, "abonoslegais@dbdiagnosticos.com.br", "", aAssEma, aTxtEma, "", 0);       
+   
+  
+  Fim;   
+Fim;
+Cur_ColPos.FecharCursor();
+
+ExecSql "Update R038AFA set ObsAfa = '' where NumEmp = :nNumEmp \
+                                            and TipCol = :nTipCol \
+  		          			     and NumCad = :nNumCad \
+							     and DatAfa = :dDatAfa \
+							     and SitAfa = :nSitAfa";
+Cur_R038AFA.proximo();
+      
+};                                        
+Cur_R038AFA.fecharcursor();

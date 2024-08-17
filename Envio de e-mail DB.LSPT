@@ -1,0 +1,103 @@
+@-- Regra Vinculada ao Processo Automático de Regras 003 --@
+Definir Cursor CUR_R040Fem;
+Definir Data dIniFer;
+Definir Alfa sDiaSem;
+Definir Alfa sDatVer;
+Definir Alfa sNumEmp;
+Definir Alfa sTipCol;
+Definir Alfa sNumCad;
+Definir Alfa sNomRel;
+Definir Alfa sMsgErr;
+Definir Alfa sEmaCom;
+Definir Alfa sIniFer;
+Definir Alfa sCorpo;
+Definir Alfa sAnexo;
+Definir Alfa xSql;
+Definir Numero dDatHoj;
+sEmaCom = "";
+
+dDatHoj = DatHoj;
+
+RetornaDiaSemana(dDatHoj,sDiaSem);
+
+@-- De Segunda a Quinta busca as férias iniciadas 3 dias para Frente --@
+Se ((sDiaSem = "Segunda-feira") ou (sDiaSem = "Terça-feira") ou (sDiaSem = "Quarta-feira") ou (sDiaSem = "Quinta-feira"))
+Inicio
+    dDatVer = dDatHoj + 3;
+    ConverteDataBanco (dDatVer, sDatVer);
+    xSql = "AND R040Fem.IniFer = " + sDatVer;
+Fim
+Senao Se (sDiaSem = "Sexta-feira") @-- Na sexta busca as férias iniciadas na Seg, Ter e Qua --@
+Inicio
+    dDatVer = dDatHoj + 3;
+    ConverteDataBanco (dDatVer, sDatVer);
+    xSql = "AND (R040Fem.IniFer >= " + sDatVer + " AND ";
+    
+    dDatVer = dDatHoj + 5;
+    ConverteDataBanco (dDatVer, sDatVer);
+    xSql = xSql + "R040Fem.IniFer <= " + sDatVer + ")";
+Fim
+Senao
+  VaPara Final;
+
+CUR_R040Fem.SQL "Select R040Fem.NumEmp, R040Fem.TipCol,        \
+                        R040Fem.NumCad, R040Fem.IniFer,        \
+                        R034Cpl.EmaCom                         \
+                   From R040Fem, R034Cpl                       \
+                  Where R040Fem.NumEmp = R034Cpl.NumEmp        \
+                    And R040Fem.TipCol = R034Cpl.TipCol        \
+                    And R040Fem.NumCad = R034Cpl.NumCad        \
+                    And R040Fem.NumEmp < 1000                   \
+                    __Inserir(:xSql)";
+CUR_R040Fem.AbrirCursor();
+Enquanto (CUR_R040Fem.Achou) 
+Inicio
+    nNumEmp = CUR_R040Fem.NumEmp; 
+    nTipCol = CUR_R040Fem.TipCol; 
+    nNumCad = CUR_R040Fem.NumCad;
+    dIniFer = CUR_R040Fem.IniFer;  
+    sEmaCom = CUR_R040Fem.EmaCom;
+    IntParaAlfa(nNumEmp,sNumEmp);
+    IntParaAlfa(nTipCol,sTipCol);
+    IntParaAlfa(nNumCad,sNumCad);
+    ConverteMascara(3,dIniFer,sIniFer,"DDMMYYYY");
+    
+    Se (sEmaCom <> "")
+    Inicio
+        sNomRel = "ferias" + sNumEmp + sTipCol + sNumCad + sIniFer;
+        
+        SetaAlfaTelaEntrada("ENomRel", sNomRel);
+        SetaAlfaTelaEntrada("EAbrEmp", sNumEmp);
+        SetaAlfaTelaEntrada("EAbrTcl", sTipCol);
+        SetaAlfaTelaEntrada("EAbrCad", sNumCad);
+        SetaDataTelaEntrada("EIniFer", dIniFer);
+        ExecutaRelatorio("FPRE503.COL", "N");
+        
+        sAnexo = "\\\\hoseg27sen\\dbmed_18213_p$\\Vetorh\\Relatorios\\" + sNomRel + "0000.jpg";
+        sCorpo = "<IMG SRC=" + sAnexo + ">";
+        
+        EnviaEmailHTML("senior@dbdiagnosticos.com.br", /* remetente */
+                       sEmaCom, /* Destinatários */
+                       "", /* Cópias */
+                       "", /* Cópia oculta */
+                       "FÉRIAS! O seu descanso merecido chegou.", /* Assunto */
+                       sCorpo, /* Texto */
+                       "", /* Anexos (Não envia) */
+                       1, /* Tratamento do anexo */
+                       1); /* Papel de carta */
+                       
+        
+        sMsgErr = MsgErroEnviaEmail;
+        Se (sMsgErr <> "")
+          Mensagem(Retorna, sMsgErr);
+    Fim; 
+    
+    CUR_R040Fem.Proximo(); 
+Fim;                    
+CUR_R040Fem.FecharCursor();
+
+
+Final:               
+x = 0;       
+        
+               

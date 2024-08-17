@@ -1,0 +1,28 @@
+Se (aEmaCom = "")
+      Inicio
+         aPayLoa ="
+         {
+          'username': '" + aNumCpf + "',
+          'fullName': '" + aNomFun + "',
+          'email': '" + aEmaPar + "',
+          'password': '" + aDatNas + "',
+          'blocked': 'false',
+          'changePassword': 'true', 
+          'locale': 'BR', 
+          'properties': []
+        }"; 
+      Fim;
+    Senao
+      Inicio  
+        aPayLoa ="
+          {
+            'username': '" + aNumCpf + "',
+            'fullName': '" + aNomFun + "',
+            'email': '" + aEmaCom + "',
+            'password': '" + aDatNas + "',
+            'blocked': 'false',
+            'changePassword': 'true', 
+            'locale': 'BR', 
+            'properties': []
+          }"; 
+      Fim;

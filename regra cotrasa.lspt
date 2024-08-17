@@ -1,0 +1,310 @@
+Definir Cursor CR044CAL;
+Definir Cursor CR046VER;
+Definir Cursor CR026VLR;
+
+Definir Numero nNumEmp;
+Definir Numero nTipCol;
+Definir Numero nNumCad; 
+Definir Numero nCodCal;
+Definir Numero nCalAtu;
+Definir Numero nValEve;
+Definir Numero ntipSal;
+Definir Numero nSalCol;
+Definir Numero nQtdFer;
+Definir Numero nQtdAbo;
+Definir Numero nCount;
+Definir Numero nCodOri;
+Definir Numero nTipCal;
+Definir Numero nPerDis;
+Definir Numero nTipCal;
+Definir Numero nValEve;
+Definir Numero nValEvt;
+Definir Numero nValAnt;
+Definir Numero nCodEvt;
+Definir Numero nTabEve;
+Definir Numero nMesAnt;
+
+Definir Data dFimCmp;
+Definir Data dIniCom;
+Definir Data dFimCom;
+Definir Data dDatIni;
+Definir Data dDatAtu;
+Definir Data dDatAlt;
+Definir Data dIniFee;
+Definir Data dFimFer;
+Definir Data dDatAnt;
+Definir Data dIniMes;
+Definir Data dDatZer;
+Definir Data dDatFer;
+Definir Data dFimMes;
+Definir Data dIniPer;
+Definir Data dFimPer;
+Definir Data dIniPer;
+Definir Alfa aCodCcu;
+Definir Data dDatFim;
+
+
+nNumEmp = R034Fun.NumEmp;
+nTipCol = R034Fun.TipCol;
+nNumCad = R034Fun.NumCad;
+aCodCcu = R034Fun.CodCcu;
+dIniFee = R040Fem.IniFer; @ ----- ESTÀ CARREGANDO INFORMAÇÃO ZERADA ----- @
+dIniPer = R040Fem.IniPer;
+nQtdFer = R040Fem.DiaFer;
+nQtdAbo = R040Fem.DiaAbo; 
+dDatIni = IniCmp;
+dFimCom = FimCmp;
+nTipCal = TipCal;
+nCodEve = CodEvt;
+nValEvt = ValEvt;
+nCalAtu = CodCal;
+dDatAtu = DatSis;
+dIniMes = IniCmp;
+dFimMes = FimCmp;
+dDatAlt = 0;
+dDatFer = 0;
+nQtdHor = 0;
+nQtdMen = 0;
+nQtdCom = 0;
+nCodCal = 0;
+nCodOri = 0;
+ntipSal = 0;
+nSalCol = 0;
+nTipCal = 0;
+nValEve = 0;
+nValAnt = 0;
+nTabEve = 1;
+nMesAnt = 0;
+nCount = 0;
+nPerDis = 0;
+nDia = 0;
+nMes = 0;
+nAno = 0;
+dFimPer = 0;
+
+@ -------------- Calcula somente se não for Calculo de Provisão -------------- @
+Se(TipCal <> 55) 
+Inicio
+
+@ --------------- Verifica o Tipo de Salário do Colaborador ------------------ @
+  RetSalEmp (nNumEmp, nTipCol, nNumCad, dFimCom);
+  nTipSal = TipSalEmp;
+  
+  Se ((TipCal <> 55) e (dIniFee > 0))@ --- Não é Cálculo de Provisão de Férias -- @
+  Inicio
+  
+    @ - Verifica o Período de Férias - @
+    dFimFer = (dIniFee + nQtdFer) - 2;
+  
+    
+    @ - Período de Anterior às Férias - @
+    DesMontaData (dIniFee, nDia, nMes, nAno); 
+    nAno = nAno - 1;
+    nanoFim = nAno;    
+      
+      Se (nMes = 1){
+        nMesAnt = 11;
+        nAno = nAno - 1;
+        nMesFim = 12;
+        nAnoFim = nAno;
+      } Senao {
+        nMesFim = nMes-1;
+        nAnoFim = nAno + 1;
+      }
+    
+      Se (nMes = 2)
+        Inicio
+          nMesAnt = 12; 
+          nAno = nAno - 1;
+      Fim
+    
+    @Senao@
+      Se (nMes > 2)
+        Inicio
+          nMesAnt = nMes - 2;
+        Fim 
+    
+    
+    MontaData (01, nMesAnt, nAno, dDatAnt);
+    
+    @DataFinal Cálculos@
+    MontaData (01, nMesFim, nAnoFim, dDatFim);
+    
+
+@------------------------------- Busca Código de Cálculo Folha ----------------------------- @
+    CR044CAL.SQL "SELECT TipCal, CodOri From R044CAL WHERE NumEmp = :nNumEmp And \
+                                                           CodCal = :nCalAtu";
+    CR044CAL.AbrirCursor();
+    Se (CR044CAL.Achou)
+    Inicio
+      nTipCal = CR044CAL.TipCal;
+      nCodOri = CR044CAL.CodOri;
+    Fim
+    CR044CAL.FecharCursor();    
+    
+    Se (nTipCal = 13)
+      Vapara Dissidio;
+      
+     
+    Se ((nTipSal = 4) e (dFimFer >= dDatIni))                                                   
+    Inicio
+        CR044CAL.SQL "SELECT FimCmp,CodCal, TipCal  FROM R044CAL WHERE NumEmp = :nNumEmp \
+                                                            AND IniCmp > :dDatAnt \
+                                                            AND IniCmp < :dDatFim\
+                                                            AND TipCal =  11      \
+                                                            Order by CodCal Asc";
+      CR044CAL.AbrirCursor();
+      Enquanto (CR044CAL.Achou){
+        nCodCal = CR044CAL.CodCal;
+        dFimCmp = CR044CAL.FimCmp;
+        
+        Se (nCodCal > 0){
+          RetSalEmp (nNumEmp, nTipCol, nNumCad, dFimCmp);
+          Se (TipSalEmp = 1){
+@            xSalEmp = SalEmp;@
+            nValEve = nValEve + SalEmp;
+            nCount  = nCount + 1;@verificar@
+          } Senao {
+            @ -------- Busca Valor Base de Cálculo de Férias --------------- @  
+            CR046VER.SQL "SELECT ValEve FROM R046VER WHERE NumEmp =  :nNumEmp \
+                                                         AND TipCol =  :nTipCol \
+                                                         AND NumCad =  :nNumCad \
+                                                         AND CodCal =  :nCodCal \
+                                                         AND CodEve in (1000)";
+            CR046VER.AbrirCursor();
+            Se (CR046VER.Achou){
+              Se ((CR046VER.ValEve > 0) e (nCount + 1)){ 
+                nValEve = nValEve + CR046VER.ValEve;
+                nCount  = nCount + 1;
+              } 
+            }
+            CR046VER.FecharCursor();
+          } 
+        } 
+        CR044CAL.Proximo();
+      }
+      CR044CAL.FecharCursor();
+    Fim
+  
+@ ------------------- Cálcula Base do Evento de Férias ----------------------- @
+    Se ((nValEve > 0) e (nCount > 0))
+    Inicio
+      nValEve = nValEve / 12;
+    Fim 
+    
+@ ------------------------ Altera Valor Evento de Férias ----------------------@
+    Se ((CodEvt = 203) e (nValEve <> 0)) @ adicionada condição para não zerar o evento quando o colaborador    @  
+    Inicio                               @ não possui o Evento 1000 (cursor acima) - Bruno C. - chamado 169912 @
+      ValEvt = (nValEve / 30) * nQtdFer;
+    Fim
+      
+@ ----------------- Altera Valor Evento Abono de Férias -----------------------@  
+    Se (CodEvt = 232)
+    Inicio    
+      ValEvt = (nValEve / 30) * nQtdAbo;
+    Fim
+    
+@ ----------------- Altera Valor 1/3 Férias -----------------------@  
+    Se (CodEvt = 228)
+    Inicio    
+      ValEvt = nValEve/ 30 * ( nQtdFer + nQtdAbo ) / 3;
+    Fim    
+    
+@ ----------------- Altera Valor INSS Férias -----------------------@  
+    Se (CodEvt = 801)
+    Inicio
+      @Busca a Faixa do % de INSS@                             
+      Definir Cursor C_R026INF;
+      
+      C_R026INF.SQL"SELECT TETFAI, PERFAI, CODFAI           \
+                    FROM R026INF                            \
+                    WHERE PERREF = (SELECT MAX(PERREF)      \
+                                  FROM R026INF              \
+                                  WHERE PERREF <= :dDatIni) \
+                    AND TETFAI > :nValEve                   \
+                    ORDER BY CODFAI"; 
+      
+      C_R026INF.AbrirCursor();
+        Se(C_R026INF.Achou){
+          nPerIns = C_R026INF.PerFai;
+        } Senao {
+          
+      C_R026INF.FecharCursor();
+      
+      C_R026INF.SQL"SELECT TETFAI, PERFAI, CODFAI             \
+                    FROM R026INF                              \
+                    WHERE PERREF = (SELECT MAX(PERREF)        \
+                                    FROM R026INF              \
+                                    WHERE PERREF <= :dDatIni) \
+                    AND CODFAI = (SELECT MAX(CODFAI)          \
+                                  FROM R026INF                \
+                                  WHERE PERREF = (SELECT MAX(PERREF)        \
+                                                  FROM R026INF              \
+                                                  WHERE PERREF <= :dDatIni))\               
+                    ORDER BY CODFAI"; 
+      C_R026INF.AbrirCursor();
+        Se(C_R026INF.Achou){
+          nPerIns = C_R026INF.PerFai;
+        }
+      }
+      C_R026INF.FecharCursor(); 
+         
+      ValEvt = nValEve * nPerIns / 100;
+    Fim       
+  Fim
+  
+  
+@---------- Calcula diferença de Dissídio para Comissionados ----------------- @
+  Dissidio:
+  
+  Se ((nCodEve = 202) ou (nCodEve = 203) ou (nCodEve = 229) ou (nCodEve = 232))
+  
+  Inicio
+  
+  @------------------------ Busca Percentual de Dissídio ------------------------@
+  CR026VLR.SQL "SELECT ComVlr, CodVlr, ValVlr FROM R026Vlr Where ComVlr = (Select  \
+                                              Max(Valor.ComVlr) From R026Vlr Valor \
+                                              Where Valor.ComVlr <= :dDatAtu and   \
+                                              valor.CodVlr = 6) And  CodVlr = 6";
+  
+  CR026VLR.AbrirCursor();
+  Se (CR026VLR.Achou)
+  Inicio
+    nPerDis = CR026VLR.ValVlr / 100;
+  Fim
+  CR026VLR.FecharCursor();
+  
+@---------------- Busca Valor Comissão no Cálculo Origem Tipo 11 --------------@  
+    Se (nCodOri > 0)
+    Inicio
+      CR046VER.SQL "SELECT ValEve FROM R046VER WHERE NumEmp = :nNumEmp And \
+                                                     TipCol = :nTipCol And \
+                                                     NumCad = :nNumCad And \
+                                                     TabEve = :nTabEve And \
+                                                     CodCal = :nCodOri And \
+                                                     CodEve = :nCodEve";
+      CR046VER.AbrirCursor();                                              
+      Se (CR046VER.Achou)
+      Inicio
+        nValAnt = CR046VER.ValEve;
+      Fim
+      CR046VER.FecharCursor();
+    Fim
+  
+@ ---- Verifica se Existe Valor de Comissão Aplica Percentual de Diferença ----@ 
+  
+    Se (nValAnt > 0)
+    Inicio
+      ValEvt = nValAnt + (nValAnt * nPerDis)@ / 100)@;
+      ValEve = nValAnt + (nValAnt * nPerDis);
+    Fim
+  
+  Fim
+Fim
+
+@@@@@@@@@@@@@@@@@@@@@@@@@ Cálculo Provisão de Férias @@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+Se (TipCal = 55)  @ -- Cálculo de Provisão de Férias -- @
+Vapara Final;
+
+Final:

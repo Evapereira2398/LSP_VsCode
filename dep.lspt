@@ -1,0 +1,89 @@
+@ - Dependente 5 - @    
+Senao 
+    Se ((nRgrDepSub1 <> 0) E 
+        (nRgrDepSub2 <> 0) E 
+        (nRgrDepSub3 <> 0) E 
+        (nRgrDepSub4 <> 0) E
+        (nRgrDepSub5 = 0)  E 
+        (nRgrDepSub6 = 0)  E 
+        (nRgrDepSub7 = 0)  E 
+        (nRgrDepSub8 = 0)  E
+        (nRgrDepSub9 = 0)  E 
+        (nRgrDepSub10 = 0))
+  
+    nRgrDepSub5 = nRgrDepSub;
+  
+@ - Dependente 6 - @    
+Senao 
+    Se ((nRgrDepSub1 <> 0) E 
+        (nRgrDepSub2 <> 0) E 
+        (nRgrDepSub3 <> 0) E 
+        (nRgrDepSub4 <> 0) E
+        (nRgrDepSub5 <> 0) E 
+        (nRgrDepSub6 = 0)  E 
+        (nRgrDepSub7 = 0)  E 
+        (nRgrDepSub8 = 0)  E
+        (nRgrDepSub9 = 0)  E 
+        (nRgrDepSub10 = 0))
+  
+    nRgrDepSub6 = nRgrDepSub;
+  
+@ - Dependente 7 - @    
+Senao 
+    Se ((nRgrDepSub1 <> 0) E 
+        (nRgrDepSub2 <> 0) E 
+        (nRgrDepSub3 <> 0) E 
+        (nRgrDepSub4 <> 0) E 
+        (nRgrDepSub5 <> 0) E 
+        (nRgrDepSub6 <> 0) E 
+        (nRgrDepSub7 = 0)  E 
+        (nRgrDepSub8 = 0)  E   
+        (nRgrDepSub9 = 0)  E 
+        (nRgrDepSub10 = 0))
+  
+    nRgrDepSub7 = nRgrDepSub;
+
+@ - Dependente 8 - @    
+Senao 
+    Se ((nRgrDepSub1 <> 0) E 
+        (nRgrDepSub2 <> 0) E 
+        (nRgrDepSub3 <> 0) E 
+        (nRgrDepSub4 <> 0) E    
+        (nRgrDepSub5 <> 0) E 
+        (nRgrDepSub6 <> 0) E 
+        (nRgrDepSub7 <> 0) E 
+        (nRgrDepSub8 = 0)  E    
+        (nRgrDepSub9 = 0)  E 
+        (nRgrDepSub10 = 0))
+  
+    nRgrDepSub8 = nRgrDepSub;
+
+@ - Dependente 9 - @    
+Senao 
+    Se ((nRgrDepSub1 <> 0) E 
+        (nRgrDepSub2 <> 0) E 
+        (nRgrDepSub3 <> 0) E 
+        (nRgrDepSub4 <> 0) E      
+        (nRgrDepSub5 <> 0) E 
+        (nRgrDepSub6 <> 0) E 
+        (nRgrDepSub7 <> 0) E 
+        (nRgrDepSub8 <> 0) E 
+        (nRgrDepSub9 = 0)  E 
+        (nRgrDepSub10 = 0))
+  
+    nRgrDepSub9 = nRgrDepSub;
+
+@ - Dependente 10 - @    
+Senao 
+    Se ((nRgrDepSub1 <> 0) E 
+        (nRgrDepSub2 <> 0) E 
+        (nRgrDepSub3 <> 0) E 
+        (nRgrDepSub4 <> 0) E
+        (nRgrDepSub5 <> 0) E 
+        (nRgrDepSub6 <> 0) E 
+        (nRgrDepSub7 <> 0) E 
+        (nRgrDepSub8 <> 0) E
+        (nRgrDepSub9 <> 0) E 
+        (nRgrDepSub10 = 0))
+  
+    nRgrDepSub10 = nRgrDepSub;

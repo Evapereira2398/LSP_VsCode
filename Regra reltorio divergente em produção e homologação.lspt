@@ -1,0 +1,601 @@
+Definir Cursor Cur_R006Esc;
+Definir Cursor Cur_R018Ccu;
+Definir Cursor Cur_R010Sit;
+Definir Cursor Cur_R030Fil;
+Definir Cursor Cur_R016Orn;
+Definir Cursor Cur_R064Cmp;
+Definir Cursor Cur_R066Sit;
+Definir Cursor Cur_R040Feg;
+Definir Cursor Cur_R038Afa;
+Definir Data EDatIni;
+Definir Data EDatRef;
+Definir Data dDatApu;
+Definir Data dIniFer;
+Definir Data dIniFer1;
+Definir Data dTerFer;
+Definir Data dTerFer1;
+Definir Data dIniFer3;
+Definir Data dIniFer4;
+Definir Data dTerFer3;
+Definir Data dTerFer4;
+Definir Data dDiaAnt;
+Definir Data dDatIniAux;
+Definir Data dDatTerAux;
+Definir Data dDatIniAuxTra;
+Definir Data dDatTerAuxTra;
+Definir Data dDatIniMat;
+Definir Data dDatTerMat;
+Definir Alfa aCodCCu;
+Definir Alfa aNomCcu;
+Definir Alfa aDesCcu;
+Definir Alfa aCodEsc;
+Definir Alfa aNomEsc;
+Definir Alfa aDesEsc;
+Definir Alfa aDesSit;
+Definir Alfa aNomSit;
+Definir Alfa aCodSit;
+Definir Alfa aTipFer;
+Definir Alfa aDiaSem;
+
+nNumEmp = 0;
+nTipCol = 0;
+nNumCad = 0;
+nCodEsc = 0;
+aCodCcu = "";
+nSitEmp = 0;
+nQtdDiaUti = 0;
+nQtdDiaTra = 0;
+nQtdDiaFal = 0;
+nTabFer = 0;
+nFilEmp = 0;
+nLocEmp = 0;
+nTabOrgEmp = 0;
+nHorSab = 0;
+nQtdDiaAte = 0;
+nDayOff = 0;
+nSabCom = 0;
+nQtdDiaAteNot = 0;
+nQtdDiapat = 0;
+nQtdDiaPatNot = 0;
+nQtdDiaCas = 0;
+nQtdDiaMor = 0;
+nQtdDiaSus = 0;
+dDatApu = 0;
+aDiaSem = "";
+nQtdDiaFerCol = 0;
+nQtdDiaFer = 0;
+nQtdDiaUtiFer = 0;
+nQtdDiaUtiFer1 = 0;
+nQtdDiaUtiFerAnt = 0;
+nDiaFer = 0;
+dIniFer = 0;
+dTerFer = 0;
+dIniFer1 = 0;
+dTerFer1 = 0;
+dIniFer3 = 0;
+dTerFer3 = 0;
+dIniFer4 = 0;
+dTerFer4 = 0;
+nQtdDiaAux = 0;
+nQtdDiaAuxTra = 0;
+nQtdDiaMat = 0;
+nDia = 0;
+dDatIniAux = 0;
+dDatTerAux = 0;
+dDatIniAuxTra = 0;
+dDatTerAuxTra = 0;
+dDatIniMat = 0;
+dDatTerMat = 0;
+nDiaAux = 0;
+nDiaAuxTra = 0;
+nDiaMat = 0;
+nQtdDayOff = 0;
+
+nNumEmp = R034Fun.NumEmp; /* Pega a empresa da 34fun */
+nTipCol = R034Fun.TipCol; /* Pega o tipo do colaborador da 34fun */
+nNumCad = R034Fun.NumCad; /* Pega a matricula da 34fun */
+
+
+/*Função que retorna em uma determinada data os dados do histórico de escala ou do histórico de horário do colaborador, 
+dependendo do assinalamento do campo Escalas de Horários disponível no cadastro da Empresa.*/
+
+/*
+Retorno: 
+
+Nome	      Descrição
+EscEmp	    Código da escala de horário do colaborador.
+Turvem	    Código da turma de revezamento do colaborador.
+HorBasEmp	  Horário base semanal, praticado de segunda a sexta-feira. *
+HorSabEmp	  Horário base de sábado. *
+HorSemEmp	  Quantidade de horas semanais do histórico de horário do colaborador. O retorno é feito em minutos. *
+HorDsrEmp	  Quantidade de horas de descanso semanal remunerado (DSR) do histórico de horário do colaborador. O retorno é feito em minutos. *
+DatAltEsc	  Data da alteração do histórico de escala ou do histórico de horário do colaborador.
+
+*/
+
+RetEscEmp(nNumEmp, nTipCol, nNumCad, EDatRef); /* EDatRef é a data colocada na tela de entrada */
+{
+  nCodEsc = EscEmp;               /* nCodEsc recebe o retorno da função "Codigo da escala de horario do colaborador */
+  IntParaAlfa(nCodEsc, aCodEsc);  /* Converte o codigo da escala para uma variavel do tipo texto */
+  nHorSab = HorSabEmp;            /* nHorSab recebe o retorno da função 'Horario base de sabado */
+}
+
+
+/* Retorna o Centro de Custo do funcionário em uma determinada data. */
+
+/*
+Retorno:
+DatAltCcu - Data de Alteração do Centro de Custo;
+CcuEmp - Código do Centro de Custo;
+NatDesEmp - Natureza de Despesa.
+
+*/
+RetCcuEmp(nNumEmp, nTipCol, nNumCad, EDatRef); /* EDatRef é a data colocada na tela de entrada */
+aCodCcu = CcuEmp; /*aCodCcu recebe o retorno da função "Codigo do centro de custo" */ 
+
+
+/* Retorna a situação em que o colaborador se encontra. Esta função não apresenta as situações dos seguintes tipos: */
+/*
+No Controle de Ponto e Refeitório:
+
+15 - Falta
+16 - Horas Extras
+
+Retorno:
+Variável	      Descrição	                 Módulos em que está disponível
+DatAltSit	      Data do Afastamento	       Administração de Pessoal e TR
+SitEmp	        Situação do Afastamento	   Todos os módulos
+TipSitEmp	      Tipo de Situação	         Administração de Pessoal, TR e SM
+DiaJus	        Dias Justificados	         Administração de Pessoal e TR
+CauDem	        Causa de Demissão	         Administração de Pessoal, TR, CS, QL e JR
+DiaDem	        Dia da Alteração	         Administração de Pessoal, TR, CS, QL e JR
+MesDem	        Mês da Alteração	         Administração de Pessoal, TR, CS, QL e JR
+AnoDem	        Ano da Alteração	         Administração de Pessoal, TR, CS, QL e JR
+
+*/
+RetSitEmp(nNumEmp, nTipCol, nNumCad, EDatRef); /* EDatRef é a data colocada na tela de entrada */
+nSitEmp = SitEmp;                              /*nSitEmp recebe o retorno da função "Situação do afastamento "*/
+IntParaAlfa(nSitEmp, aCodSit);                 /* Coverte o valor da "Situação do afastamento" para texto */  
+
+
+/* Retorna a filial do funcionário em uma determinada data. */
+/*
+Retorno:
+Nome	      Descrição
+DatAltFil	  Data de Alteração da Filial.
+FilEmp	    Código da Filial.
+EmpAltFil	  Código da Nova Empresa.
+
+*/
+RetFilEmp(nNumEmp, nTipCol, nNumCad, EDatRef); /* EDatRef é a data colocada na tela de entrada */
+nFilEmp = FilEmp; /* nFilEmp recebe o retorno da função "Codigo da filial" */
+
+
+
+/* Retorna o local do colaborador em uma determinada data. */
+
+/*
+Tipo de retorno
+
+Nome	        Descrição
+LocEmp	      NumLoc do Local.
+CodLocEmp	    Código do local.
+DatAltLoc	    Data de Alteração do Local.
+TabOrgEmp	    Tabela de Organograma de Local.
+*/
+
+RetLocEmp(nNumEmp, nTipCol, nNumCad, EDatRef); /* EDatRef é a data colocada na tela de entrada */
+{
+  nLocEmp = LocEmp;                            /* nLocEmp recebe o retorno da função "NumLoc do local"*/
+  nTabOrgEmp = TabOrgEmp;                      /* nTabOrEmp recebe o retorno da função "Tabela de Organograma de Local"*/
+}
+
+
+
+/* Cursor para buscar o descrição do centro de custo da tabela de centro de custo (R018CCU) */
+Cur_R018Ccu.Sql "Select NomCcu From R018Ccu Where NumEmp = :nNumEmp\
+                                              and CodCcu = :aCodCcu";
+
+Cur_R018Ccu.AbrirCursor()
+  Se(Cur_R018Ccu.Achou)
+  aNomCcu = Cur_R018Ccu.NomCcu; /* Se o cusor achar o descrição do centro de custo ele coloca esse nome na variavel aNomCcu */
+Cur_R018Ccu.FecharCursor();
+
+
+/* ============================================================================= */
+/* ============================================================================= */
+/* ============================================================================= */
+
+/* Cursor para buscar o descrição da escala, tipo de feriado da escala e o codigo da tabela de feriados da tabela de escalas (R006Esc) */
+Cur_R006Esc.Sql "Select NomEsc, TipFer, TabFer From R006Esc Where CodEsc = :nCodEsc";
+
+Cur_R006Esc.AbrirCursor()
+Se(Cur_R006Esc.Achou)
+{
+  aNomEsc = Cur_R006Esc.NomEsc; /*Se o cursor achar a descrição ele coloca o valor na variavel aNomEsc */
+  aTipFer = Cur_R006esc.TipFer; /* Se o cursor achar o tipo de feriado da escala ele coloca o valor na variavel aTipFer */
+  Se(Cur_R006esc.TipFer = "P")
+  {
+    nTabFer = Cur_R006Esc.TabFer; /* Se o tipo de feriado da escala for igual a "P" a variavel nTabFer recebe o codigo da tabela de feriados que o cursor achou */
+  }
+}
+Cur_R006Esc.FecharCursor();
+
+/* ============================================================================= */
+/* ============================================================================= */
+/* ============================================================================= */
+
+
+/* Cursor para buscar descrição da situação da tabela de situações (R010SIT) se o coddigo da situação for o mesmo do periodo informado*/
+Cur_R010Sit.Sql "Select DesSit From R010Sit Where CodSit = :nSitEmp";
+
+Cur_R010Sit.AbrirCursor()
+  Se(Cur_R010Sit.Achou)
+    aNomSit = Cur_R010Sit.DesSit; /* Se o cusor achou a descrição coloca o valor na variavel aNomSit */
+Cur_R010Sit.FecharCursor();
+
+Se(aTipFer = "F") /* Se o tipo de feriado da escala for igual a "F", o cursor busca a tabela de feriados diurnas da tabela Filiais da empresa (R030FIL) */
+{
+  Cur_R030Fil.Sql "Select TabFed From R030Fil Where NumEmp = :nNumEmp\
+                                                and CodFil = :nFilEmp";
+                                                
+  Cur_R030Fil.AbrirCursor()
+    Se(Cur_R030Fil.Achou)
+    nTabFer = Cur_R030Fil.TabFed; /* Se o cursor achar a tabela de feriados diurna na tabela de filiais, adiciona o valor na variavel nTabFer */
+  Cur_R030Fil.FecharCursor();
+}
+
+Se(aTipFer = "L") /* Se o tipo de feriado da escala for igual a "L", o cursor busca a tabela de feriados diurna na tavela Locais de organograma (R016Orn)*/
+{
+  Cur_R016Orn.Sql "Select TabFed From R016Orn Where TabOrg = :nTabOrgEmp\
+                                                and NumLoc = :nLocEmp";
+                                                
+  Cur_R016Orn.AbrirCursor()
+    Se(Cur_R016Orn.Achou)
+    nTabFer = Cur_R016Orn.TabFed; /* Se o cursor achar a tabela de feriados noturna na tabela de locais de organograma, coloca o valor na variavel nTabFer */
+  Cur_R016Orn.FecharCursor(); 
+}
+
+/* Concatenação */
+
+/* aDesCcu recebe aCodCcu (Codigo do centro de custo) + " - " +  descrição do centro de custo */
+/* O mesmo acontece para o codigo da escala + " - " + descrição da escala  */ 
+/* Codigo da situação + " - " + descrição da situação */
+aDesCcu = aCodCcu + " - " + aNomCcu;
+aDesEsc = aCodEsc + " - " + aNomEsc;
+aDesSit = aCodSit + " - " + aNomSit;
+
+
+
+
+/* ============================================================================= */
+/* ============================================================================= */
+/* ============================================================================= */
+/* CalculaDias(0, 1, 1, 1, 1, 1, 0, nTabFer, EDatIni, EDatRef, nQtdDiaUti); */
+
+/* Situação 18 - Day Off diminui dia util
+Situação 24 - Sábado Produtivo Aumenta Dia util */
+/* ============================================================================= */
+/* ============================================================================= */
+/* ============================================================================= */
+
+
+
+
+/* Esta consulta busca registros na tabela R064Cmp (Compensações) que atendem a uma das duas condições:
+
+As condições onde DatIni está entre :EDatIni e :EDatRef e CodSit (codigo da situação da compensação) é 18 ou 24.
+As condições onde DatFim está entre :EDatIni e :EDatRef e CodSit (codigo da situação da compensação)é 18 ou 24.*/ 
+Cur_R064Cmp.Sql "Select * From R064Cmp Where NumEmp = :nNumEmp\
+                                         and TipCol = :nTipCol\
+                                         and NumCad = :nNumCad\
+                                         and DatIni Between :EDatIni\
+                                         and :EDatRef\
+                                         and CodSit in (18,24)\
+                                         Or  NumEmp = :nNumEmp\
+                                         and TipCol = :nTipCol\
+                                         and NumCad = :nNumCad\
+                                         and DatFim Between :EDatIni\
+                                         and :EDatRef\
+                                         and CodSit in (18,24)";
+
+
+
+Cur_R064Cmp.AbrirCursor()
+Enquanto(Cur_R064Cmp.Achou) /* Enquanto o cursor achar */
+{
+  Se(Cur_R064Cmp.CodSit = 18) /* Se o codigo da situação da compensação for 18 */
+  {
+    /* Se a data final da compensação for menor ou igual a data de referencia (tela de entrada) e a data inicial da compensação for maior ou igual a EdatIni (Tela de entrada)*/
+    Se((Cur_R064Cmp.DatFim <= EDatRef) e (Cur_R064Cmp.DatIni >= EDatIni))
+    {
+      nQtdDayOff = Cur_R064Cmp.DatFim - Cur_R064Cmp.DatIni + 1; /* A variavel nQtdDayOff = data final da compensação - a data inicial da compensação + 1*/
+    }
+
+
+
+    /* Senão */
+    Senao
+    {
+      /* Se a data final da compensação for maior que a data de referencia */
+      Se(Cur_R064Cmp.DatFim > EDatRef)
+      {
+        /* nQtdDayOff vai ser a data de referencia (Tela de entrada) - a data inicial da compensação + 1*/
+        nQtdDayOff = EDatRef - Cur_R064Cmp.DatIni + 1;
+      }
+
+      /* Se a data inicial da compensação for menor que a EdatIni (Tela de entrada)*/
+      Se(Cur_R064Cmp.DatIni < EDatIni)
+      {
+        /*nQtdDayOff vai ser igual a data final da compensação menos a Edatini (Tela de entrada) + 1*/
+        nQtdDayOff = Cur_R064Cmp.DatFim - EDatIni + 1;
+      }
+    }
+
+    /* nDayOff recebe ele mesmo mais nQtdDayOff de acordo com a condição que entrou*/
+    nDayOff = nDayOff + nQtdDayOff;
+  }
+
+  /* Se o codigo da situação for 24 */
+  Se(Cur_R064Cmp.CodSit = 24)
+  {
+    nSabCom = nSabCom + 1; /*nSabCom recebe ele mesmo + 1 */
+  }
+  Cur_R064Cmp.Proximo();
+}
+Cur_R064Cmp.FecharCursor();
+
+
+
+
+
+Cur_R066Sit.Sql "Select * From R066Sit Where NumEmp = :nNumEmp\
+                                        and TipCol = :nTipCol\
+                                        and NumCad = :nNumCad\
+                                        and DatApu Between :EDatIni\
+                                        and :EDatRef\
+                                        and CodSit in (20,15,65,11,61,33,32,35)";
+                                        
+Cur_R066Sit.AbrirCursor()
+Enquanto(Cur_R066Sit.Achou)
+{
+  /*RetornaDiaSemana(Cur_R066Sit.DatApu, aDiaSem);   */
+  Se(Cur_R066Sit.DatApu <> dDatApu)
+  {
+    nQtdDiaFal = nQtdDiaFal + 1;
+    dDatApu = Cur_R066Sit.DatApu;
+  } 
+  Cur_R066Sit.Proximo();
+}
+Cur_R066Sit.FecharCursor();
+
+Cur_R066Sit.Sql "Select * From R066Sit Where NumEmp = :nNumEmp\
+                                        and TipCol = :nTipCol\
+                                        and NumCad = :nNumCad\
+                                        and DatApu Between :EDatIni\
+                                        and :EDatRef\
+                                        and CodSit in (1,14,38,64)\
+                                        Order By DatApu, CodSit";
+                                        
+Cur_R066Sit.AbrirCursor()
+Enquanto(Cur_R066Sit.Achou)
+{
+  /*RetornaDiaSemana(Cur_R066Sit.DatApu, aDiaSem);   */
+  Se(Cur_R066Sit.DatApu <> dDatApu)
+  {
+    Se(Cur_R066Sit.CodSit = 1)
+    {
+      dDatApu = Cur_R066Sit.DatApu;
+    }
+    Senao
+    {
+      Se(Cur_R066Sit.DatApu <> dDatApu)
+        {
+        nQtdDiaFal = nQtdDiaFal + 1;
+        dDatApu = Cur_R066Sit.DatApu;
+        }
+    }
+  } 
+  Cur_R066Sit.Proximo();
+}
+Cur_R066Sit.FecharCursor();
+
+BuscaDiaSit(nNumEmp, nTipCol, nNumCad, EDatIni, EDatRef, 12, nQtdDiaFerCol);
+BuscaDiaSit(nNumEmp, nTipCol, nNumCad, EDatIni, EDatRef, 2, nQtdDiaFer);
+
+Se((nQtdDiaFerCol > 0) ou (nQtdDiaFer > 0))
+{
+  Cur_R040Feg.Sql "Select iniFer, TerAfa From R040Feg Where NumEmp = :nNumEmp\
+                                                        and TipCol = :nTipCol\
+                                                        and NumCad = :nNumCad\
+                                                        and IniFer >= :EdatIni\
+                                                        and IniFer <= :EDatRef"; 
+                                                        
+  Cur_R040Feg.AbrirCursor()
+  Enquanto(Cur_R040Feg.Achou)
+  {
+    Se(dIniFer = 0)
+    {    
+      dIniFer = Cur_R040Feg.IniFer;
+      dTerFer = Cur_R040Feg.TerAfa;
+      Se(dTerFer > EDatRef)
+      {
+        dTerFer = EDatRef;
+      }
+      RetQtdDiasUtil(dIniFer, dTerFer, nTabFer, nQtdDiaUtiFer);
+    }
+    Senao
+    {  
+      dIniFer1 = Cur_R040Feg.IniFer;
+      dTerFer1 = Cur_R040Feg.TerAfa;
+      Se(dTerFer1 > EDatRef)
+      {
+        dTerFer1 = EDatRef;
+      } 
+      RetQtdDiasUtil(dIniFer1, dTerFer1, nTabFer, nQtdDiaUtiFer1);
+    }
+    Cur_R040Feg.Proximo();
+  } 
+  Cur_R040Feg.FecharCursor();
+  
+  Cur_R040Feg.Sql "Select iniFer, TerAfa From R040Feg Where NumEmp = :nNumEmp\
+                                                        and TipCol = :nTipCol\
+                                                        and NumCad = :nNumCad\
+                                                        and IniFer < :EdatIni\
+                                                        and TerAfa >= :EDatIni\
+                                                        and TerAfa <= :EDatRef"; 
+                                                        
+  Cur_R040Feg.AbrirCursor()
+  Se(Cur_R040Feg.Achou)
+  {
+    dTerFer3 = Cur_R040Feg.TerAfa;
+    RetQtdDiasUtil(EDatIni, dTerFer3, nTabFer, nQtdDiaUtiFerAnt);
+  } 
+  Cur_R040Feg.FecharCursor();
+}
+
+nDiaFer = nQtdDiaUtiFer + nQtdDiaUtiFer1 + nQtdDiaUtiFerAnt;   
+
+BuscaDiaSit(nNumEmp, nTipCol, nNumCad, EDatIni, EDatRef, 3, nQtdDiaAux);
+BuscaDiaSit(nNumEmp, nTipCol, nNumCad, EDatIni, EDatRef, 4, nQtdDiaAuxTra);
+BuscaDiaSit(nNumEmp, nTipCol, nNumCad, EDatIni, EDatRef, 6, nQtdDiaMat);
+
+nDia = EDatRef - EDatIni + 1;
+
+Se((nQtdDiaAux > 0) ou (nQtdDiaAuxTra > 0) ou (nQtdDiaMat > 0)) 
+{
+  Se(nQtdDiaAux < nDia)
+  {
+    Cur_R038Afa.Sql "Select DatAfa, DatTer From R038Afa Where NumEmp = :nNumEmp\
+                                                          and TipCol = :nTipCol\
+                                                          and NumCad = :nNumCad\
+                                                          and SitAfa = 3\
+                                                          and DatAfa in (Select Max (DatAfa)\
+                                                          From R038Afa Where NumEmp = :nNumEmp\
+                                                                         and TipCol = :nTipCol\
+                                                                         and NumCad = :nNumCad\
+                                                                         and SitAfa = 3)"; 
+                                                                         
+     Cur_R038Afa.AbrirCursor()
+     Se(Cur_R038Afa.Achou)
+     {
+       dDatIniAux = Cur_R038Afa.DatAfa;
+       dDatTerAux = Cur_R038Afa.DatTer;
+     }
+     Cur_R038Afa.FecharCursor();
+     Se(dDatIniAux >= EDatIni)
+     {
+       Se((dDatTerAux = 0) ou (dDatTerAux > EDatRef)) 
+       {
+         RetQtdDiasUtil(dDatTerAux, EDatRef, nTabFer, nDiaAux);
+       }
+     }
+     Se(dDatTerAux <= EDatRef)
+     {
+       Se(dDatIniAux < EDatIni)
+       {
+         RetQtdDiasUtil(EDatIni, dDatTerAux, nTabFer, nDiaAux);
+       }
+       Se(dDatIniAux > EDatIni)
+       {
+         RetQtdDiasUtil(dDatIniAux, dDatTerAux, nTabFer, nDiaAux);
+       }
+     }
+  }
+  Se(nQtdDiaAuxTra < nDia)
+  {
+    Cur_R038Afa.Sql "Select DatAfa, DatTer From R038Afa Where NumEmp = :nNumEmp\
+                                                          and TipCol = :nTipCol\
+                                                          and NumCad = :nNumCad\
+                                                          and SitAfa = 3\
+                                                          and DatAfa in (Select Max (DatAfa)\
+                                                          From R038Afa Where NumEmp = :nNumEmp\
+                                                                         and TipCol = :nTipCol\
+                                                                         and NumCad = :nNumCad\
+                                                                         and SitAfa = 4)"; 
+                                                                         
+     Cur_R038Afa.AbrirCursor()
+     Se(Cur_R038Afa.Achou)
+     {
+       dDatIniAuxTra = Cur_R038Afa.DatAfa;
+       dDatTerAuxTra = Cur_R038Afa.DatTer;
+     }
+     Cur_R038Afa.FecharCursor();
+     Se(dDatIniAuxTra >= EDatIni)
+     {
+       Se((dDatTerAuxTra = 0) ou (dDatTerAuxTra > EDatRef)) 
+       {
+         RetQtdDiasUtil(dDatTerAuxTra, EDatRef, nTabFer, nDiaAuxTra);
+       }
+     }
+     Se(dDatTerAuxTra <= EDatRef)
+     {
+       Se(dDatIniAuxTra < EDatIni)
+       {
+         RetQtdDiasUtil(EDatIni, dDatTerAuxTra, nTabFer, nDiaAuxTra);
+       }
+       Se(dDatIniAuxTra > EDatIni)
+       {
+         RetQtdDiasUtil(dDatIniAuxTra, dDatTerAuxTra, nTabFer, nDiaAuxTra);
+       }
+     }
+  }
+  Se(nQtdDiaMat < nDia)
+  {
+    Cur_R038Afa.Sql "Select DatAfa, DatTer From R038Afa Where NumEmp = :nNumEmp\
+                                                          and TipCol = :nTipCol\
+                                                          and NumCad = :nNumCad\
+                                                          and SitAfa = 3\
+                                                          and DatAfa in (Select Max (DatAfa)\
+                                                          From R038Afa Where NumEmp = :nNumEmp\
+                                                                         and TipCol = :nTipCol\
+                                                                         and NumCad = :nNumCad\
+                                                                         and SitAfa = 6)"; 
+                                                                         
+     Cur_R038Afa.AbrirCursor()
+     Se(Cur_R038Afa.Achou)
+     {
+       dDatIniMat = Cur_R038Afa.DatAfa;
+       dDatTerMat = Cur_R038Afa.DatTer;
+     }
+     Cur_R038Afa.FecharCursor();
+     Se(dDatIniMat >= EDatIni)
+     {
+       Se((dDatTerMat = 0) ou (dDatTerMat > EDatRef)) 
+       {
+         RetQtdDiasUtil(dDatTerMat, EDatRef, nTabFer, nDiaMat);
+       }
+     }
+     Se(dDatTerMat <= EDatRef)
+     {
+       Se(dDatIniMat < EDatIni)
+       {
+        RetQtdDiasUtil(EDatIni, dDatTerMat, nTabFer, nDiaAuxMat);
+       }
+       Se(dDatIniMat > EDatIni)
+       {
+         RetQtdDiasUtil(dDatIniMat, dDatTerMat, nTabFer, nDiaMat);
+       }
+     }
+  }
+}
+
+/*BuscaDiaSit (nNumEmp, nTipCol, nNumCad, EDatIni, EDatRef, 14, nQtdDiaAte);
+BuscaDiaSit (nNumEmp, nTipCol, nNumCad, EDatIni, EDatRef, 64, nQtdDiaAteNot);
+BuscaDiaSit (nNumEmp, nTipCol, nNumCad, EDatIni, EDatRef, 11, nQtdDiaPat);
+BuscaDiaSit (nNumEmp, nTipCol, nNumCad, EDatIni, EDatRef, 61, nQtdDiaPatNot);
+BuscaDiaSit (nNumEmp, nTipCol, nNumCad, EDatIni, EDatRef, 33, nQtdDiaCas);
+BuscaDiaSit (nNumEmp, nTipCol, nNumCad, EDatIni, EDatRef, 32, nQtdDiaMor);
+BuscaDiaSit (nNumEmp, nTipCol, nNumCad, EDatIni, EDatRef, 35, nQtdDiaSus); 
+
+nQtdDiaFal = nQtdDiaFal + nQtdDiaAte + nQtdDiaAteNot + nQtdDiaPat + nQtdDiaPatNot +
+nQtdDiaCas + nQtdDiaMor + nQtdDiaSus; */
+
+RetQtdDiasUtil(EDatIni, EDatRef, nTabFer, nQtdDiaUti);
+nQtdDiaUti = nQtdDiaUti + nSabCom - nDayOff - nDiaFer - nDiaAux - nDiaAuxTra - nDiaMat;   
+
+22               22          0        0          0         0          0            0
+
+nQtdDiaTra = nQtdDiaUti - nQtdDiaFal;
+
+x = 0;

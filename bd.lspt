@@ -1,0 +1,194 @@
+Definir Alfa xCursor;
+Definir Alfa xSql;
+Definir Alfa aNomRem;
+Definir Alfa aSeqDos;
+Definir Alfa aDatApl;
+Definir Alfa aEmaCom;
+Definir Alfa aEmaPar;
+Definir Alfa aEmaChe;
+Definir Alfa aDesEma;
+Definir Alfa aNomFun;
+Definir Alfa aAnexo;
+Definir Alfa aCorpo;
+Definir Alfa aAssEma;
+Definir Alfa aMsgErr;
+Definir Alfa aMsgLog;
+Definir Alfa aTipRel;
+Definir Alfa aNomRel;   
+Definir Alfa aNumEmp;
+Definir Alfa aTipCol;
+Definir Alfa aNumCad;
+Definir Alfa aTxtRel;
+Definir Alfa aTxtRel2;
+Definir Alfa aDatSis;
+Definir Alfa aPosTra;
+Definir Alfa aDesPos;
+Definir Alfa aPosPaiAux;
+Definir Alfa cSaltLinha;
+Definir Alfa auxStr;
+
+Definir Data dDatHoj;
+Definir Data dDat1;
+Definir Data dDat7;
+Definir Data dDat30;
+Definir Data dDatSol;
+
+/*Definir Data dVenc30; */
+/*Definir Data dVenc7; */
+
+@ - Caracter que representa o Salto de página em textos - @
+CaracterParaAlfa(13,auxStr);
+cSaltLinha = auxStr;
+CaracterParaAlfa(10,auxStr);
+cSaltLinha = cSaltLinha + auxStr;
+
+/*
+Implementação de lembrete 1 dia antes da data de aplicação - CH - 220384; 
+No chamado tambem houve solicitação para remover os avisos de 7 e 30 dias após a 
+data da aplicação, Permance somente no dia da aplicação, caso o colaborador não tenha tomado a vacina 
+*/
+dDatHoj = DatSis;
+dDat1 = DatSis + 1; 
+dDat7 = DatSis + 7;
+dDat30 = DatSis + 30;
+
+/*dVenc7 = DatSis - 7;*/
+/*dVenc30 = DatSis - 30;*/
+
+ConverteMascara (3, DatSis, aDatSis, "DD-MM-YYYY");
+
+xSql = "SELECT VAC.NumEmp, VAC.CodFic, VAC.CodRem, VAC.SeqDos, VAC.DatApl, VAC.DatSol, \ 
+        REM.NomRem, FUN.TipCol, FUN.NumCad, FUN.NomFun, CPL.EmaCom                     \
+        FROM R111VAC VAC, R110REM REM, R110FIC FIC, R034FUN FUN, R034CPL CPL           \
+        WHERE VAC.CodRem = REM.CodRem    \
+        AND VAC.NumEmp = FIC.NumEmp      \
+        AND VAC.CodFic = FIC.CodFic      \
+        AND FIC.NumEmp = FUN.NumEmp      \
+        AND FIC.TipCol = FUN.TipCol      \
+        AND FIC.NumCad = FUN.NumCad      \
+        AND FUN.NumEmp = CPL.NumEmp      \
+        AND FUN.TipCol = CPL.TipCol      \
+        AND FUN.NumCad = CPL.NumCad      \
+        AND (VAC.DatApl = :dDatHoj       \
+          OR  VAC.DatApl = :dDat1        \ 
+          OR  VAC.DatApl = :dDat7        \
+          OR  VAC.DatApl = :dDat30       \
+        AND VAC.SitVac = 1               \
+        AND FUN.SitAfa <> 7              \
+        AND FUN.NumEmp NOT IN (2, 8)     \
+        AND FUN.CodFil <> 40             \
+        ORDER BY VAC.DatApl";
+
+SQL_Criar(xCursor);
+SQL_UsarAbrangencia(xCursor, 0);
+SQL_UsarSQLSenior2(xCursor, 0);
+SQL_DefinirComando(xCursor, xSql);
+
+SQL_DefinirData(xCursor, "dDatHoj", dDatHoj);
+SQL_DefinirData(xCursor, "dDat1", dDat1);
+SQL_DefinirData(xCursor, "dDat7", dDat7);
+SQL_DefinirData(xCursor, "dDat30", dDat30);
+
+@ - Trecho removido CH - 220384 - @
+/*SQL_DefinirData(xCursor, "dVenc7", dVenc7); */
+/*SQL_DefinirData(xCursor, "dVenc30", dVenc30); */ 
+
+SQL_AbrirCursor(xCursor);
+
+Enquanto(SQL_EOF(xCursor) = 0) {
+    SQL_RetornarInteiro(xCursor, "NumEmp", xNumEmp);
+    SQL_RetornarInteiro(xCursor, "TipCol", xTipCol);
+    SQL_RetornarInteiro(xCursor, "NumCad", xNumCad);   
+    SQL_RetornarInteiro(xCursor, "CodFic", xCodFic);
+    SQL_RetornarInteiro(xCursor, "CodRem", xCodRem);
+    SQL_RetornarInteiro(xCursor, "SeqDos", xSeqDos);
+    SQL_RetornarData(xCursor, "DatApl", dDatApl);
+    SQL_RetornarData(xCursor, "DatSol", dDatSol);  
+    SQL_RetornarAlfa(xCursor, "NomRem", aNomRem);
+    SQL_RetornarAlfa(xCursor, "NomFun", aNomFun);
+    SQL_RetornarAlfa(xCursor, "EmaCom", aEmaCom);
+                                                                                                              
+    IntParaAlfa(xNumEmp, aNumEmp);
+    IntParaAlfa(xTipCol, aTipCol);
+    IntParaAlfa(xNumCad, aNumCad);
+    ConverteMascara (3, dDatApl, aDatApl, "DD/MM/YYYY");
+  
+    @ - Trecho Alterado CH - 220384 - @
+    Se ((aEmaCom <> "") e (aEmaCom <> " ")) {
+  
+        @ Vacinas lembretes @
+        Se ((dDatApl = dDat1) ou (dDatApl = dDat7) ou (dDatApl = dDat30)) {
+            aTipRel = "S";
+            aTxtRel = aNomFun+ " fique atento à data em que você deve tomar a sua vacina " +aNomRem+ ": " +aDatApl+ ".";
+            aAssEma = "Lembrete de Vacinação!";
+        }
+  
+        @ Vacina Vencida @
+        Senao Se (dDatApl = dDatHoj) {
+            aTipRel = "V"; 
+            aTxtRel = aNomFun+ ", vacina e proteção são sinônimos, certo? " + cSaltLinha + cSaltLinha +
+            "Identificamos que a vacina " + aNomRem + " venceu no dia " + aDatApl + ".";
+            aAssEma = "SUA VACINA VENCEU!";
+        }
+    
+     
+        @- Listagem do Modelo 100 - Lembrete Vacinação  - @
+        aNomRel = "vacina"+aNumEmp+aTipCol+aNumCad+aTipRel+aDatSis;   
+  
+        @ - Definições da tela de entrada para envio do relatório - @
+        SetaAlfaTelaEntrada("ENomRel", aNomRel);
+        SetaAlfaTelaEntrada("EAbrEmp", aNumEmp);
+        SetaAlfaTelaEntrada("EAbrTcl", aTipCol);
+        SetaAlfaTelaEntrada("EAbrCad", aNumCad);
+        SetaAlfaTelaEntrada("ETipLis", aTipRel);
+        SetaAlfaTelaEntrada("ETxtRel", aTxtRel);
+        ExecutaRelatorio("SMVA100.GER", "N");
+    
+        aAnexo = "\\\\hoseg27sen\\dbmed_18213_p$\\Vetorh\\Relatorios\\"+aNomRel+"0000.jpg";
+        aCorpo = "<IMG SRC=" + aAnexo + ">";
+  
+        RetornaPostoColaborador(xNumEmp, xTipCol, xNumCad, dDatHoj, xEstPos, aPosTra, aDesPos);
+        RetornaChefePosto(1, xEstPos, 2, dDatHoj, aPosTra, xEmpChe, xTipChe, xCadChe);
+        x = 0;
+    
+        Enquanto ((xCadChe = 0) e (x < 6)) {
+            RetornaPostoPai(aPostra, xEstPos, 2, dDatHoj, aPosPaiAux);
+            RetornaChefePosto(1, xEstPos, 2, dDatHoj, aPosPaiAux, xEmpChe, xTipChe, xCadChe);
+            x++; 
+        }
+  
+        BusEmailFunc(xEmpChe, xTipChe, xCadChe, aEmaPar, aEmaChe);
+        Se((aEmaCom = "") ou (aEmaCom = " ")) {
+            aEmaCom = aEmaChe;
+        }  
+        aEmaChe = aEmaChe + ";vacinas@dbdiagnosticos.com.br";
+    
+        Se (aAssEma <> " ") {
+    
+            @ - Remetente / Destinatários / Cópias / Cópia Oculta / Assunto / Texto / Anexos (Não envia) / Tratamento do Anexo / Papel de carta - @
+            EnviaEmailHTML("senior@dbdiagnosticos.com.br", aEmaCom, aEmaChe, "", aAssEma, aCorpo, "", 1, 1);                            
+        
+            aMsgErr = MsgErroEnviaEmail;
+            aMsgLog = aMsgLog + aMsgErr + "; ";
+    
+            Se (aMsgErr = "") {
+                aDesEma = aEmaCom + ";" + aEmaChe;
+            }
+        
+            Se (aTipRel = "V") {
+                ExecSql "UPDATE R111VAC SET USU_DatVen = :dDatHoj, USU_DesVen = :aDesEma Where CodFic = :xCodFic and NumEmp = :xNumEmp \
+                and DatSol = :dDatSol and CodRem = :xCodRem";
+            } 
+      
+            Senao {
+                ExecSql "UPDATE R111VAC SET USU_DatLem = :dDatHoj, USU_DesLem = :aDesEma Where CodFic = :xCodFic and NumEmp = :xNumEmp \
+               and DatSol = :dDatSol and CodRem = :xCodRem";
+            }                        
+        } 
+    }   
+}
+ 
+SQL_Proximo(xCursor);
+SQL_FecharCursor(xCursor);
+SQL_Destruir(xCursor);
+MensagemLog(aMsgLog);                                                  

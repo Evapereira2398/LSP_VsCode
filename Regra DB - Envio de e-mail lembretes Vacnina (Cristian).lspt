@@ -1,0 +1,466 @@
+Definir Cursor Cur_R111Vac;
+Definir Cursor CUR_R034FUN;
+Definir Data dDatHoj;
+Definir Data dDat1;
+Definir Data dDat7;
+Definir Data dDat30;
+Definir Data dDatSol;
+Definir Alfa sNomRem;
+Definir Alfa sSeqDos;
+Definir Alfa aDatApl;
+Definir Alfa sEmaCom;
+Definir Alfa xEmaPar;
+Definir Alfa xEmaCom;
+Definir Alfa sNomFun;
+Definir Alfa sAnexo;
+Definir ALfa sCorpo;
+Definir Alfa sMsgErr;
+Definir Alfa sTipRel;
+Definir Alfa sNomRel;   
+Definir Alfa sNumEmp;
+Definir Alfa sTipCol;
+Definir Alfa sNumCad;
+Definir Alfa sTxtRel;
+Definir Alfa sDatSis;
+Definir Alfa xMsgErr;
+Definir Alfa aPosTra;
+Definir Alfa aDesPos;
+Definir Alfa aPosPaiAux;
+
+
+@ - Definição das datas - @
+dDatHoj = DatSis;
+dDat1 = DatSis + 1;
+dDat7 = DatSis + 7;
+dDat30 = DatSis + 30;
+
+ConverteMascara (3, DatSis, sDatSis, "DD-MM-YYYY");
+
+@ Busca as vacinas vencem Hoje @
+Cur_R111Vac.SQL"Select NumEmp,CodFic,R111Vac.CodRem,R110REM.NomRem,SeqDos,DatApl, R111Vac.CodRem, R111Vac.DatSol 
+                from R111Vac, R110REM  
+                Where 0 = 1 union \
+                Select NumEMp,CodFic,Vac1.CodRem,Rem.NomRem,SeqDos,DatApl, Vac1.CodRem, Vac1.DatSol 
+                from R111Vac Vac1, R110REM REM 
+                Where Vac1.CodREm = REM.CodREm 
+                And Vac1.DatApl = :dDatHoj 
+                and Vac1.SitVac = 1 
+                And Vac1.NumEmp < 1000";
+Cur_R111Vac.AbrirCursor();
+Enquanto(Cur_R111Vac.Achou)
+  Inicio
+    nCodFic = Cur_R111Vac.CodFic;
+    nNumEmp = Cur_R111Vac.NumEmp;
+    sNomRem = Cur_R111Vac.NomRem; 
+    nSeqDos = Cur_R111Vac.SeqDos;
+    dDatApl = Cur_R111Vac.DatApl;
+    dDatSol = Cur_R111Vac.DatSol;
+    nCodRem = Cur_R111Vac.CodRem;
+    sNomRem = Cur_R111Vac.NomRem;
+    ConverteMascara (3, dDatApl, aDatApl, "DD/MM/YYYY");
+    
+    CUR_R034Fun.SQL "Select R034Fun.NumEmp,R034Fun.TipCol,R034Fun.NumCad,R034CPL.EmaCom,R034Fun.NomFun 
+                    From R110Fic, R034Fun, R034CPL 
+                    Where CodFic = :nCodFic 
+                    And R110Fic.NumEmp = :nNumEmp 
+                    And R110Fic.NumEmp = R034Fun.NumEmp 
+                    And R110Fic.TipCol = R034Fun.TipCol 
+                    And R110Fic.NumCad = R034Fun.NumCad 
+                    and R034CPL.NumEmp = R034Fun.NumEmp 
+                    And R034CPL.TipCol = R034Fun.TipCol 
+                    And R034CPL.NumCad = R034Fun.NumCad 
+                    AND R034Fun.SitAfa <> 7 
+                    AND R034Fun.NumEmp NOT IN (2, 8) 
+                    AND R034Fun.CodFil <> 40";
+    CUR_R034Fun.AbrirCursor();                                    
+      Se(CUR_R034Fun.Achou)
+        Inicio
+          nNumEmp = CUR_R034Fun.NumEmp; 
+          nTipCol = CUR_R034Fun.TipCol; 
+          nNumCad = CUR_R034Fun.NumCad; 
+          sEmaCom = CUR_R034Fun.EmaCom;
+          sNomFun = CUR_R034Fun.NomFun;
+          IntParaAlfa(nNumEmp,sNumEmp);
+          IntParaAlfa(nTipCol,sTipCol);
+          IntParaAlfa(nNumCad,sNumCad);
+          sTipRel = "V";  
+        
+          Se (sEmaCom <> "")
+            Inicio      
+              sNomRel = "vacina" + sNumEmp + sTipCol + sNumCad + sTipRel+sDatSis;
+              sTxtRel = "Prezado(a), "+sNomFun+" o prazo para tomar a dose da "+ sNomRem + " venceu em "+aDatApl;   
+              SetaAlfaTelaEntrada("ENomRel", sNomRel);
+              SetaAlfaTelaEntrada("EAbrEmp", sNumEmp);
+              SetaAlfaTelaEntrada("EAbrTcl", sTipCol);
+              SetaAlfaTelaEntrada("EAbrCad", sNumCad);
+              SetaAlfaTelaEntrada("ETipLis", sTipRel);
+              SetaAlfaTelaEntrada("ETxtRel", sTxtRel);
+              ExecutaRelatorio("SMVA100.GER", "N");
+              sAnexo = "\\\\hoseg27sen\\dbmed_18213_p$\\Vetorh\\Relatorios\\"+sNomRel+"0000.jpg";
+              sCorpo = "<IMG SRC=" + sAnexo + ">";      
+   
+              RetornaPostoColaborador(nNumEmp, nTipCol, nNumCad, dDatHoj, nEstPos, aPosTra, aDesPos);
+              RetornaChefePosto(1, nEstPos, 2, dDatHoj, aPosTra, nEmpChe, nTipChe, nCadChe);
+  
+              Enquanto ((nCadChe = 0) e (nQtd < 6)){
+                RetornaPostoPai(aPostra, nEstPos, 2, dDatHoj, aPosPaiAux);
+                RetornaChefePosto(1, nEstPos, 2, dDatHoj, aPosPaiAux, nEmpChe, nTipChe, nCadChe);
+                nQtd = nQtd + 1; 
+              }
+              
+              nQtd = 0;
+   
+              BusEmailFunc(nEmpChe, nTipChe, nCadChe, xEmaPar, xEmaCom);
+              sEmaCom = sEmaCom + ";" + xEmaCom; 
+     
+              EnviaEmailHTML("senior@dbdiagnosticos.com.br", @ remetente @
+                              sEmaCom, @ Destinatários @
+                              "vacinas@dbdiagnosticos.com.br", @ Cópias @ 
+                              "", @ Cópia oculta @
+                              "SUA VACINA VENCEU!", @ Assunto @
+                              sCorpo, @ Texto @
+                              "", @ Anexos (Não envia) @
+                              1, @ Tratamento do anexo @
+                              1); @ Papel de carta @
+              
+              sMsgErr = MsgErroEnviaEmail;
+              MensagemLog(sMsgErr);
+
+              Se (sMsgErr <> "") {
+                ExecSqlEx("Update R111Vac Set USU_EnvEma = 'N' 
+                          Where CodFic = :nCodFic 
+                          And NumEmp = :nNumEmp 
+                          And DatSol = :dDatSol 
+                          And CodRem = :nCodRem", nErro, xMsgErr);
+              } Senao {  
+                ExecSqlEx("Update R111Vac Set USU_EnvEma = 'S' 
+                          Where CodFic = :nCodFic 
+                          And NumEmp = :nNumEmp 
+                          And DatSol = :dDatSol 
+                          And CodRem = :nCodRem", nErro, xMsgErr); 
+              }
+            Fim;  
+        Fim;
+    CUR_R034Fun.FecharCursor();
+Cur_R111Vac.Proximo();                           
+Fim;
+Cur_R111Vac.FecharCursor();
+
+
+@ Busca as vacinas que vencem em 01 dia @
+Cur_R111Vac.SQL"Select NumEMp,CodFic,R111Vac.CodRem,R110REM.NomRem,SeqDos,DatApl, R111Vac.CodRem, R111Vac.DatSol 
+                from R111Vac, R110REM  
+                Where 0 = 1 union \
+                Select NumEMp,CodFic,Vac1.CodRem,Rem.NomRem,SeqDos,DatApl, Vac1.CodRem, Vac1.DatSol 
+                from R111Vac Vac1, R110REM REM 
+                Where Vac1.CodREm = REM.CodREm 
+                And Vac1.DatApl = :dDat1
+                and Vac1.SitVac = 1 
+                And Vac1.NumEmp < 1000";
+Cur_R111Vac.AbrirCursor();
+Enquanto(Cur_R111Vac.Achou) {
+  nCodFic = Cur_R111Vac.CodFic;
+  nNumEmp = Cur_R111Vac.NumEmp;
+  sNomRem = Cur_R111Vac.NomRem; 
+  nSeqDos = Cur_R111Vac.SeqDos;
+  dDatApl = Cur_R111Vac.DatApl;
+  ConverteMascara (3, dDatApl, aDatApl, "DD/MM/YYYY"); 
+
+  CUR_R034Fun.SQL"Select R034Fun.NumEmp,R034Fun.TipCol,R034Fun.NumCad,R034CPL.EmaCom,R034Fun.NomFun 
+                  From R110Fic, R034Fun, R034CPL Where CodFic = :nCodFic 
+                  And R110Fic.NumEmp = :nNumEmp 
+                  And R110Fic.NumEmp = R034Fun.NumEmp 
+                  And R110Fic.TipCol = R034Fun.TipCol 
+                  And R110Fic.NumCad = R034Fun.NumCad 
+                  and R034CPL.NumEmp = R034Fun.NumEmp 
+                  And R034CPL.TipCol = R034Fun.TipCol 
+                  And R034CPL.NumCad = R034Fun.NumCad 
+                  AND R034Fun.SitAfa <> 7 
+                  AND R034Fun.NumEmp NOT IN (2, 8) 
+                  AND R034Fun.CodFil <> 40";
+  CUR_R034Fun.AbrirCursor();  
+  Se(CUR_R034Fun.Achou) {
+      nNumEmp = CUR_R034Fun.NumEmp; 
+      nTipCol = CUR_R034Fun.TipCol; 
+      nNumCad = CUR_R034Fun.NumCad; 
+      sEmaCom = CUR_R034Fun.EmaCom;
+      sNomFun = CUR_R034Fun.NomFun;
+      dDatSol = Cur_R111Vac.DatSol;
+      nCodRem = Cur_R111Vac.CodRem;    
+      IntParaAlfa(nNumEmp,sNumEmp);
+      IntParaAlfa(nTipCol,sTipCol);
+      IntParaAlfa(nNumCad,sNumCad);  
+      sTipRel = "S";  
+
+      Se (sEmaCom <> "") {
+        sNomRel = "vacina" + sNumEmp + sTipCol + sNumCad + sTipRel+sDatSis;
+        sTxtRel = "Prezado(a), "+sNomFun+" o prazo para tomar a dose da "+ sNomRem + " irá vencer em "+aDatApl; 
+          SetaAlfaTelaEntrada("ENomRel", sNomRel);
+          SetaAlfaTelaEntrada("EAbrEmp", sNumEmp);
+          SetaAlfaTelaEntrada("EAbrTcl", sTipCol);
+          SetaAlfaTelaEntrada("EAbrCad", sNumCad);
+          SetaAlfaTelaEntrada("ETipLis", sTipRel);
+          SetaAlfaTelaEntrada("ETxtRel", sTxtRel);
+          ExecutaRelatorio("SMVA100.GER", "N");   
+          sAnexo = "\\\\hoseg27sen\\dbmed_18213_p$\\Vetorh\\Relatorios\\"+sNomRel+"0000.jpg";
+          sCorpo = "<IMG SRC=" + sAnexo + ">";
+          
+          RetornaPostoColaborador(nNumEmp, nTipCol, nNumCad, dDat7, nEstPos, aPosTra, aDesPos);
+          RetornaChefePosto(1, nEstPos, 2, dDat7, aPosTra, nEmpChe, nTipChe, nCadChe);
+  
+          Enquanto (nCadChe = 0){
+            RetornaPostoPai(aPostra, nEstPos, 2, dDat7, aPosPaiAux);
+            RetornaChefePosto(1, nEstPos, 2, dDat7, aPosPaiAux, nEmpChe, nTipChe, nCadChe);
+          }
+   
+          BusEmailFunc(nEmpChe, nTipChe, nCadChe, xEmaPar, xEmaCom);
+          sEmaCom = sEmaCom + ";" + xEmaCom; 
+   
+          EnviaEmailHTML("senior@dbdiagnosticos.com.br", @ remetente @
+                          sEmaCom, @ Destinatários @
+                          "vacinas@dbdiagnosticos.com.br", @ Cópias @  
+                          "", @ Cópia oculta @
+                          "Lembrete de Vacinação!", @ Assunto @
+                          sCorpo, @ Texto @
+                          "", @ Anexos (Não envia) @
+                          1, @ Tratamento do anexo @
+                          1); @ Papel de carta @
+          
+          sMsgErr = MsgErroEnviaEmail;
+          MensagemLog(sMsgErr);
+      
+          Se (sMsgErr <> "") {
+            ExecSqlEx("Update R111Vac Set USU_EnvEma7 = 'N' 
+                      Where CodFic = :nCodFic 
+                      And NumEmp = :nNumEmp 
+                      And DatSol = :dDatSol 
+                      And CodRem = :nCodRem", nErro, xMsgErr);
+          } Senao  {
+            ExecSqlEx("Update R111Vac Set USU_EnvEma7 = 'S' 
+                      Where CodFic = :nCodFic 
+                      And NumEmp = :nNumEmp 
+                      And DatSol = :dDatSol 
+                      And CodRem = :nCodRem", nErro, xMsgErr);
+          }    
+        }  
+      }
+  CUR_R034Fun.FecharCursor();             
+Cur_R111Vac.Proximo();                           
+}
+Cur_R111Vac.FecharCursor();   
+
+
+@ Busca as vacinas vencem em 07 dias  @
+Cur_R111Vac.SQL"Select NumEmp,CodFic,R111Vac.CodRem,R110REM.NomRem,SeqDos,DatApl, R111Vac.CodRem, R111Vac.DatSol 
+                from R111Vac, R110REM  Where 0 = 1 union \
+                Select NumEmp,CodFic,Vac1.CodRem,Rem.NomRem,SeqDos,DatApl, Vac1.CodRem, Vac1.DatSol from R111Vac Vac1, R110REM REM 
+                Where Vac1.CodREm = REM.CodREm 
+                And Vac1.DatApl = :dDat7 
+                and Vac1.SitVac = 1 
+                And Vac1.NumEmp < 1000";
+
+Cur_R111Vac.AbrirCursor();
+Enquanto(Cur_R111Vac.Achou)
+Inicio
+   nCodFic = Cur_R111Vac.CodFic;
+   nNumEmp = Cur_R111Vac.NumEmp;
+   sNomRem = Cur_R111Vac.NomRem; 
+   nSeqDos = Cur_R111Vac.SeqDos;
+   dDatApl = Cur_R111Vac.DatApl;
+   ConverteMascara (3, dDatApl, aDatApl, "DD/MM/YYYY"); 
+CUR_R034Fun.SQL"Select R034Fun.NumEmp,R034Fun.TipCol,R034Fun.NumCad,R034CPL.EmaCom,R034Fun.NomFun 
+                From R110Fic, R034Fun, R034CPL 
+                Where CodFic = :nCodFic 
+                And R110Fic.NumEmp = :nNumEmp 
+                And R110Fic.NumEmp = R034Fun.NumEmp 
+                And R110Fic.TipCol = R034Fun.TipCol 
+                And R110Fic.NumCad = R034Fun.NumCad 
+                and R034CPL.NumEmp = R034Fun.NumEmp 
+                And R034CPL.TipCol = R034Fun.TipCol 
+                And R034CPL.NumCad = R034Fun.NumCad 
+                AND R034Fun.SitAfa <> 7 
+                AND R034Fun.NumEmp NOT IN (2, 8) 
+                AND R034Fun.CodFil <> 40";
+CUR_R034Fun.AbrirCursor();  
+Se(CUR_R034Fun.Achou)
+Inicio
+    nNumEmp = CUR_R034Fun.NumEmp; 
+    nTipCol = CUR_R034Fun.TipCol; 
+    nNumCad = CUR_R034Fun.NumCad; 
+    sEmaCom = CUR_R034Fun.EmaCom;
+    sNomFun = CUR_R034Fun.NomFun;
+    dDatSol = Cur_R111Vac.DatSol;
+    nCodRem = Cur_R111Vac.CodRem;    
+    IntParaAlfa(nNumEmp,sNumEmp);
+    IntParaAlfa(nTipCol,sTipCol);
+    IntParaAlfa(nNumCad,sNumCad);  
+    sTipRel = "S";  
+    Se (sEmaCom <> "")
+    Inicio  
+    sNomRel = "vacina" + sNumEmp + sTipCol + sNumCad + sTipRel+sDatSis;
+    sTxtRel = "Prezado(a), "+sNomFun+" o prazo para tomar a dose da "+ sNomRem + " irá vencer em "+aDatApl; 
+        SetaAlfaTelaEntrada("ENomRel", sNomRel);
+        SetaAlfaTelaEntrada("EAbrEmp", sNumEmp);
+        SetaAlfaTelaEntrada("EAbrTcl", sTipCol);
+        SetaAlfaTelaEntrada("EAbrCad", sNumCad);
+        SetaAlfaTelaEntrada("ETipLis", sTipRel);
+        SetaAlfaTelaEntrada("ETxtRel", sTxtRel);
+        ExecutaRelatorio("SMVA100.GER", "N");   
+        sAnexo = "\\\\hoseg27sen\\dbmed_18213_p$\\Vetorh\\Relatorios\\"+sNomRel+"0000.jpg";
+        sCorpo = "<IMG SRC=" + sAnexo + ">";
+               
+   
+
+      RetornaPostoColaborador(nNumEmp, nTipCol, nNumCad, dDat7, nEstPos, aPosTra, aDesPos);
+      RetornaChefePosto(1, nEstPos, 2, dDat7, aPosTra, nEmpChe, nTipChe, nCadChe);
+  
+      Enquanto (nCadChe = 0){
+        RetornaPostoPai(aPostra, nEstPos, 2, dDat7, aPosPaiAux);
+        RetornaChefePosto(1, nEstPos, 2, dDat7, aPosPaiAux, nEmpChe, nTipChe, nCadChe);
+      }
+   
+      BusEmailFunc(nEmpChe, nTipChe, nCadChe, xEmaPar, xEmaCom);
+      sEmaCom = sEmaCom + ";" + xEmaCom; 
+   
+              
+        EnviaEmailHTML("senior@dbdiagnosticos.com.br", @ remetente @
+                       sEmaCom, @ Destinatários @
+                       "vacinas@dbdiagnosticos.com.br", @ Cópias @  
+                       "", @ Cópia oculta @
+                       "Lembrete de Vacinação!", @ Assunto @
+                       sCorpo, @ Texto @
+                       "", @ Anexos (Não envia) @
+                       1, @ Tratamento do anexo @
+                       1); @ Papel de carta @
+                       
+        
+        sMsgErr = MsgErroEnviaEmail;
+        MensagemLog(sMsgErr);
+      Se (sMsgErr <> "")
+        ExecSqlEx("Update R111Vac Set USU_EnvEma7 = 'N' 
+                  Where CodFic = :nCodFic 
+                  And NumEmp = :nNumEmp 
+                  And DatSol = :dDatSol 
+                  And CodRem = :nCodRem", nErro, xMsgErr);
+      Senao  
+        ExecSqlEx("Update R111Vac Set USU_EnvEma7 = 'S' 
+                  Where CodFic = :nCodFic 
+                  And NumEmp = :nNumEmp 
+                  And DatSol = :dDatSol 
+                  And CodRem = :nCodRem", nErro, xMsgErr);    
+    Fim;  
+Fim;
+CUR_R034Fun.FecharCursor();             
+                           
+Cur_R111Vac.Proximo();                           
+Fim
+Cur_R111Vac.FecharCursor();   
+
+@ Busca as vacinas vencem em 30 Dias @
+Cur_R111Vac.SQL"Select NumEMp,CodFic,R111Vac.CodRem,R110REM.NomRem,SeqDos,DatApl,R111Vac.CodRem, R111Vac.DatSol 
+                from R111Vac, R110REM  
+                Where 0 = 1 union \
+                Select NumEMp,CodFic,Vac1.CodRem,Rem.NomRem,SeqDos,DatApl, Vac1.CodRem, Vac1.DatSol from R111Vac Vac1, R110REM REM 
+                Where Vac1.CodREm = REM.CodREm 
+                And Vac1.DatApl = :dDat30 
+                and Vac1.SitVac = 1 
+                And Vac1.NumEmp < 1000";
+
+Cur_R111Vac.AbrirCursor();
+Enquanto(Cur_R111Vac.Achou)
+Inicio
+   nCodFic = Cur_R111Vac.CodFic;
+   nNumEmp = Cur_R111Vac.NumEmp;
+   sNomRem = Cur_R111Vac.NomRem; 
+   nSeqDos = Cur_R111Vac.SeqDos;
+   dDatApl = Cur_R111Vac.DatApl;
+   dDatSol = Cur_R111Vac.DatSol;
+   nCodRem = Cur_R111Vac.CodRem;  
+     
+  ConverteMascara (3, dDatApl, aDatApl, "DD/MM/YYYY");
+  CUR_R034Fun.SQL"Select R034Fun.NumEmp,R034Fun.TipCol,R034Fun.NumCad,R034CPL.EmaCom,R034Fun.NomFun From R110Fic, R034Fun, R034CPL 
+                  Where CodFic = :nCodFic 
+                  And R110Fic.NumEmp = :nNumEmp 
+                  And R110Fic.NumEmp = R034Fun.NumEmp 
+                  And R110Fic.TipCol = R034Fun.TipCol 
+                  And R110Fic.NumCad = R034Fun.NumCad 
+                  and R034CPL.NumEmp = R034Fun.NumEmp 
+                  And R034CPL.TipCol = R034Fun.TipCol 
+                  And R034CPL.NumCad = R034Fun.NumCad 
+                  AND R034Fun.SitAfa <> 7 
+                  AND R034Fun.NumEmp NOT IN (2, 8) 
+                  AND R034Fun.CodFil <> 40";
+  CUR_R034Fun.AbrirCursor();  
+    Se(CUR_R034Fun.Achou)
+      Inicio
+        nNumEmp = CUR_R034Fun.NumEmp; 
+        nTipCol = CUR_R034Fun.TipCol; 
+        nNumCad = CUR_R034Fun.NumCad; 
+        sEmaCom = CUR_R034Fun.EmaCom;
+        sNomFun = CUR_R034Fun.NomFun; 
+        IntParaAlfa(nNumEmp,sNumEmp);
+        IntParaAlfa(nTipCol,sTipCol);
+        IntParaAlfa(nNumCad,sNumCad); 
+        sTipRel = "T";    
+        Se (sEmaCom <> "")
+          Inicio      
+            sNomRel = "vacina" + sNumEmp + sTipCol + sNumCad + sTipRel+sDatSis;
+            sTxtRel = "Prezado(a), "+sNomFun+" o prazo para tomar a dose da "+ sNomRem + " irá vencer em "+aDatApl;
+            SetaAlfaTelaEntrada("ENomRel", sNomRel);
+            SetaAlfaTelaEntrada("EAbrEmp", sNumEmp);
+            SetaAlfaTelaEntrada("EAbrTcl", sTipCol);
+            SetaAlfaTelaEntrada("EAbrCad", sNumCad);
+            SetaAlfaTelaEntrada("ETipLis", sTipRel);
+            SetaAlfaTelaEntrada("ETxtRel", sTxtRel);
+            ExecutaRelatorio("SMVA100.GER", "N");  
+            sAnexo = "\\\\hoseg27sen\\dbmed_18213_p$\\Vetorh\\Relatorios\\"+sNomRel+"0000.jpg";
+            sCorpo = "<IMG SRC=" + sAnexo + ">";
+                  
+           
+
+            RetornaPostoColaborador(nNumEmp, nTipCol, nNumCad, dDat30, nEstPos, aPosTra, aDesPos);
+            RetornaChefePosto(1, nEstPos, 2, dDat30, aPosTra, nEmpChe, nTipChe, nCadChe);
+  
+            Enquanto ((nCadChe = 0) e (nQtd < 6)){
+              RetornaPostoPai(aPostra, nEstPos, 2, dDatHoj, aPosPaiAux);
+              RetornaChefePosto(1, nEstPos, 2, dDatHoj, aPosPaiAux, nEmpChe, nTipChe, nCadChe);
+              nQtd = nQtd + 1; 
+            }
+            nQtd = 0;
+   
+            BusEmailFunc(nEmpChe, nTipChe, nCadChe, xEmaPar, xEmaCom);
+            sEmaCom = sEmaCom + ";" + xEmaCom; 
+           
+                        
+            EnviaEmailHTML("senior@dbdiagnosticos.com.br", @ remetente @
+                          sEmaCom, @ Destinatários @
+                          "vacinas@dbdiagnosticos.com.br", @ Cópias @   
+                          "", @ Cópia oculta @
+                          "Lembrete de Vacinação!", @ Assunto @
+                          sCorpo, @ Texto @
+                          "", @ Anexos (Não envia) @
+                          1, @ Tratamento do anexo @
+                          1); @ Papel de carta @
+              
+            sMsgErr = MsgErroEnviaEmail;
+            MensagemLog(sMsgErr);
+
+            Se (sMsgErr <> "")
+            ExecSqlEx("Update R111Vac Set USU_EnvEma30 = 'N' 
+                       Where CodFic = :nCodFic 
+                       And NumEmp = :nNumEmp 
+                       And DatSol = :dDatSol 
+                       And CodRem = :nCodRem", nErro, xMsgErr);
+          
+            Senao  
+            ExecSqlEx("Update R111Vac Set USU_EnvEma30 = 'S' 
+                       Where CodFic = :nCodFic 
+                       And NumEmp = :nNumEmp 
+                       And DatSol = :dDatSol 
+                       And CodRem = :nCodRem", nErro, xMsgErr);        
+          Fim;  
+      Fim;
+  CUR_R034Fun.FecharCursor();             
+Cur_R111Vac.Proximo();                           
+Fim
+Cur_R111Vac.FecharCursor();     

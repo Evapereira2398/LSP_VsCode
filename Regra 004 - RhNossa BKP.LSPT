@@ -1,0 +1,120 @@
+@- verifica se colaborador possui fornecedor vinculado -@
+@- verifica duração/prorrogação de contrato, incluir informaões de contrato -@
+
+Definir Cursor Cur_R034FUN;  
+Definir Cursor Cur_R034CTR;
+Definir cursor Cur_R034CPL;
+
+Definir numero nFicReg;
+Definir Data dDatAdm;
+Definir Data dDatIni;
+Definir Data dDatFim;
+
+
+nNumEmp = R034CPL.NumEmp;
+nTipCol = R034CPL.TipCol;
+nNumCad = R034CPL.NumCad;
+
+
+@- verifica se possui fornecedor vinculado, categoria esocial, data admissão -@
+Cur_R034FUN.Sql "SELECT * FROM R034FUN \
+                  WHERE NumEmp = :nNumEmp \
+                    AND TipCol = :nTipCol \
+                    AND NumCad = :nNumCad";
+Cur_R034FUN.AbrirCursor();
+Se (Cur_R034FUN.Achou) {
+  nCodFor = Cur_R034FUN.CodFor;
+  
+  Se (nCodFor <= 31)
+    Mensagem (Retorna, "Por gentileza, gerar fornecedor em: Módulo Administração de Pessoal > Menu > Integração ERP > Gerar Fornecedores !!");
+
+  dDatAdm = Cur_R034FUN.DatAdm;
+  nCatEso = Cur_R034FUN.CatEso;  
+}
+Cur_R034FUN.FecharCursor();
+
+@- verifica informações de contrato temporário -@
+@- trabalhador temporário -@
+Se (nCatEso = 106) {
+  nDurCon = R034CPL.DurCon; 
+  nProCon = R034CPL.ProCon; 
+  
+  @- verifica se possui informação preenchida de contrato, se possui não faz nada, -@
+  @- se não possui, preenche com dados básicos, tendo como objetivo o cadastro -@
+  @- correto da data de início e fim da informação de contrato -@
+  
+  @- CONTRATO INICIAL ---------------------------------------------------------@
+  Cur_R034CTR.Sql "SELECT * FROM R034CTR \
+                    WHERE NumEmp = :nNumEmp \
+                      AND TipCol = :nTipCol \
+                      AND NumCad = :nNumCad \
+                      AND TipCtr = 1";
+  Cur_R034CTR.AbrirCursor();
+  Se (Cur_R034CTR.Achou) {
+    dDatIni = Cur_R034CTR.DatIni;  
+    
+    Se (dDatIni <> dDatAdm){
+      Mensagem (Retorna, "Tipo de Contrato do tipo INICIAL com data diferente de ADMISSÂO, por gentileza verificar!");
+    }  
+  }
+  Senao {
+    @- vai inserir informações na tabela de contrato -@
+    @- chama r034ctr: numemp, tipcol, numcad, datini -@
+    
+    dDatIni = dDatAdm;
+    Se (nDurCon = 0)  
+      Mensagem (Retorna, "Por gentileza, preencher informações de DURAÇÃO de Contrato na Ficha Complementar!");
+    Senao {
+      dDatFim = dDatIni + nDurCon - 1; 
+      
+      @- serão preenchidas com informações padrões para que cliente possa altera-los manualmente -@
+      ExecSql "INSERT INTO R034CTR VALUES \
+              (:nNumEmp,:nTipCol,:nNumCad,:dDatIni,2,1,2,'ALTERAR',0,'',2,:dDatFim,'N',0,'',0,0,0,'','','',0,0,0,'')";
+    }
+  }
+  Cur_R034CTR.FecharCursor();
+                     
+  @- PRORROGAÇÃO --------------------------------------------------------------@
+  Cur_R034CTR.Sql "SELECT * FROM R034CTR \
+                    WHERE NumEmp = :nNumEmp \
+                      AND TipCol = :nTipCol \
+                      AND NumCad = :nNumCad \
+                      AND TipCtr = 2";
+  Cur_R034CTR.AbrirCursor();
+  Se (Cur_R034CTR.NaoAchou) {
+    @- vai inserir informações na tabela de contrato -@
+    @- chama r034ctr: numemp, tipcol, numcad, datini -@
+    Se (nProCon = 0)
+      Mensagem (Retorna, "Por gentileza, preencher informações de PRORROGAÇÃO (se houver) de Contrato na Ficha Complementar!");
+    Senao {
+      dDatIni = dDatAdm + nDurCon;  
+      dDatFim = dDatIni + nProCon - 1; 
+     
+      @- serão preenchidas com informações padrões para que cliente possa altera-los manualmente -@
+      ExecSql "INSERT INTO R034CTR VALUES \
+              (:nNumEmp,:nTipCol,:nNumCad,:dDatIni,2,2,2,'ALTERAR',0,'',2,:dDatFim,'N',0,'',0,0,0,'','','',0,0,0,'')";
+    }
+  }
+  Cur_R034CTR.FecharCursor();
+}
+
+@-- Atualiza o valor da Ficha de Registro - Chamado 202338 --@
+
+@- Cursor para identificar o numero da Ficha Complementar -@
+Cur_R034CPL.SQL "Select FicReg From R034CPL \
+                where NumEmp = :nNumEmp \
+                  and TipCol = :nTipCol \
+                  and NumCad = :nNumCad ";
+Cur_R034CPL.AbrirCursor();
+Se (Cur_R034CPL.Achou)
+   nFicReg = Cur_R034CPL.FicReg;
+Cur_R034CPL.FecharCursor();
+
+Se (nFicReg <> nNumCad) {
+  ExecSQL "Update R034CPL set ficreg = :nNumCad \
+            where numemp = :nNumEmp \
+              and tipcol = :nTipCol \
+              and numcad = :nNumCad ";
+}
+
+x = 0;

@@ -1,0 +1,49 @@
+/*Será criado uma regra, vinculado à um processo automático, que irá enviar para todos os colaborares ativos com email 
+cadastrado, falando com qual Grau de Instrução a pessoa se encontra, e caso tenha alterado deverá atualizar junto ao RH.*/
+Definir Cursor Cur_R034Fun;
+Definir Alfa sNomFun;
+Definir ALfa sEmail;
+Definir Alfa sTxtEma;
+Definir Alfa sRmtEma;
+Definir Alfa sDstEma;
+Definir ALfa sGraIns;
+Definir ALfa sAssEma;
+Definir Alfa sBranco;
+Definir Data dDatSis;
+sBranco = "";
+
+dDatSis = DatSis;
+
+DesMontaData (ddatSis, nDia, nMes, nAno);
+
+Se (nMes = 9) @Processo automático sera executado mensalmente mas a regra só será executada no mês 9@
+{
+  Cur_R034Fun.SQL"Select R034Fun.NomFun, R022Gra.DesGra, R034Cpl.EmaPar, R034Cpl.EmaCom From R034Fun, R022Gra, R034Cpl Where \
+                      R034Fun.SitAfa <> 7 And                \
+                      R034Fun.GraIns = R022GRA.GraIns And    \
+                      R034Fun.NumEMp = R034Cpl.NumEMp And    \
+                      R034Fun.TipCol = R034CPl.TipCol And    \
+                      R034Fun.NumCad = R034Cpl.NumCad And    \
+                      R034Fun.NumEmp >= 1 And  R034Fun.NumEmp < 1000 And \
+                      (R034Cpl.Emapar <> ' ' OR R034Cpl.EmaCom <> ' ')";
+  Cur_R034Fun.AbrirCursor();
+  Enquanto(Cur_R034Fun.Achou)
+  Inicio
+     sNomFun =  Cur_R034Fun.NomFun;
+     sGraIns = Cur_R034Fun.DesGra;
+     sDstEma = Cur_R034Fun.EmaCom;
+     Se(sDstEma <> " ")  
+     Inicio
+     sAssEma = "Atualização Escolaridade"; 
+     sTxtEma = "Prezado(a) <b>"+ sNomFun + "</b>, o RH informa que seu grau de instrução que consta em nosso cadastro é:  <b>"+sGraIns+"</b>.<br><br> Caso tenha alterado, por favor acessar o Painel de Gestão e realizar a atualização em: <br><br>"+
+               "Gestão de Pessoas -> Painel de gestão -> Perfil -> Perfil Acadêmico -> No campo Formação Acadêmica clicar em + Adicionar, preencher com os dados atuais e anexar o comprovante de escolaridade atualizado.<br><br>"+
+               "Essa atualização deve ocorrer no prazo máximo de 30 dias do recebimento desse informativo. <br><br>" +
+               "Agradecemos sua Atenção! <br><br>"+
+               "Recursos Humanos<br>DB Diagnósticos<br>";  
+               /*elisangela.pontes@dbdiagnosticos.com.br */
+     EnviaEmailHTML ("senior@dbdiagnosticos.com.br", sDstEma,"", "", sAssEma,sTxtEma, "", 0, 0);
+     Fim;
+    Cur_R034Fun.Proximo();
+  Fim
+  Cur_R034Fun.FecharCursor();
+}

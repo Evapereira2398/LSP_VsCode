@@ -1,0 +1,453 @@
+Definir Cursor CUR_TPPRCOL;
+Definir Cursor CUR_R034Fun;
+Definir Cursor CUR_TPPRSAL;
+Definir Cursor CUR_R046Ver;
+Definir Cursor CUR_R003Lan;
+Definir Cursor CUR_TPPREMP;
+Definir Cursor CUR_R042RCV;
+Definir Alfa   xMensagem;
+Definir Numero xErro;
+Definir Data   dAnoBas;
+Definir Data   dFimAno;
+Definir Data   dCmpInt;
+Definir Data   dIniCom;
+Definir Alfa   xMsg;
+
+@-- Gerar PPR? --@
+xRet = Mensagem(Retorna,"Será Gerado PPR para todos os colaboradores. Deseja continuar? [&Não, &Sim]");
+
+@-- Rotina de Geração de PPR --@                          
+Se (xRet = 1) {
+    IniciarTransacao();
+    nErrSql = 0;
+    nNumEmp = USU_T003Def_USU_NumEmp;
+    nTipCol = 1;
+    nAnoBas = USU_T003Def_USU_AnoBas;
+    dCmpInt = USU_T003Def_USU_CmpInt;
+    MontaData(1,1,nAnoBas,dAnoBas);  
+    MontaData(31,12,nAnoBas,dFimAno);
+    nPPREmp = 0;
+    nTotPPR = 0;
+    nTotPer = 0; 
+    nPPRDem = 0;
+    nTotGerPPR = 0;
+    nDifPPR = 0;
+    nQtdCol = 0;
+    nValDesCol = 0;
+        
+    CUR_R034Fun.SQL "Select NumCad From R034Fun Where 0=1   \
+                    UNION                                   \
+                    Select Count(*)                         \
+                    From R034Fun                            \
+                    Where NumEmp = :nNumEmp                 \ 
+                    And TipCol = :nTipCol                   \
+                    And DatAdm <= :dFimAno                  \
+                    And (SitAfa <> 7                        \ 
+                    or (SitAfa = 7 and DatAfa > :dFimAno))";
+        
+    CUR_R034Fun.AbrirCursor();
+        Se (CUR_R034Fun.Achou) {
+            nQtdBar = CUR_R034Fun.NumCad + 3;
+        }
+    CUR_R034Fun.FecharCursor();
+        
+    IniciaBarraProgresso(nQtdBar);
+        
+    AtualizaBarraProgresso("Geração PPR", "Verificando se há PPR já gerado.","SIM",3);
+        
+    @-- 1. Verifica se já existem valores gerados para a Empresa e o Ano Base Selecionados --@
+    CUR_TPPRCOL.SQL "Select USU_NumEmp From USU_TPPRCOL Where 0=1  \
+                    UNION Select Count(*) From USU_TPPRCOL         \
+                    Where USU_NumEmp = :nNumEmp                    \
+                    And USU_AnoRef = :dAnoBas"; 
+        
+    CUR_TPPRCOL.AbrirCursor();
+    Se (CUR_TPPRCOL.USU_NumEmp > 0) {
+    @-- 1.1 Gerar PPR? --@        
+    xTemReg = Mensagem(Retorna,"Já existe Valores PPR gerado para essa Empresa e Ano Base. Os valores existentes serão excluídos para geração dos novos valores PPR. Deseja continuar? [&Não, &Sim]");    
+        Se (xTemReg = 0){
+            DesfazerTransacao();
+            FinalizaBarraProgresso();
+            Mensagem(Retorna,"Geração Valores PPR Cancelada!");
+            CUR_TPPRCOL.FecharCursor();
+            VaPara Final; 
+        }           
+            
+        Senao Se (xTemReg = 1){
+            AtualizaBarraProgresso("Geração PPR", "Excluindo PPR já gerado.","SIM",2);
+            ExecSqlEx ("Delete USU_TPPRCOL Where USU_NumEmp = :nNumEmp And USU_AnoRef = :dAnoBas", xErro, xMensagem);
+                    
+            Se  (xErro <> 0) {
+                nErrSql = 1; 
+                CUR_TPPRCOL.FecharCursor();
+                VaPara ErroSQL;
+            } 
+        }         
+    }
+
+    CUR_TPPRCOL.FecharCursor();
+}    
+        
+@-- 2 Busca colaboradores Ativos da Empresa --@
+/*And NumCad in (226,729)*/
+        
+CUR_R034Fun.SQL "Select NumCad, DatAdm       \
+                 From R034Fun                \
+                 Where NumEmp = :nNumEmp     \
+                 And TipCol = :nTipCol       \
+                 And DatAdm <= :dFimAno      \
+                 And (SitAfa <> 7            \ 
+                 or (SitAfa = 7 and DatAfa > :dFimAno))";
+
+CUR_R034Fun.AbrirCursor();
+Enquanto (CUR_R034Fun.Achou)
+    Inicio    
+    @-- Variáveis --@
+    nNumCad = CUR_R034Fun.NumCad;
+    dDatAdm = CUR_R034Fun.DatAdm; 
+    nQtdSal = 0;
+    nMesMed = 0;
+    nMedCom = 0;
+    nValSal = 0;    
+    nPerPer = 0;  
+    nPerLoc = 0;
+    nValPPR = 0;
+    nPerPPR = 0;
+            
+    IntParaAlfa(nNumCad,xMsg);
+    xMsg = "Gerando PPR. Cadastro: " + xMsg + ".";
+    AtualizaBarraProgresso("Geração PPR", xMsg,"SIM",2);
+            
+    @-- Salário do colaborador --@
+    RetSalEmp(nNumEmp,nTipCol,nNumCad,dFimAno);
+    nValSal = SalEmp;         
+            
+    @-- Retorna quantidade de salários --@
+    CUR_TPPRSAL.SQL "Select * From USU_TPPRSAL      \
+                    Where USU_AnoRef = :dAnoBas     \
+                    And USU_ValSal >= :nValSal      \
+                    Order By USU_ValSal";
+            
+    CUR_TPPRSAL.AbrirCursor();
+        Se (CUR_TPPRSAL.Achou)
+            nQtdSal = CUR_TPPRSAL.USU_QtdSal;
+    CUR_TPPRSAL.FecharCursor();   
+            
+    @-- Tratamento para Sal. Normativo --@
+    /*Definir Cursor CUR_R014NOR;
+    RetSinEmp(nNumEmp,nTipCol,nNumCad,dFimAno);
+    nCodSin = CodSinEmp;
+    CUR_R014NOR.SQL "Select * From R014Nor Where CodSin = :nCodSin and CmpNor <= :dFimAno Order By CmpNor Desc";
+    CUR_R014NOR.AbrirCursor();
+    Se (CUR_R014NOR.Achou)
+    nValSal = CUR_R014NOR.SalNor;        
+    CUR_R014NOR.FecharCursor(); */             
+            
+    @-- Valor do Salário proporcional para os Admitidos no Ano --@
+    Se (dAnoBas < dDatAdm) {          
+        RetDifDat(2,dDatAdm,dFimAno,nMesMed);
+        nMesMed = nMesMed + 1; @-- Soma mais um para ajustar a quantidade de meses --@
+        nValSal = (nValSal / 12) * nMesMed;
+    }
+            
+    @-- Busca as Comissões dos últimos 12 meses para Média --@ 
+    dIniCom = dAnoBas;       
+    Se (dIniCom < dDatAdm) {
+        dIniCom = dDatAdm;
+    }        
+            
+    RetDifDat(2,dIniCom,dFimAno,nMesMed);
+    nMesMed = nMesMed + 1; @-- Soma mais um para ajustar a quantidade de meses --@
+            
+    @-- Cursor para Buscar e Calcular a Média de Provisão --@
+    CUR_R046Ver.SQL "Select ValEve From R046Ver Where 0=1               \
+                     UNION                                              \
+                     Select Sum(R046Ver.ValEve)                         \
+                     From R046Ver, R044Cal                              \
+                     Where R046Ver.NumEmp = R044Cal.NumEmp              \
+                     And R046Ver.CodCal = R044Cal.CodCal                \
+                     And R046ver.NumEmp = :nNumEmp                      \
+                     And R046Ver.TipCol = :nTipCol                      \
+                     And R046Ver.NumCad = :nNumCad                      \
+                     And R046Ver.TabEve = 1                             \
+                     And R046Ver.CodEve = 268                           \
+                     And R044Cal.PerRef Between :dIniCom and :dFimAno   \
+                     And R044Cal.TipCal = 11";
+            
+    CUR_R046Ver.AbrirCursor();
+    Se (CUR_R046Ver.Achou)
+        nMedCom = CUR_R046Ver.ValEve / nMesMed; 
+    CUR_R046Ver.FecharCursor()                       
+            
+    @-- Valor PPR --@        
+    nValPPR = (nValSal + nMedCom) * nQtdSal;                
+            
+    @-- Busca o Local do Colaborador --@
+    RetLocEmp(nNumEmp,nTipCol,nNumCad,dFimAno);
+    nTabOrg = TabOrgEmp;        
+    nCodLoc = LocEmp;
+            
+    @-- Busca Percentual de PPR do Local --@
+    CUR_R003Lan.Sql "Select USU_PerPPR                                     \
+                     From USU_T003Lan                                    \
+                     Where USU_NumEmp = :nNumEmp                          \
+                     And USU_AnoBas = :nAnoBas                          \
+                     And USU_TabOrg = :nTabOrg                          \
+                     And USU_NumLoc = :nCodLoc";
+            
+    CUR_R003Lan.AbrirCursor();
+        Se (CUR_R003Lan.Achou)
+            nPerLoc = CUR_R003Lan.USU_PerPPR;        
+            CUR_R003Lan.FecharCursor();
+            
+        Se (nPerLoc > 0)
+            nValPPR = nValPPR * (nPerLoc / 100);
+            
+        @-- Valor Periculosidade PPR --@
+        RetAdiEmp(nNumEmp,nTipCol,nNumCad,dFimAno);
+        nPerPer = PerPerEmp;
+            
+        Se (nPerPer > 0)
+        nPerPPR = nValPPR * (nPerPer / 100);             
+            
+        @-- Insere os Valores de PPR na tabel USU_TPPRCol - Valores PPR Colaborador --@
+        ExecSQLEx ("Insert Into USU_TPPRCOL (USU_NumEmp,USU_TipCol,USU_NumCad,USU_AnoRef,USU_ValPPR,USU_ValPer,USU_MesPgt ) \
+                    Values (:nNumEmp  ,:nTipCol  ,:nNumCad  ,:dAnoBas  ,:nValPPR  ,:nPerPPR  ,:dCmpInt   )", xErro, xMensagem);
+            
+        Se  (xErro <> 0) {
+            nErrSql = 1;
+            CUR_R034Fun.FecharCursor(); 
+            VaPara ErroSQL;       
+            }                    
+            
+            CUR_R034Fun.Proximo();            
+        Fim;
+        CUR_R034Fun.FecharCursor();
+            
+        @-- 3 Busca 10% do Valor Total do PPR Empresa - USU_TPPREMP --@
+        AtualizaBarraProgresso("Geração PPR", "Buscando 10% do Valor Total do PPR Empresa.","NAO",2);
+        CUR_TPPREMP.SQL "Select USU_VlrTot From USU_TPPREMP Where USU_AnoRef = :dAnoBas";
+        CUR_TPPREMP.AbrirCursor();
+            Se (CUR_TPPREMP.Achou)
+                nPPREmp = CUR_TPPREMP.USU_VlrTot;
+        CUR_TPPREMP.FecharCursor();
+            
+        @-- 4 Verifica se o Valor Total PPR está preenchido no cadastro --@
+        AtualizaBarraProgresso("Geração PPR", "Verificando se o Valor Total PPR está preenchido no cadastro.","NAO",2);
+        Se (nPPREmp <= 0)
+        Inicio
+            xMensagem = "Valor Total PPR Empresa não informado. Processo será cancelado!";
+            nErrSql = 1;
+            VaPara ErroSql;    
+        Fim;        
+        
+        VerificaTotalPPR:
+        @-- 5 Busca valor Total do PPR Colaboradores --@
+        AtualizaBarraProgresso("Geração PPR", "Buscando valor Total do PPR Colaboradores.","NAO",2);
+        CUR_TPPRCOL.SQL "Select USU_ValPPR, USU_ValPer, USU_NumCad From USU_TPPRCOL Where 0=1   \
+                        UNION                                                                   \
+                        Select Sum(USU_ValPPR), Sum(USU_ValPer), Count(*)                       \
+                        From USU_TPPRCOL                                                        \
+                        Where USU_NumEmp = :nNumEmp                                             \
+                        And USU_AnoRef = :dAnoBas";
+        CUR_TPPRCOL.AbrirCursor();
+        Se (CUR_TPPRCOL.Achou)
+        Inicio
+            nTotPPR = CUR_TPPRCOL.USU_ValPPR;
+            nTotPer = CUR_TPPRCOL.USU_ValPer;
+            nQtdCol = CUR_TPPRCOL.USU_NumCad;
+        Fim;
+        CUR_TPPRCOL.FecharCursor();
+        
+        @-- 6 Busca Valor PPR Demitidos no Ano Base --@
+        AtualizaBarraProgresso("Geração PPR", "Buscando Valor PPR Demitidos no Ano Base.","NAO",2);
+        
+        CUR_R042RCV.SQL "Select ValEve From R042Rcv Where 0=1                      \
+                        UNION                                                    \
+                        Select Sum(R042Rcv.ValEve)                                \
+                        From R042Rcv, R042Rcm                                   \
+                        Where R042Rcv.NumEmp = R042Rcm.NumEmp                    \
+                            And R042Rcv.TipCol = R042Rcm.TipCol                    \
+                            And R042Rcv.NumCad = R042Rcm.NumCad                    \
+                            And R042Rcv.NumEmp = :nNumEmp                          \
+                            And R042Rcv.TipCol = :nTipCol                          \
+                            And R042Rcv.TabEve = 1                                 \
+                            And R042Rcv.CodEve in (440,441)                        \
+                            And R042Rcm.DatDem between :dAnoBas and :dFimAno";
+        CUR_R042RCV.AbrirCursor();
+            Se (CUR_R042RCV.Achou)
+                nPPRDem = CUR_R042RCV.ValEve;    
+        CUR_R042RCV.FecharCursor();  
+        
+        @-- 7 Soma os valores PPR + Periculosidade + PPR Demitidos --@
+        AtualizaBarraProgresso("Geração PPR", "Somando valores PPR + Periculosidade + PPR Demitidos.","NAO",2);
+        nTotGerPPR = nTotPPR + nTotPer + nPPRDem;
+        
+        @-- 8 Verifica se o Total de PPR é maior que os 10% do Faturamento da Empresa --@    
+        AtualizaBarraProgresso("Geração PPR", "erifica se o Total de PPR é maior que os 10% do Faturamento da Empresa.","NAO",2);
+        Se (nTotGerPPR > nPPREmp)
+        Inicio
+            nDifPPR = nTotGerPPR - nPPREmp;                     
+            
+            Se (nDifPPR > (nTotPPR + nTotPer))
+            Inicio
+                nErrSql = 1; 
+                xMensagem = "Valor da Diferença de PPR a Descontar é maior que valor Total do PPR Gerado. Processo não pode ser finalizado!";            
+                VaPara ErroSQL; 
+            Fim;
+            
+            @-- 8.1 Calcula o valor a ser descontado por Colaborador --@
+            AtualizaBarraProgresso("Geração PPR", "Calculando valor a ser descontado do PPR por Colaborador","NAO",2);
+            nValDesCol = (nDifPPR / nQtdCol);
+            
+            Se (nValDesCol < 0.01)
+                VaPara Ajustado;
+
+            ArredondarValor (nValDesCol,2);
+            
+            Se (nValDesCol > 10000)
+            Inicio
+                ConverteMascara(2,nValDesCol,xMensagem,"ZZZ.ZZZ.ZZ9,999");
+                xMensagem = "Valor de ajuste (R$ " + xMensagem + ") do PPR por colaborador é demasiado alto. Isto pode gerar uma demora, " +  
+                            "ou até travamento no processo. Verifique se o valor do Faturamento Anual está lançado" + 
+                            " corretamente ou clique em continuar caso esteja correto. [&Continuar, &Cancelar]";
+                xRet = Mensagem(Retorna,xMensagem);
+                Se (xRet = 1)  
+                Inicio
+                    nErrSql = 1; 
+                    xMensagem = "Processo Cancelado! Valor a ser descontado por colaborador é demasiado alto.";
+                    VaPara ErroSQL; 
+                Fim;        
+            Fim;     
+                            
+            
+            CUR_TPPRCOL.SQL "Select *                                              \
+                            From USU_TPPRCOL                                    \    
+                            Where USU_NumEmp = :nNumEmp                          \
+                                And USU_AnoRef = :dAnoBas";
+            CUR_TPPRCOL.AbrirCursor();
+            Enquanto (CUR_TPPRCOL.Achou)
+            Inicio
+                PprNumCad = CUR_TPPRCOL.USU_NumCad;
+                PprValPPR = CUR_TPPRCOL.USU_ValPPR;
+                PprValPer = CUR_TPPRCOL.USU_ValPer;
+                
+                IntParaAlfa(PprNumCad,xMsg);
+                xMsg = "Desconto Colaborador: " + xMsg + ". Diferença PPR!";
+                AtualizaBarraProgresso("Geração PPR", xMsg,"NAO",2);
+                
+                Se (PprValPer > 0)
+                Inicio
+                    nDesCol = nValDesCol / 1.3;
+                    nValPPRFin = PprValPPR - nDesCol;
+                    
+                    Se (nValPPRFin < 0)
+                    nValPPRFin = 0;
+                    
+                    @-- Valor Periculosidade PPR --@
+                    Se (nValPPRFin > 0)
+                    Inicio
+                    RetAdiEmp(nNumEmp,nTipCol,PprNumCad,dFimAno);
+                    nPerPer = PerPerEmp;
+                    nValPerFin = nValPPRFin * (nPerPer / 100);
+                    Fim
+                    Senao
+                    nValPerFin = 0;
+                    
+                    Se (nValPPRFin <= 0)
+                    Inicio
+                        @-- Altera os Valores de PPR na tabel USU_TPPRCol - Valores PPR Colaborador --@
+                        ExecSQLEx ("Delete USU_TPPRCOL                                \                                   
+                                    Where USU_NumEmp = :nNumEmp                      \
+                                    And USU_TipCol = :nTipCol                      \
+                                    And USU_NumCad = :PprNumCad                    \
+                                    And USU_AnoRef = :dAnoBas", xErro, xMensagem); 
+                    Fim
+                    Senao
+                    Inicio
+                        @-- Altera os Valores de PPR na tabel USU_TPPRCol - Valores PPR Colaborador --@
+                        ExecSQLEx ("Update USU_TPPRCOL                                \
+                                    Set USU_ValPPR = :nValPPRFin,                  \
+                                        USU_ValPer = :nValPerFin                   \
+                                    Where USU_NumEmp = :nNumEmp                      \
+                                    And USU_TipCol = :nTipCol                      \
+                                    And USU_NumCad = :PprNumCad                    \
+                                    And USU_AnoRef = :dAnoBas", xErro, xMensagem); 
+                    Fim;
+                                                        
+                    Se  (xErro <> 0) 
+                    Inicio
+                        nErrSql = 1; 
+                        CUR_TPPRCOL.FecharCursor();
+                        VaPara ErroSQL;       
+                    Fim;                
+                Fim
+                Senao @-- Se o Colaborador não Periculosidade --@
+                Inicio
+                    nValPPRFin = PprValPPR - nValDesCol;
+                    nValPerFin = 0;
+                    
+                    Se (nValPPRFin < 0)
+                    nValPPRFin = 0;
+                    
+                    Se (nValPPRFin <= 0)
+                    Inicio
+                        @-- Altera os Valores de PPR na tabel USU_TPPRCol - Valores PPR Colaborador --@
+                        ExecSQLEx ("Delete USU_TPPRCOL                                \                                   
+                                    Where USU_NumEmp = :nNumEmp                      \
+                                    And USU_TipCol = :nTipCol                      \
+                                    And USU_NumCad = :PprNumCad                    \
+                                    And USU_AnoRef = :dAnoBas", xErro, xMensagem); 
+                    Fim
+                    Senao
+                    Inicio
+                        @-- Altera os Valores de PPR na tabel USU_TPPRCol - Valores PPR Colaborador --@
+                        ExecSQLEx (" Update USU_TPPRCOL                                \
+                                        Set USU_ValPPR = :nValPPRFin                   \
+                                    Where USU_NumEmp = :nNumEmp                      \
+                                        And USU_TipCol = :nTipCol                      \
+                                        And USU_NumCad = :PprNumCad                    \
+                                        And USU_AnoRef = :dAnoBas", xErro, xMensagem);  
+                    Fim;
+                    
+                    Se  (xErro <> 0) 
+                    Inicio
+                        nErrSql = 1; 
+                        CUR_TPPRCOL.FecharCursor();
+                        VaPara ErroSQL;       
+                    Fim;               
+                Fim;      
+                
+                CUR_TPPRCOL.Proximo();      
+            Fim;        
+            CUR_TPPRCOL.FecharCursor();
+            
+            VaPara VerificaTotalPPR;
+            Ajustado:
+        Fim;                                     
+        
+        @-- Verifica se os valores de PPR foram inseridos com sucesso --@
+        ErroSql:
+        Se (nErrSql = 0){
+            FinalizarTransacao();
+        }
+        
+        Senao { 
+            DesfazerTransacao();
+            FinalizaBarraProgresso();
+            Mensagem(Erro,xMensagem);
+            VaPara Final; 
+        }   
+                                             
+    Fim;
+
+Senao {
+    FinalizaBarraProgresso();
+    Mensagem(Retorna,"Geração Valores PPR Cancelada!");
+    VaPara Final;      
+}
+
+FinalizaBarraProgresso();
+Mensagem(Retorna,"Valores PPR gerados com sucesso!");    
+
+Final:  

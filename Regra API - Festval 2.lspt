@@ -1,0 +1,197 @@
+@     REGRA DESENVOLVIDA POR RAFAEL BELICE      @
+@     BUSCA LANÇAMENTOS NA API VEXPENSES        @
+@        E INSERE NA TABELA R044MOV             @
+@               EVENTO  128                     @
+@ ----------------------------------------------@
+Definir Cursor Cur_R034Fun; 
+Definir Cursor Cur_R044Mov; 
+Definir Cursor Cur_R044Cal; 
+
+Definir Alfa Despesas;
+Definir Alfa request_despesas;     
+Definir Alfa request_user;
+Definir Alfa JSON;                 
+Definir Alfa el_id;
+Definir Alfa el_valor;
+Definir Alfa retorno_user;
+Definir Alfa retorno_valor;
+Definir Alfa user_id;
+Definir Alfa despesa_id;
+Definir Alfa JSON_Data;
+Definir Alfa JSON_User;
+Definir Alfa JSON_Expenses;
+Definir Alfa cpf_col;
+Definir Alfa nom_fun;
+Definir Alfa dat_pro;
+Definir Alfa sDia;
+Definir Alfa sDiaF;
+Definir Alfa sMes;
+Definir Alfa sAno;
+Definir Alfa sDatIni;
+Definir Alfa sDatFim;
+Definir Alfa Old_ID;
+Definir Alfa Expense_ID;
+
+Definir Data dDatPro; 
+Definir Data dDatini;
+Definir Data dDate;
+Definir Data dDatFim;
+Definir Data dDatZer;
+
+nCodEve = 128;
+dDatPro = DatSis; 
+
+x = 0;
+y = 0;
+
+DesmontaData (dDatPro, Dia, Mes, Ano);
+
+MontaData (1, 2, 2023, dDatIni);
+dDatFim = dDatIni;
+
+UltimoDia(dDatFim);
+
+ConverteMascara (3, dDatIni, sDatIni, "YYYY-MM-DD");
+ConverteMascara (3, dDatFim, sDatFim, "YYYY-MM-DD");
+
+MontaData (31, 12, 1900, dDatZer);
+
+@ Request Despesas @
+request_despesas = "https://api.vexpenses.com/v2/reports/status/APROVADO?include=expenses&search=approval_date%3A"+sDatIni+"%2C"+sDatFim+"&searchFields=approval_date%3Abetween&searchJoin=and";
+HttpObjeto(JSON);
+HttpAlteraCabecalhoRequisicao(JSON, "Authorization", "WqQaPwlARqWiNoEofYI0T0HzirVESq5D9Es57TSjwEyt5PBC1CE5WSsNHbBf");
+HttpAlteraCabecalhoRequisicao(JSON, "Accept", "application/json");
+HttpAlteraCabecalhoRequisicao(JSON, "Content-Type", "application/json");
+HttpDesabilitaErroResposta(JSON);
+HttpGet(JSON, request_despesas, despesa_id);
+getJSONArrayObj(despesa_id, "data", JSON_Data);
+getJSONArrayLength(JSON_Data, xretorno);
+
+Enquanto (x < xretorno)
+  Inicio
+    
+    Definir alfa JSON_AUX;
+    JSON_AUX = JSON_DATA;
+
+    @ Procura por um trecho específico dentro de um texto e o substitui, retornando um novo texto @
+    TrocaString(JSON_AUX, "[", "", JSON_AUX);
+    TrocaString(JSON_AUX, "]", "", JSON_AUX); 
+   
+    @Aqui busca o ID que vai ser usado para buscar o colaborador@
+    getItemJSONArrayStringByTag(JSON_Data, "user_id", x, el_id);           @ ID Colaborador@
+    getItemJSONArrayStringByTag(JSON_Data, "approval_date", x , dat_pro);  @ Data aprovação @  
+    getItemJSONArrayStringByTag(JSON_Data, "expenses", x , JSON_Expenses); @ Array das Despesas @   
+    getJSONArrayObj(JSON_Expenses, "data", JSON_AUX);                      @ Dados das Despesas @
+    getJSONArrayLength(JSON_AUX, xretorno2);
+    
+    y = 0;
+    
+      Enquanto (y < xRetorno2)
+        Inicio
+          getItemJSONArrayStringByTag(JSON_AUX, "expense_id", y , Expense_ID);
+          getItemJSONArrayStringByTag(JSON_AUX, "value", y , el_valor);              @Aqui vai buscar o valor que veio no array@  
+          /*TrocaString(JSON_AUX, "[", "", JSON_AUX);
+          TrocaString(JSON_AUX, "]", "", JSON_AUX);   
+          getJSONString(JSON_AUX, "value", el_valor);               @Aqui vai buscar o valor que veio no array@ 
+          getJSONString(JSON_AUX, "expense_id", Expense_ID);     */ @ Busca o Id da Despesa @
+          AlfaparaData(dat_pro, "YYYY-MM-DD", dDate);               @ Data de Referência do Cálculo @
+
+          @request users para buscar o cpf do colaborador @
+          request_user = "https://api.vexpenses.com/v2/team-members/"+el_id;  @ID no final@
+
+          HttpObjeto(user_id);
+          HttpAlteraCabecalhoRequisicao(user_id, "Authorization", "WqQaPwlARqWiNoEofYI0T0HzirVESq5D9Es57TSjwEyt5PBC1CE5WSsNHbBf");
+          HttpAlteraCabecalhoRequisicao(user_id, "Accept", "application/json");
+          HttpDesabilitaErroResposta(user_id);
+          HttpGet(user_id, request_user, user_id);  
+   
+          getJSONObj(user_id, "data", JSON_User);
+          getJSONString(JSON_User, "cpf", cpf_col);
+          getJSONString(JSON_User, "name", nom_fun);
+          TrocaString(el_valor, ".", ",",el_valor);
+          AlfaParaInt (el_valor, nValor);
+          nValEve = nValor;
+ 
+          @ BUSCA O CÁLCULO QUE PERTENCE A DESPESA @
+          Cur_R044Cal.SQL "SELECT CodCal FROM R044CAL WHERE INICMP <= :dDate And FIMCMP >= :dDate and tipcal = 11";
+          
+          Cur_R044Cal.AbrirCursor();
+            Se(Cur_R044Cal.Achou)
+              Inicio
+                nCodCal = Cur_R044Cal.CodCal;
+                @ nCodCal = 307;    Teste @
+              Fim;
+            Senao
+              Inicio
+                Cur_R044Cal.FecharCursor();
+                Vapara Final;
+              Fim;
+          Cur_R044Cal.FecharCursor();
+  
+          @ BUSCA O COLABORADOR DA DESPESA @
+          Cur_R034Fun.Sql "SELECT NumEmp,TipCol,NumCad FROM R034FUN WHERE NUMCPF = :Cpf_Col AND SITAFA <> 7 ORDER BY NUMCAD DESC";
+          
+          Cur_R034Fun.AbrirCursor();
+            Se(Cur_R034Fun.Achou)
+              Inicio        
+                Definir Alfa sOriMov;
+                nNumEmp = Cur_R034Fun.NumEmp;
+                nTipCol = Cur_R034Fun.TipCol;
+                nNumCad = Cur_R034Fun.NumCad;
+                nTabEve = 1;
+                nCodRat = 0;
+                nSeqEve = 1;
+                sOriMov = "I";
+                nRefEve = 1;
+              Fim;
+          Cur_R034Fun.FecharCursor();
+
+          @ VERIFICA SE JÁ EXISTE UM REGISTRO PARA O COLABORADOR NO CALCULO @
+          Cur_R044Mov.Sql " Select SeqEve from R044MOV Where 0 = 1 Union \
+                            SELECT Max(SeqEve) FROM R044MOV WHERE NUMEMP = :nNumEmp AND TIPCOL = :nTipCol AND NUMCAD = :nNUMCAD AND \
+                            CODCAL = :nCodCal and TABEVE = :nTabEve AND CODEVE = :nCodEve AND \
+                            CODRAT = :nCodRat AND ORIMOV = :sOriMov AND REFEVE = :nRefEve";
+                                             
+                                              @  CODCAL IN (302,304,307) @ 
+          Cur_R044Mov.AbrirCursor();
+                  Se(Cur_R044Mov.NaoAchou)   
+                    Inicio
+                      ExecSql"INSERT INTO R044MOV VALUES (:nNumEmp,:nTipCol,:nNumCad,:nCodCal,:nTabEve,:nCodEve,:nCodRat,:nSeqEve,:sOriMov,:nRefEve,:nValEve,Null,null,null)";
+                Cur_R044Mov.FecharCursor();
+                Vapara Final;
+              Fim;
+
+            Senao
+              Inicio 
+                nSeqEve = Cur_R044Mov.SeqEve;
+          Cur_R044Mov.FecharCursor();
+          @ Verifica se o lançamento é no valor do evento @
+          
+          Cur_R044Mov.Sql "SELECT * FROM R044MOV WHERE NUMEMP = :nNumEmp AND TIPCOL = :nTipCol AND NUMCAD = :nNUMCAD AND \
+                            CODCAL = :nCodCal and TABEVE = :nTabEve AND CODEVE = :nCodEve AND \
+                            CODRAT = :nCodRat AND ORIMOV = :sOriMov AND VALEVE = :nVALEve AND REFEVE = :nRefEve";
+                            @ CODCAL IN (302,304,307) @
+
+          Cur_R044Mov.AbrirCursor();
+            Se(Cur_R044Mov.NaoAchou)
+              Inicio
+                nSeqEve = nSeqEve + 1;
+                ExecSql"INSERT INTO R044MOV VALUES (:nNumEmp,:nTipCol,:nNumCad,:nCodCal,:nTabEve,:nCodEve,:nCodRat,:nSeqEve,:sOriMov,:nRefEve,:nValEve,Null,null,null)";
+              Fim;
+        Fim;
+        Cur_R044Mov.FecharCursor();
+        
+      Final;
+
+/*  Se(x = xretorno)
+      Vapara Final;
+    Senao
+      Vapara volta; 
+*/
+
+    Y++;
+    Fim;
+X++;
+Fim;
+
+

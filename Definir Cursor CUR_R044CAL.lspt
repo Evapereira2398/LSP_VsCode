@@ -1,0 +1,102 @@
+Definir Cursor CUR_R044CAL;
+Definir Cursor CUR_R046VER;
+
+Definir Numero nNumEmp;
+Definir Numero nTipCol;
+Definir Numero nNumCad;
+Definir Numero nCodCal;
+Definir Numero nCodEve;
+
+Definir Data dPerRef;
+
+nNumEmp = 0;
+nTipCol = 0;
+nNumCad = 0;
+nCodCal = 0;
+nCodEve = 0;
+nValEve = 0;
+
+nNumEmp = R034FUN.NumEmp; /* Empresa */ 
+nTipCol = R034FUN.TipCol; /* Tipo do colaborador */
+nNumCad = R034FUN.NumCad; /* Matricula */
+dPerRef = PerRef; /* Período de Referência (Cálculo Atual) */
+nCodEve = CodEvt; /*Informa as horas, valor ou quantidade de um evento informado entre os colchetes. 
+                    Esta variável refere-se apenas ao cálculo que está sendo efetuado, sem levar em consideração os lançamentos.*/ 
+
+
+/* Se o codigo do evento for 1993 o cursor vai buscar a empresa o periodo de referencia e o tipo do calculo 91, se ela achar atritui o valor que encontrou 
+  na variavel nCodCal 
+*/
+Se (nCodEve = 1993)
+  {
+    CUR_R044CAL.Sql "Select * from R044CAL where NumEmp = :nNumEmp and PerRef = :dPerRef and TipCal = 91"; /* Tipo do calculo 91 */
+      
+      CUR_R044CAL.AbrirCursor();
+        Se (CUR_R044CAL.Achou)
+          {
+            nCodCal = CUR_R044CAL.CodCal;
+          }
+      CUR_R044CAL.FecharCursor();
+
+      /* Abre outro cursor para buscar codigo do evento 1983 se achar algum evento com esse codigo atribui o valor do evento na variavel nValEve */
+      CUR_R046VER.Sql "Select * from R046VER where NumEmp = :nNumEmp and \
+                                                 TipCol = :nTipCol and \
+                                                 NumCad = :nNumCad and \
+                                                 CodCal = :nCodCal and \
+                                                 CodEve = 1983";
+      CUR_R046VER.AbrirCursor();
+        Se (CUR_R046VER.Achou)
+          {
+            nValEve = CUR_R046VER.ValEve;
+          }
+      CUR_R046VER.FecharCursor(); 
+    
+      ValEvt = nValEve; /* ValEvt passa a ser o valor encontrado no cursor R046VER */
+  }
+
+Senao
+
+
+
+/* Se o codigo do evento for 1991 busca empresa o periodo de refernecia e o tipo do calculo 31 e 32, se encontrar algum valor com esses parametros 
+  atribui esse valor na variavel nCodCal
+*/
+
+Se (nCodEve = 1991) @@@ Se for o evento do Arred. Mês Anterior, exclui os valores do Arred. do 13º Salário (Integral e Adiantado) @@@
+  { 
+    CUR_R044CAL.Sql "Select * from R044CAL where NumEmp = :nNumEmp and PerRef = :dPerRef and TipCal in (31,32)"; /* Tipo do calculo 31 e 32 */
+    CUR_R044CAL.AbrirCursor();
+      Se (CUR_R044CAL.Achou)
+        {
+          nCodCal = CUR_R044CAL.CodCal;
+        }
+    CUR_R044CAL.FecharCursor();
+
+
+    /* O segundo cursor busca o codigo do evento 1984, quando encontrar algum valor com esses parametros atribui o valor encontrado na variavel nValEve*/ 
+    CUR_R046VER.Sql "Select * from R046VER where NumEmp = :nNumEmp and \
+                                                 TipCol = :nTipCol and \
+                                                 NumCad = :nNumCad and \
+                                                 CodCal = :nCodCal and \
+                                                 CodEve = 1984"; /* 86,40 + 0,60 = 90 */ 
+    CUR_R046VER.AbrirCursor();
+      Se (CUR_R046VER.Achou)
+        {
+          nValEve = CUR_R046VER.ValEve; /* 86,40 */
+        }
+    CUR_R046VER.FecharCursor(); 
+
+    /* 86,40 = 86,40 - 86,40*/
+    
+    ValEvt = ValEvt - nValEve; /* Valor do evento passa a ser ele mesmo menos o valor encontrado pelo cursor*/
+  }
+x=0;
+
+/* ValEvt = Valor do Evento Calculado */
+
+
+
+13° Adiantado /* 814 */
+
+Media de horas extras - 28,06
+

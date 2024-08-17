@@ -1,0 +1,454 @@
+@Regra Ligada na R034CPL @
+Definir Cursor Cur_R034FUN;
+Definir Cursor Cur_R034Cpl;
+Definir Cursor Cur_R030Fil;
+Definir Cursor Cur_R030Emp;
+Definir Cursor CR034FUN;
+Definir Cursor CR030EMP;
+Definir Cursor CR030FIL;
+Definir Cursor CUSU34FUN;
+
+Definir Cursor Cur_R023Nac;
+Definir Cursor Cur_R038HFI;
+Definir Alfa sCaracter1;
+Definir Alfa sCaracter2;
+Definir Alfa sCaracter3;
+Definir Alfa sUser;
+Definir Alfa sPass;
+Definir Alfa sPost;
+Definir Alfa sSobrenome;
+Definir Alfa sNomFun;
+Definir Alfa sCidNas;
+Definir Alfa sTipSex;
+Definir Alfa sPriNom;
+Definir Data dDatAdm;
+Definir Data dDatDem;
+Definir Alfa sAux;
+Definir Alfa vPostData;
+Definir Alfa POST;
+Definir Alfa aCodSAP;
+Definir Alfa aLog;
+Definir Alfa aNumCad;
+Definir Alfa aNumEmp;
+
+@ Campos do POST São todos Alfa @
+Definir Alfa codigoColaborador;
+Definir Alfa dataInicio;
+Definir Alfa dataFim;
+Definir Alfa areaRecursosHumanos;
+Definir Alfa formaTratamento;
+Definir Alfa sobrenome;
+Definir Alfa primeiroNome;
+Definir Alfa nomeCompleto;
+Definir Alfa dataNascimento;
+Definir Alfa localNascimento;
+Definir Alfa sexoMasculino;
+Definir Alfa sexoFeminino;
+Definir Alfa paisDadosPessoais;
+Definir Alfa estado;
+Definir Alfa nacionalidade;
+Definir Alfa cpf;
+Definir Alfa divisao;
+Definir Alfa subArea;
+Definir Alfa endereco;
+Definir Alfa snumero;
+Definir Alfa complemento;
+Definir Alfa bairro;
+Definir Alfa cidade;
+Definir Alfa cep;
+Definir Alfa paisEnderecos;
+Definir Alfa regiao;
+Definir Alfa email;
+Definir Alfa telefone;
+Definir Alfa aDddTel;
+
+aLog = "";
+
+CR034FUN.sql"Select NumEmp,TipCol,NumCad                    \
+               From R034FUN                                 \
+              Where NumEmp in (1,3,4,5,10,12,13,14,15,23,25) \
+                And TipCol = 1                            \
+                And SitAfa not in (7,8)";                   
+               
+CR034FUN.AbrirCursor()
+Enquanto (CR034FUN.Achou)
+    {
+        nNumEmp =  CR034FUN.NumEmp;
+        nTipCol =  CR034FUN.TipCol; 
+        nNumCad =  CR034FUN.NumCad;
+        aCodSAP = "0";
+        
+        Se ((nNumemp = 4) e (nTipCol = 1) e (nNumCad = 1000) ou (nNumcad = 1001)){
+          VaPara ProxReg;
+        }
+    
+        @ --- Busca os dados do colaborador em relação ao código de pessoa cadastrado --- @
+        CUSU34FUN.sql"  Select *                        \
+                        From USU_T034FUN                \
+                        Where USU_NumEmp = :nNumEmp     \
+                        And USU_TipCol = :nTipCol       \
+                        And USU_NumCad = :nNumCad       \
+                        Order by USU_SeqReg asc";
+                
+        CUSU34FUN.AbrirCursor()
+            Enquanto (CUSU34FUN.Achou) {
+                aCodSAP = CUSU34FUN.USU_CodSap;
+                CUSU34FUN.Proximo()
+            }
+        CUSU34FUN.FecharCursor() 
+
+        Se (aCodSAP <> "0") { VaPara ProxReg; }
+
+        Cur_R034FUN.Sql "Select * from R034fun Where NumEmp = :nNumEmp and TipCol = :nTipCol And NumCad = :nNumCad";
+    
+        Cur_R034FUN.AbrirCursor();
+            Se(Cur_R034FUN.Achou) {
+                @ dataInicio @
+                dDatAdm = Cur_R034FUN.DatAdm;
+                ConverteMascara (3, dDatAdm, dataInicio, "DDMMYYYY");
+            
+                @ dataFim @
+                nSitAfa = Cur_R034FUN.SitAfa;
+                Se(SitAfa = 7) {
+                    dDatDem = Cur_R034FUN.DatAfa;
+                    ConverteMascara (3, dDatDem, dataFim, "DDMMYYYY");
+                } Senao { dataFim = "31129999"; }
+  
+                @ formaTratamento @
+                sTipSex = Cur_R034FUN.TipSex;
+                Se(sTipSex = "M") { sTipSex = "Sr"; } 
+                Senao { sTipSex = "Sra"; }
+                formaTratamento = sTipSex;
+
+                @ Sobrenome @
+                sNomFun = Cur_R034FUN.NomFun; 
+                sSobrenome = sNomFun;
+                TamanhoAlfa (sSobrenome, Tam);
+                PosicaoAlfa (" ",sSobrenome, PosStr);
+                CopiarAlfa (sSobrenome, 0, PosStr);
+                sAux = sNomFun;
+                TrocaString(sAux, sSobrenome, "", sSobrenome);
+                sobrenome = sSobrenome;
+  
+                @ primeiroNome @
+                sPriNom = sNomFun;
+                PosicaoAlfa (" ",sNomFun, PosStr);
+                CopiarAlfa (sPriNom, 0, PosStr);
+                primeiroNome = sPriNom;
+                TiraEspacos (primeiroNome, primeiroNome);
+                @ nomeCompleto @
+                nomeCompleto = sNomFun;
+  
+                @ Data Nascimento @
+                dDatNas = Cur_R034FUN.DatNas;
+                ConverteMascara (3, dDatNas, dataNascimento, "DDMMYYYY");
+  
+                @ sexoMasculino @  @ sexoFeminino @
+                sexoMasculino = "";
+                sexoFeminino  = "";
+                sTipSex = Cur_R034FUN.TipSex;
+                Se(sTipSex = "M") { sexoMasculino = "X"; }
+                Senao { sexoFeminino = "X"; }
+     
+                @nacionalidade @
+                nCodNac = Cur_R034FUN.CodNac;
+
+                @ CPF @
+                ConverteMascara (1,Cur_R034FUN.NumCpf,cpf,"99999999999");
+            }
+        Cur_R034FUN.FecharCursor();
+    
+        @ codigoColaborador @
+        IntParaAlfa(nNumCad, codigoColaborador);
+        codigoColaborador = "";
+        @ areaRecursosHumanos @
+        @ConverteMascara (1, nNumEmp, areaRecursosHumanos, "9999"); @
+
+        @ Busca os dados da ficha complementar @
+        Cur_R034Cpl.SQL"SELECT  R034CPL.TIpLgr, \
+                                R034CPL.PaiNas, \
+                                R034CPL.EndRua, \
+                                R034Cpl.EndCpl, \
+                                R034Cpl.EndNum, \
+                                R034CPL.EndCep, \
+                                R034CPL.EmaCom, \
+                                R034CPL.DddTel, \
+                                R034CPL.NumTel, \
+                                R074PAI.NomPai, \
+                                R074EST.CodEst, \
+                                R074CID.NomCid  \
+                        FROM R034CPL, R074PAI, R074EST, R074CID WHERE  \
+                        R034Cpl.NumEmp = :nNumEmp AND                  \
+                        R034Cpl.TipCol = :nTipCol AND                  \
+                        R034Cpl.NumCad = :nNumCad AND                  \
+                        R034Cpl.PaiNas = r074pai.CodPai AND            \
+                        R034Cpl.EstNas = R074Est.CodEst AND            \
+                        R034Cpl.PaiNas = R074Est.CodPai AND            \
+                        R034Cpl.CciNas = R074Cid.CodCid"; 
+        Cur_R034Cpl.AbrirCursor();
+            Se(Cur_R034Cpl.Achou) {
+                @ LocalNascimento @
+                localNascimento = Cur_R034Cpl.NomCid;
+      
+                @ email @
+                email = Cur_R034Cpl.EmaCom;
+                
+                @ telefone @
+                nDddTel = Cur_R034CPL.DddTel;
+                ConverteMascara(1,nDddTel,aDddTel,"999");
+                telefone = aDddTel + Cur_R034Cpl.NumTel;
+            
+                @ paisDadosPessoais @
+                paisDadosPessoais = Cur_R034Cpl.NomPai; 
+                CopiarAlfa (paisDadosPessoais, 0, 2);
+                ConverteParaMaiusculo(paisDadosPessoais, paisDadosPessoais);
+      
+                @ Estado  @
+                estado =  Cur_R034Cpl.CodEst;
+          
+                @ Endereco @
+                @ Tipo Endereço @
+                Definir Alfa sTipLgd;
+                Definir Alfa aTipLgd;
+                sTipLgd = Cur_R034CPL.TIpLgr;
+                Se (sTipLgd = "SIT") {
+                    aTipLgd = "Sítio";
+                    endereco = aTipLgd + Cur_R034Cpl.EndRua; 
+                }
+              
+                Se (sTipLgd = "COM"){
+                    aTipLgd = "Vila ";
+                    endereco = aTipLgd + Cur_R034Cpl.EndRua;
+                }
+              
+                Se ((sTipLgd <> "COM") e (sTipLgd <> "SIT")){
+                    endereco = Cur_R034Cpl.EndRua;
+                    RetornaEnderecoComLogradouro(sTipLgd, endereco, endereco);
+                }    
+  
+                @ snumero @
+                snumero = Cur_R034Cpl.EndNum;
+                
+                @ Complemento @
+                complemento = Cur_R034Cpl.EndCpl;
+                TiraEspacos (complemento, complemento);
+                
+                @ Cep @
+                ncep = Cur_R034CPL.EndCep;
+                ConverteMascara (1, ncep, cep, "99999999");  
+            }
+    
+        Cur_R034Cpl.FecharCursor();
+
+        @ Nacionalidade @
+        Cur_R023Nac.Sql"Select DesNac From R023Nac Where CodNac = :nCodNac";
+        Cur_R023Nac.AbrirCursor();
+            Se(Cur_R023Nac.Achou) {
+                nacionalidade = Cur_R023Nac.DesNac;
+                CopiarAlfa (nacionalidade, 0, 2);
+                ConverteParaMaiusculo(nacionalidade, nacionalidade);
+            }
+        Cur_R023Nac.FecharCursor();
+        @IntParaAlfa(Numero Origem, Alfa end Retorno);@
+
+        @ Divisão - Representa a Filial @
+        Cur_R038HFI.SQl"Select CODFIL FROM R038HFI \ 
+                        WHERE NUMEMP = :nNumEmp    \
+                        AND TIPCOL = :nTipCol      \
+                        AND NUMCAD = :nNumCad      \
+                        AND DATALT = (SELECT MAX(DATALT) FROM R038HFI \
+                                      WHERE NUMEMP = :nNumEmp         \
+                                      AND TIPCOL = :nTipCol           \
+                                      AND NUMCAD = :nNumCad)";
+        Cur_R038HFI.AbrirCursor();
+            Se(Cur_R038HFI.Achou) {
+                nCodFil = Cur_R038HFI.CodFil;
+                ConverteMascara (1,nCodFil,divisao,"9999");
+      
+                CR030EMP.sql"Select USU_EmpSap      \
+                           From R030EMP             \
+                           Where NumEmp = :nNumEmp";
+                
+                CR030EMP.AbrirCursor()
+                    Se (CR030EMP.Achou) {
+                        areaRecursosHumanos = CR030EMP.USU_EmpSap;
+                        subArea = CR030EMP.USU_EmpSap;
+                    }
+                CR030EMP.FecharCursor()
+      
+                CR030FIL.sql"Select USU_FilSap        \
+                            From R030FIL              \
+                            Where NumEmp = :nNumEmp   \
+                            and CodFil = :nCodFil";
+                
+                CR030FIL.AbrirCursor()
+                    Se (CR030FIL.Achou) { divisao = CR030FIL.USU_FilSap; }
+                CR030FIL.FecharCursor();
+            }
+        Cur_R038HFI.FecharCursor();
+
+        @Busca Cidade Atual @
+        Cur_R034Cpl.SQL"SELECT  R074PAI.NomPai,                          \
+                                R074CID.NomCid,                          \
+                                R074Bai.NomBai,                          \
+                                R034CPL.CodEst                           \
+                                FROM R034CPL, R074PAI, R074BAI, R074CID  \
+                                WHERE R034Cpl.NumEmp = :nNumEmp          \
+                                AND R034Cpl.TipCol = :nTipCol            \
+                                AND R034Cpl.NumCad = :nNumCad            \
+                                AND R034Cpl.CodPai = r074pai.CodPai      \
+                                AND R034Cpl.CodCid = R074Cid.CodCid      \
+                                AND R034Cpl.CodBai = R074Bai.CodBai      \
+                                AND R034Cpl.CodCid = R074Bai.CodCid ";  
+        Cur_R034Cpl.AbrirCursor();
+            Se(Cur_R034Cpl.Achou) {
+                @Bairro@
+                bairro = Cur_R034Cpl.NomBai;
+        
+                @cidade@
+                cidade = Cur_R034Cpl.NomCid;
+        
+                @paisEnderecos@
+                paisEnderecos  = Cur_R034Cpl.NomPai;
+                CopiarAlfa (paisEnderecos, 0, 2);
+                ConverteParaMaiusculo(paisEnderecos, paisEnderecos);
+    
+                @ Região @
+                regiao = Cur_R034CPL.CodEst;
+            }
+        Cur_R034Cpl.FecharCursor();
+
+        x = 1;
+
+        @ Faz o POST @
+        RetornaAscII (34,sCaracter1);
+        RetornaAscII (64,sCaracter2);
+        RetornaAscII (92,sCaracter3);
+    
+        @ Authorization @
+        sUser = "S-IFSENIOR";
+        sPass = "^0AEmb"+sCaracter1 + "@jXQxXNd!8"+sCaracter3+"*mtL;.6kfuT1NB";
+        sPost = "https://pipo.lavoroagro.com:443/RESTAdapter/senior/criarempregado";
+
+        vPostData ="{\"codigoColaborador\":\""+codigocolaborador+"\",\"dataInicio\":\""+dataInicio+"\",\"dataFim\":\""+dataFim+
+        "\",\"areaRecursosHumanos\":\""+areaRecursosHumanos+"\",\"formaTratamento\":\""+formaTratamento+"\",\"sobrenome\":\""+sobrenome+
+        "\",\"primeiroNome\":\""+primeiroNome+"\",\"nomeCompleto\":\""+nomeCompleto+"\",\"dataNascimento\":\""+dataNascimento+
+        "\",\"localNascimento\":\""+localNascimento+"\",\"sexoMasculino\":\""+sexoMasculino+"\",\"sexoFeminino\":\""+sexoFeminino+
+        "\",\"paisDadosPessoais\":\""+paisDadosPessoais+"\",\"estado\":\""+estado+"\",\"nacionalidade\":\""+nacionalidade+
+        "\",\"cpf\":\""+cpf+"\",\"divisao\":\""+divisao+"\",\"subArea\":\""+subArea+"\",\"endereco\":\""+endereco+"\",\"numero\":\""+snumero+
+        "\",\"complemento\":\""+complemento+"\",\"bairro\":\""+bairro+"\",\"cidade\":\""+cidade+"\",\"cep\":\""+cep+"\",\"paisEnderecos\":\""+paisEnderecos+
+        "\",\"regiao\":\""+regiao+"\",\"email\":\""+email+"\",\"telefone\":\""+telefone+"\"}";
+
+        Definir Alfa vHtml;
+        Definir Alfa aStaRet;
+        Definir Alfa aCodSAP;
+        Definir Alfa aLogSAP;
+        Definir Data dDatInt;
+        Definir Alfa aDatTim;
+        Definir Cursor CUSU34FUN;
+        HttpObjeto(POST);
+        HttpAlteraAutenticacaoProxy(POST, "Username", sUser);
+        HttpAlteraAutenticacaoProxy(POST, "Password", sPass);
+        HttpAlteraCabecalhoRequisicao(POST, "Authorization", "Basic Uy1JRlNFTklPUjpeMEFFbWIiQGpYUXhYTmQhOFwqbXRMOy42a2Z1VDFOQg==");
+        HttpAlteraCabecalhoRequisicao(POST, "Accept", "*/*");
+        HttpAlteraCabecalhoRequisicao(POST, "Accept-Encoding", "gzip, deflate, br");
+        HttpAlteraCabecalhoRequisicao(POST, "User-Agent", "PostmanRuntime/7.26.8");
+        HttpAlteraCabecalhoRequisicao(POST, "Content-Type", "application/json");
+        HttpDesabilitaErroResposta(POST); 
+        HttpPost(POST, sPost,vPostData, vHTML);
+        dDatInt = DatSis;
+        nHorInt = HorSis;
+        nSeqReg = 0;
+        aStaRet = "";
+        nCodRet = 0;
+    
+        HttpLeCodigoResposta(POST, nCodRet);    
+    
+        aStaRet = vHTML;
+        PosicaoAlfa("status",aStaRet, nPosStr);
+        CopiarAlfa(aStaRet,nPosStr+8,1);
+        Se (aStaRet = "0"){
+            aCodSAP = vHTML;
+            PosicaoAlfa("empregado",aCodSAP, nPosStr);
+            CopiarAlfa(aCodSAP,nPosStr+12,8);
+        }
+        Senao {
+            aCodSAP = "0";
+            @  Inclusao log detalhado por colaborador - Chamado 217086 @
+            IntParaAlfa(nNumCad, aNumCad);
+            IntParaAlfa(nNumEmp, aNumEmp);        
+            aLog = aLog + "Erro ao integrar Matrícula " + aNumCad + " da Empresa " + aNumEmp + ". Causa: " + vHTML + "!!! ";
+        }
+            
+        @ --- Verifica se o colaborador já tem registro de integração --- @
+        CUSU34FUN.sql"  Select * From USU_T034FUN    \
+                        Where USU_NumEmp = :nNumEmp  \
+                        And USU_TipCol = :nTipCol    \
+                        And USU_NumCad = :nNumCad";
+        CUSU34FUN.AbrirCursor()
+            Enquanto (CUSU34FUN.Achou) {
+                nSeqReg = nSeqReg + 1;
+                CUSU34FUN.Proximo()
+            }
+        CUSU34FUN.FecharCursor()
+        
+        nSeqReg = nSeqReg + 1;
+        aLogSAP = vHTML;
+        
+        
+        @ ------------------------------------------------------------ @
+        Definir Alfa aMensagem;
+        Definir Numero TamExemplo;
+        Definir Alfa aLogSapQtd;
+
+        aLogSapQtd = aLogSap;
+            
+        TamanhoAlfa (aLogSapQtd, TamExemplo);
+        
+        Se (TamExemplo >= 200) {
+            aMensagem = "O SAP retornou um log com mais de 200 caracteres para o colaborador: " + aNumCad + " Empresa: " + aNumEmp;
+            Mensagem (Retorna, aMensagem);
+        }
+        @ ------------------------------------------------------------ @
+    
+        @ --- Grava o novo registro --- @
+        ExecSql"Insert into USU_T034FUN Values (:nNumEmp,:nTipCol,:nNumCad,:dDatInt,:nHorInt,:aCodSAP,:aLogSAP,:nSeqReg)";
+    
+        ProxReg:
+    
+    CR034FUN.Proximo()
+  }
+CR034FUN.FecharCursor()
+
+Se (aLog <> "") {
+    MensagemLog(aLog);
+}
+
+
+/*   CAMPOS
+    "codigoColaborador": "String 1",
+    "dataInicio": "String 2",
+    "dataFim": "String 3",
+    "areaRecursosHumanos": "String 4",
+    "formaTratamento": "String 5",
+    "sobrenome": "String 6",
+    "primeiroNome": "String 7",
+    "nomeCompleto": "String 8",
+    "dataNascimento": "String 9",
+    "localNascimento": "String 10",
+    "sexoMasculino": "String 11",
+    "sexoFeminino": "String 12",
+    "paisDadosPessoais": "String 13",
+    "estado": "String 14",
+    "nacionalidade": "String 15",
+    "cpf": "String 16",
+    "divisao": "String 17",
+    "subArea": "String 18",
+    "endereco": "String 19",
+    "numero": "String 20",
+    "complemento": "String 21",
+    "bairro": "String 22",
+    "cidade": "String 23",
+    "cep": "String 24",
+    "paisEnderecos": "String 25",
+    "regiao": "String 26"  */

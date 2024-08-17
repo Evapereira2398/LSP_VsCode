@@ -1,0 +1,836 @@
+Definir Data   dDatPro;
+Definir Data   dDatZer;
+definir Data   xDatInt;
+Definir Data   dDatFer;
+Definir Alfa   aMensagem;
+Definir Alfa   aTemBco;
+Definir numero xCodSin;
+Definir numero nHorSit20;
+Definir cursor cur_r034fun;
+Definir cursor C_R002Fec;
+Definir Cursor Cur_R064SOB;
+
+xNumEmp = R034FUN.NumEmp; @ Numero da empresa @
+xCodFil = R034FUN.CodFil; @ Codigo da filial @
+xTipCol = R034FUN.TipCol; @ Tipo do colaborador @
+xNumCad = R034FUN.NumCad; @ Matricula @
+aTemBco = ""; 
+dDatPro = DatPro; @Retorna a data que está sendo processada @
+dDatZer = 0;
+dIniApu = IniApu; @ Retorna o Início da Apuração do Cálculo ativo @
+dFimApu = FimApu; @ Retorna a data final da Apuração do Cálculo ativo @
+montadata(03,06,2011,xdatret); 
+montadata(16,03,2012,xdtbco01); 
+montadata(16,12,2014,xdtbco08); 
+
+@ Retorna a filial do funcionário em uma determinada data (dDatPro é a data que vai puxar a filial) @
+RetFilEmp(xNumEmp, xTipCol, xNumCad, dDatPro);
+xCodFil = FilEmp; @ Codigo fa Filial recebe o codigo da filial recebido pela função @
+Se (FilEmp = 29) @ Se a filial for a 29 @ ***Cancela***
+  Cancel(1);
+
+Definir Numero xCodEqp;  
+Definir Numero xCodCat;
+
+RetornaEscala (xNumEmp, xTipCol, xNumCad, dDatPro, xPCodEsc, XpCodTma, xPTurInt, xCodEqp, xCodCat, aMensagem); 
+xCodEsc = xpCodEsc;
+
+RetSinEmp(r034fun.numemp, r034fun.tipcol, r034fun.numcad, FimApu);
+xCodSin = codsinemp;
+
+
+@ Se a empresa for 8 ou 30 e Codigo da filial for diferente de 19 @
+Se ((xnumemp = 8) ou (xnumemp = 30) e (xCodFil <> 19)) {
+    xDatInt = datpro - 1;
+    vret = FLeMar;
+      Se(vret <> 0)
+        {
+          vret = FPxMar;
+          Se (vret <> 0)
+            {
+              xPriMar = HorMar;
+            }
+        }
+
+      Se (DulMar = xDatInt)
+        {
+          xHorInt = (1440 - HulMar) + xPrimar; 
+        }
+
+      senao
+        Se (DulMar = DatPro)
+        {
+          xHorInt = xPriMar - HulMar; 
+        }
+          
+        Se ((xHorInt < 660) e (xHorInt > 0))
+          Inicio
+            xPagInter = 660 - xHorInt;  
+
+            Se (horsit[301] + horsit[302] > 0)
+              {
+                horsit[301] = horsit[301] +  xPagInter;
+              }
+            
+            Senao
+            Se (horsit[16] + horsit[66] > 0)
+              {
+                horsit[16] = horsit[16] +  xPagInter;
+              } 
+          Fim 
+           
+  }
+
+VerAbrBHR(xNumEmp,xTipCol,xNumCad,1,datpro,xColBhr);
+VerAbrBHR(xNumEmp,xTipCol,xNumCad,9,datpro,xColBhr9); 
+VerAbrBHR(xNumEmp,xTipCol,xNumCad,18,datpro,xColBhr18);
+VerAbrBHR(xNumEmp,xTipCol,xNumCad,28,datpro,xColBhr28);
+VerAbrBHR(xNumEmp,xTipCol,xNumCad,30,datpro,xColBhr30);
+
+  Se (((xColBhr = 1) e (datpro >= xdtbco01)) ou ((xColBhr18 = 1) e (datpro >= xdtbco01)) ou ((xColBhr30 = 1) e (datpro >= xdtbco01)) ou (xColBhr28 = 1) ou (xColBhr9 = 1))
+    {
+      cur_r034fun.sql"select numemp, tipcol, numcad,usu_tembco \
+                    from r034fun \
+                    where \
+                    numemp = :xnumemp and \
+                    tipcol = :xtipcol and \
+                    numcad = :xnumcad";
+                    cur_r034fun.abrircursor();                     
+                      Se (cur_r034fun.achou)
+                        aTemBco = cur_r034fun.usu_tembco;  
+                    
+                    cur_r034fun.fecharcursor();                                             
+    }
+
+horas = HorSit[301] + HorSit[302] + HorSit[309] + HorSit[310];
+
+Se ((xcodsin = 23) e (diasem = 6) e (codhor < 9996) e (horas > 0)) 
+  Inicio
+    tem50d = HorSit[301]; 
+    tem50n = HorSit[302];
+    tem75d = HorSit[309];            
+    tem75n = HorSit[310];
+    ExtrasIntervalo(0,720,0,ate12diu,ate12not);
+    horsit[301] = ate12diu;
+    horsit[302] = ate12not;
+    ExtrasIntervalo (720, 1440, 0, apo12diu, apo12not);
+    horsit[303] = apo12diu;
+    horsit[304] = apo12not;
+
+    horsit[309] = 0;
+    horsit[310] = 0;     
+  fim;
+
+HorSit[032] = 0;
+Cur_R064SOB.SQL"SELECT * \
+                FROM R064SOB \
+                WHERE NumEmp = :xNumEmp \
+                AND TipCol = :xTipCol \
+                AND NumCad = :xNumCad \
+                AND DatIni <= :dDatPro \
+                AND (DatFim >= :dDatPro OR DatFim = :dDatZer)";
+
+Cur_R064SOB.AbrirCursor();
+  Enquanto (Cur_R064SOB.Achou)
+    {
+      dDatIni = Cur_R064SOB.DatIni;
+      xHorIni = Cur_R064SOB.HorIni;
+      dDatFim = Cur_R064SOB.DatFim;
+      xHorFim = Cur_R064SOB.HorFim;
+    
+      Se ((dDatIni = dDatPro) e (dDatFim = dDatPro))
+        HorSit[032] = HorSit[032] + (xHorFim - xHorIni);
+      
+      Senao
+        Se ((dDatIni = dDatPro) e (dDatFim > dDatPro))
+          HorSit[032] = HorSit[032] + (1440 - xHorIni);
+      Senao
+        Se ((dDatIni < dDatPro) e (dDatFim = dDatPro))
+          HorSit[032] = HorSit[032] + xHorFim;
+      Senao
+        Se ((dDatIni < dDatPro) e (dDatFim < dDatPro))
+          HorSit[032] = HorSit[032] + 1440;
+      
+      Cur_R064SOB.Proximo();
+    }
+Cur_R064SOB.FecharCursor();
+
+se (datpro < xdatret)
+    vapara l_final_bh;
+se ((xnumemp <> 8) ou (xcodfil <> 9))
+    vapara l_final_bh;
+
+Se ((xNumEmp = 8) e (xCodFil = 9) e (((xCodEsc = 105) e (aTemBco <> "N")) ou (aTemBco = "S")))     
+  {
+    Se ( CodHor < 9996 )  
+      {
+        xExtras = HorSit[301] + HorSit[302] + HorSit[309] + HorSit[310];
+        xExtDiu = HorSit[301] + HorSit[309];
+        xExtNot = HorSit[302] + HorSit[310];
+        HorSit[301] = 0;
+        HorSit[302] = 0;
+        HorSit[309] = 0;
+        HorSit[310] = 0;
+    
+        HorSit[901] = 0;
+        HorSit[901] = xExtras;
+        xExtras = 0;
+      }
+      
+    Senao 
+      {
+        xExtras = HorSit[303] + HorSit[304] + HorSit[307] + HorSit[308];
+        xExtDiu = HorSit[303] + HorSit[307];
+        xExtNot = HorSit[304] + HorSit[308];
+        HorSit[303] = 0;
+        HorSit[304] = 0;
+        HorSit[307] = 0;
+        HorSit[308] = 0;
+        HorSit[901] = 0;
+        HorSit[901] = xExtras;
+        xExtras = 0;
+      }
+  }
+
+    Senao
+      {    
+        Se ((xNumEmp = 8) e (xCodFil = 9) e ((xCodEsc <> 105) ou (aTemBco = "N")))     
+      {
+        Se ( (CodHor < 9996) e (CodHor <> 0078) )  
+          {
+            xExtras = HorSit[301] + HorSit[302] + HorSit[309] + HorSit[310];
+            xExtDiu = HorSit[301] + HorSit[309];
+            xExtNot = HorSit[302] + HorSit[310];
+            HorSit[301] = 0;
+            HorSit[302] = 0;
+            HorSit[309] = 0;
+            HorSit[310] = 0;            
+            HorSit[901] = 0;
+          
+            Se (xExtras <= 120)           
+              {
+                HorSit[301] = xExtDiu;
+                HorSit[302] = xExtNot;
+                xExtras = 0;
+              }
+            
+            Senao 
+              {
+                Se(xExtDiu > 0) { 
+                  HorSit[301] = 120;
+                  xExtDiu = xExtDiu - 120;
+                }
+
+                Senao Se(xExtNot > 0) {
+                  HorSit[302] = 120;
+                  xExtNot = xExtNot - 120;
+                }
+                HorSit[309] = HorSit[309] + xExtDiu;
+                HorSit[310] = HorSit[310] + xExtNot;        
+              }  
+          }
+
+        Senao 
+          { 
+            Se ( (CodHor >= 9996)) 
+              {
+                xExtras = HorSit[303] + HorSit[304] + HorSit[307] + HorSit[308];
+                xExtDiu = HorSit[303] + HorSit[307];
+                xExtNot = HorSit[304] + HorSit[308];
+                HorSit[303] = 0;
+                HorSit[304] = 0;
+                HorSit[307] = 0;
+                HorSit[308] = 0;
+                HorSit[901] = 0;
+                HorSit[303] = xExtDiu;
+                HorSit[304] = xExtNot;       
+                xExtras = 0;
+              }
+          }
+      }  
+  }
+
+l_final_bh:
+
+Se (((QtdMar = 1) ou (QtdMar = 3)) e (ClaEsc = 7))
+  Inicio
+    HorSit[015] = PrvTrd + PrvTrn;
+    HorSit[999] = 0;
+  Fim;  
+
+  Se ((ClaEsc = 7) e (QtdMar > 0))
+    Inicio
+      xSitCmD = 0;
+      xHorSai = HorSai;
+      HorSit[103] = HorSit[015]; 
+      HorSit[104] = HorSit[065];
+      HorSit[015] = 0;
+      HorSit[065] = 0;
+      HorSit[021] = 0; 
+      HorSit[330] = 0;
+      HorSit[205] = 0;
+      HorSit[325] = 0;  
+      HorSit[334] = 0;
+      HorSit[343] = 0;
+
+      xConta = 1;
+      Enquanto ( xConta < 7 )
+        Inicio
+          Se ( (TemCmp[xConta] = 1) )
+            Inicio
+              xSitCmD = SitCmD[xConta];
+              HorSit[xSitCmD] = HorSit[xSitCmD] + QtdCmp[xConta];
+              HorSit[103] = HorSit[103] - HorSit[xSitCmD] - HorSit[001] - HorSit[051];
+            Fim;   
+          xConta = xConta + 1; 
+        Fim;
+
+      xConta = 1;
+        Enquanto ( xConta < 7 )
+          Inicio
+            Se ( (TemCmp[xConta] = 2) )
+              Inicio
+                xSitCmD = SitCmD[xConta];
+                HorSit[xSitCmD] = HorSit[xSitCmD] + QtdCmp[xConta];
+                HorSit[103] = HorSit[103] - HorSit[xSitCmD] - HorSit[001] - HorSit[051];
+              Fim;   
+            xConta = xConta + 1; 
+          Fim;
+
+      xConta = 1;
+        Enquanto ( xConta < 7 )
+          Inicio
+            Se ( (TemCmp[xConta] = 4) )
+              Inicio
+                xSitCmD = SitCmD[xConta];
+                HorSit[xSitCmD] = HorSit[xSitCmD] + QtdCmp[xConta];
+                HorSit[103] = HorSit[103] - HorSit[xSitCmD];
+              Fim;   
+            xConta = xConta + 1; 
+          Fim;
+    
+      xConta = 1;
+        Enquanto ( xConta < 7 )
+          Inicio
+            Se ( (TemCmp[xConta] = 5) )
+              Inicio
+                xSitCmD = SitCmD[xConta];
+                HorSit[xSitCmD] = HorSit[xSitCmD] + QtdCmp[xConta];
+                HorSit[103] = HorSit[103] - HorSit[xSitCmD];
+              Fim;   
+            xConta = xConta + 1; 
+          Fim;
+    Fim; 
+
+Se (( codhor = 9999 ) ou (codhor = 9997))
+  {
+    Se (( Escatu = 10 ) ou ( Escatu = 99 )ou ( Escatu = 98 )ou ( Escatu = 119 ) ou ( Escatu = 131 ) ou ( Escatu = 136 ) ou ( Escatu = 138 )ou ( Escatu = 142 )) 
+      {
+        horsit[303] = horsit[303] + horsit[301];
+        horsit[304] = horsit[304] + horsit[302];
+        horsit[301] = 0;
+        horsit[302] = 0;
+      }
+  }
+
+Se (( codhor = 9999 ))
+  {
+    xsomadiu = 0;
+    xsomaMe  = 0;
+    xsomaMa  = 0;
+    xsomanot = 0;
+    xtothor  = 0;
+    xtothor  = 0;
+    xresta   = 0;
+    
+    xNumEmp = R034FUN.NumEmp;
+
+    x++;
+    Se((xNumEmp <> 8) E (xnumemp <> 30) Ou ((xNumEmp = 8) E (xCodFil <> 19)))
+      {
+        xsomadiu = horsit[303] + horsit[307];
+        xsomaMe  = horsit[303] + horsit[304];
+        xsomanot = horsit[304] + horsit[308];
+      }
+     
+      xtothor  = xsomadiu + xsomanot;
+      
+    Se (xtothor > 480 ){
+      xresta = 0;
+
+      Se (xsomaMe < 480 ) {
+        Se ( horsit[307] > 0 ){
+          xresta = 480 - xsomaMe;
+            Se (horsit[307] > xresta )               
+              aux = horsit[307] - xresta;
+            senao  
+              aux = xresta - horsit[307];
+              
+            Se (( xNumEmp = 8 ) e (xCodFil = 19))
+              horsit[313] = horsit[313] + xresta;
+            senao
+              horsit[303] = horsit[303] + xresta;
+              horsit[307] = aux;
+            }
+      }        
+
+    } 
+    
+    senao {
+      Se((xNumEmp <> 8) e (xnumemp <> 30) e (xnumemp <> 28) Ou ((xNumEmp = 8) E (xCodFil <> 19))) {
+          horsit[303] = xsomadiu;
+          horsit[304] = xsomanot ;
+          horsit[307] = 0;
+          horsit[308] = 0;
+        }
+    }
+  }
+
+Se (( xNumEmp = 8 ) e (xCodFil = 19)) { 
+  HorSit[075] = HorSit[051] + HorSit[302] 
+  + HorSit[304] + HorSit[306] 
+  + HorSit[308] + HorSit[310] 
+  + HorSit[312] + HorSit[314]
+  + HorSit[071] + HorSit[336]
+  + HorSit[337] + HorSit[360] 
+  + HorSit[364];
+}
+
+Senao { 
+  HorSit[020] = HorSit[051] + HorSit[302]  
+  + HorSit[304] + HorSit[306] 
+  + HorSit[308] + HorSit[310] 
+  + HorSit[312] + HorSit[314]
+  + HorSit[071] + HorSit[336]
+  + HorSit[337] + HorSit[360] 
+  + HorSit[364];
+}
+
+HorSit[325] = HorSit[325] + HorSit[364];
+HorSit[364] = 0;
+
+Se((aTemBco = "S") E ((xnumemp <> 8) Ou (xnumemp = 8) E (xCodFil <> 19))) {
+  Se (diasem = diasab) {
+    jafoi = 0;  
+    vtemhoj = 0; 
+    vtempas = 0; 
+    vret = FLeMar;
+      Se(vret <> 0)
+        Inicio
+          vret = FPxMar;
+          Se (vret <> 0)
+            Inicio
+              Se (jafoi = 0)
+                  vtemhoj = FPxMar;
+              Fim;
+        Fim;
+
+Definir Cursor CurMar;
+Definir Data vdatacc;
+Definir Data vdatpro;
+Definir Data vdatbco;
+                                    
+vdatpro = DatPro -7; 
+vdatbco = xdtbco01; 
+                                    
+CurMar.Sql  "SELECT NUMCAD, DATAPU, QTDHOR, CODSIT FROM R066SIT \
+            WHERE NUMEMP = :xnumemp AND \
+            TIPCOL = :xtipcol AND \
+            NUMCAD = :xnumcad AND \
+            ((CODSIT >= 301 and CODSIT <= 314 ) OR CODSIT = 901) AND \ 
+            DATAPU = :vdatpro AND \
+            DATAPU > :vdatbco \
+            ORDER BY NUMCAD, DATAPU";
+                                    
+CurMar.AbrirCursor();
+  Se (CurMar.Achou)
+    Inicio
+      vtempas = 1;
+      vhoracc = CurMar.QtdHor;
+      vdatacc = CurMar.DatApu;                                        
+    Fim;
+CurMar.FecharCursor();
+
+}
+
+Se (((vtemhoj = 1) e (vtempas = 0)) ou ((diasem  >= 1) e (diasem <= 5) e (codhor < 9996))) {
+                    
+  Se((aTemBco = "S") e (xnumemp = 8) e ((xCodFil = 3) ou (xCodFil = 35) ou (xCodFil = 29))){
+    
+    Se((xCodFil = 3) ou (xCodFil = 35)) { 
+      HorSit[901] = HorSit[901] + HorSit[301] + HorSit[16];
+      HorSit[301] = 0;
+      HorSit[16] = 0;
+    } 
+    
+    Senao {                           
+      horsit[901] = Horsit[16];
+        Se (HorSit[901] < 60 ){
+          HorSit[901] = HorSit[901] + HorSit[66];
+          HorSit[16] = 0;
+        } 
+        
+        Senao {
+          HorSit[16] = HorSit[16] - 60;
+          HorSit[901] = 60;
+        } 
+                            
+        Se (HorSit[901] < 60 ) {
+          HorSit[901] = HorSit[901] + HorSit[301];
+          HorSit[66] = 0;
+        } 
+        
+        Senao {
+          HorSit[66] = HorSit[66] - 60;
+          HorSit[901] = 60;
+        }
+
+        Se (HorSit[901] < 60 ){
+          HorSit[901] = HorSit[901] + HorSit[302];
+          HorSit[301] = 0;
+        }
+
+        Senao {
+          HorSit[301] = HorSit[301] - 60;
+          HorSit[901] = 60;
+        }
+
+        Se (HorSit[901] < 60 ){
+          HorSit[901] = HorSit[901] + HorSit[303];
+          HorSit[302] = 0;
+        }
+
+        Senao {
+          HorSit[302] = HorSit[302] - 60;
+          HorSit[901] = 60;
+        } 
+
+        Se (HorSit[901] < 60 ){
+          HorSit[901] = HorSit[901] + HorSit[305];
+          HorSit[303] = 0;
+        } 
+
+        Senao {
+          HorSit[303] = HorSit[303] - 60;
+          HorSit[901] = 60;
+        } 
+    
+        Se (HorSit[901] < 60 ){
+          HorSit[901] = HorSit[901] + HorSit[306];
+          HorSit[305] = 0;
+        } 
+
+        Senao {
+          HorSit[305] = HorSit[305] - 60;
+          HorSit[901] = 60;
+        }  
+    
+        Se (HorSit[901] < 60 ){
+          HorSit[901] = HorSit[901] + HorSit[309];
+          HorSit[306] = 0;
+        } 
+
+        Senao {
+          HorSit[306] = HorSit[306] - 60;
+          HorSit[901] = 60;
+        } 
+    
+        Se (HorSit[901] > 60 ){
+          HorSit[309] = HorSit[901] -60;
+          HorSit[901] = 60;
+        }
+    }
+  }
+  
+  Senao { 
+
+    horsit[901] = horsit[901] + horsit[016] + horsit[066] + horsit[301] + horsit[302] + horsit[303] + horsit[305] + horsit[306] + horsit[309];
+    horsit[016] = 0; horsit[066] = 0; 
+    horsit[301] = 0; horsit[302] = 0; 
+    horsit[305] = 0; horsit[306] = 0;
+    horsit[303] = 0; horsit[309] = 0;
+  }
+}
+  Senao Se(xCodFil = 9) {
+    HorSit[303] = HorSit[303] + HorSit[901];
+    HorSit[901] = 0;
+  }
+}
+         
+definir data xdatauxini;
+definir data xdatauxfim;
+definir data xdatace;
+definir data xdatace01;
+definir data xdatace02;                
+                
+definir numero nqtdhor;
+definir numero ncrebco;
+definir numero nnumemp;
+definir numero ntipcol;
+definir numero nnumcad; 
+definir numero ncodsit;                                               
+nnumemp = r034fun.numemp;
+ntipcol = r034fun.tipcol;
+nnumcad = r034fun.numcad; 
+ncrebco = 0;
+montadata (02,09,2013,xdatauxini);  
+montadata (06,09,2013,xdatauxfim);  
+montadata (07,09,2013,xdatace01);   
+montadata (27,10,2013,xdatace02);                 
+
+
+Se (datpro = xdatace01) {
+  ncodsit = 500; 
+  xdatace = xdatace01;                  
+} 
+
+Senao Se (datpro = xdatace02) {
+  ncodsit = 901;  
+  xdatace = xdatace02;                                      
+} 
+
+definir cursor cur_R034LCO;
+
+cur_r034lco.sql"select * from r034lco \
+                where numemp = 8 \
+                and codlot = 9 \
+                and tipcol = :ntipcol \
+                and numcad = :nnumcad";
+
+cur_r034lco.abrircursor();
+  Se (cur_r034lco.achou) {
+    Se (datpro = xdatace) {
+      xdataux = xdatauxini;
+        enquanto (xdataux <= xdatauxfim) {
+          BuscaTotalizadoresSituacoes(r034fun.numemp,r034fun.tipcol,r034fun.numcad,xdataux,xdataux,150,nqtdhor);      
+          Se (nqtdhor > 0) {
+            ncrebco = ncrebco + 48;
+            nqtdhor = 0;
+          }
+                        
+          xdataux ++;
+        }
+
+        Se (datpro = xdatace) {
+          horsit[ncodsit] = horsit[ncodsit]+ ncrebco;
+          ncrebco = 0;
+        }
+    }
+  }
+
+cur_r034lco.fecharcursor();
+xDatInt = datpro - 1;
+vret = FLeMar;
+Se(vret <> 0) {
+    vret = FPxMar;
+    Se (vret <> 0)
+     {
+       xPriMar = HorMar;
+      
+     }
+  }
+  
+Senao
+vapara seqregra;
+
+Se (DulMar = xDatInt) {
+  xHorInt = (1440 - HulMar) + xPrimar; 
+    
+  Se(xHorInt < 660)
+    Inicio
+      HorSit[70] = xHorInt;
+      HorSit[77] = 660 - xHorInt;
+
+        Se ((aTemBco = "S") e (HorSit[901] = 0))
+          Inicio
+            HorSit[901] = HorSit[77] <= 120 ? HorSit[77] * 0.5 : 120 + (HorSit[77] - 120) * 0.75;
+          Fim;                                                 
+      Fim;
+}
+  
+Senao
+  Se (DulMar = DatPro) {
+    xHorInt = xPriMar - HulMar; 
+      Se(xHorInt < 660)
+        Inicio
+          HorSit[70] = xHorInt;
+          HorSit[77] = 660 - xHorInt;  
+          Se (((aTemBco = "S") e (HorSit[901] = 0) e (HorSit[77] > 0))) {
+             HorSit[901] = HorSit[77];
+          }
+        Fim;      
+  }
+  
+seqregra;
+
+Se (datpro <> xdataace2) {
+
+  Definir cursor CUR_R064TES;
+  Definir data dDatPro; 
+  dDatPro = DatPro;
+  dDatIni = IniApu;
+  dDatFim = FimApu;
+        
+  CUR_R064TES.SQL " select CodEsc \
+                    from R064TES \
+                    where 0=1 \
+                    union all \
+                    select CodEsc \
+                    from R064TES \
+                    where NumEmp = :xNumEmp \
+                      and   TipCol = :xTipCol \
+                      and   NumCad = :xNumCad \
+                      and ( DatIni >= :dIniApu \
+                            and  DatFim <= :dFimApu) \
+                            and CodEsc in (190,191,192)";
+  CUR_R064TES.AbrirCursor();
+    Se (CUR_R064TES.Achou) {
+        xCodEsc = CUR_R064TES.COdEsc;
+    }                  
+  
+  CUR_R064TES.FecharCursor();                                                                                                        
+}          
+
+Se ((Codhor = 9997) ou (CodHor = 9999)) {
+    Se (((xnumemp = 8) e (xCodFil <> 9) e (xCodFil <> 19) ) ou (xnumemp = 30) ou (xnumemp = 24)) {
+      Se (HorSit[077] > 0)
+          HorSit[303] = HorSit[303] + HorSit[077];           
+    }    
+}  
+
+Definir Cursor CUR_R034Fun; 
+Definir Cursor CurMar;  
+Definir Data dSabPas;
+Definir Data dDatBco;
+
+CUR_R034Fun.sql"SELECT NumEmp, TipCol, NumCad, USU_TemBco \
+                FROM r034fun \
+                WHERE NumEmp = :xnumemp \
+                AND TipCol = :xtipcol \
+                AND NumCad = :xnumcad";
+
+CUR_R034Fun.abrircursor();                     
+  Se(CUR_R034Fun.achou) { 
+    aTemBco = CUR_R034Fun.Usu_TemBco;  
+}
+
+CUR_R034Fun.fecharcursor(); 
+Se((aTemBco = "S") E ((xNumEmp = 8) E (xCodFil = 19)) ou ((aTemBco = "S") E ((xNumEmp = 28) OU (xnumemp = 30)))) {
+  Se(DiaSem = 6) {
+    nTemMarHoj = 0; 
+    nMarSabPasBco = 0; 
+    nMarSabPasExt = 0; 
+    nTemMarHoj = FLeMar;
+    dSabPas = DatPro - 7; 
+    MontaData(16,12,2014,dDatBco);
+    
+    Se(nTemMarHoj > 0) {
+      CurMar.Sql  "SELECT NUMCAD, DATAPU, \
+                  QTDHOR, CODSIT \
+                  FROM R066SIT \
+                  WHERE NUMEMP = :xnumemp AND \
+                  TIPCOL = :xtipcol AND \
+                  NUMCAD = :xnumcad AND \
+                  ((CODSIT >= 301 and CODSIT <= 314 ) \
+                  OR (CODSIT = 901) OR (CODSIT = 16)  \
+                  OR (CODSIT = 904)) \
+                  AND DATAPU =:dSabPas \   
+                  AND DATAPU >:dDatBco \
+                  ORDER BY NUMCAD,DATAPU";                    
+                                  
+      CurMar.AbrirCursor();
+      
+      Se(CurMar.Achou) {
+   
+        Se((CurMar.CodSit = 904) ou (CurMar.CodSit = 906)) {
+           nMarSabPasBco = 1;
+        }
+         
+        Senao {
+           nMarSabPasExt = 1; 
+         }                  
+      }
+
+      CurMar.FecharCursor();
+      
+     
+      Se ((nMarSabPasExt = 0) e (nMarSabPasBco = 0)) {                                                
+        horsit[904] = horsit[016];       
+        nHorAut = horsit[016] + horsit[066];
+        Se(nHorAut = 0) {
+          horsit[904] = horsit[311] + horsit[312] + horsit[313] + horsit[314] + horsit[307] + horsit[308];   
+        }
+        
+        horsit[311] = 0;  horsit[312] = 0;
+        horsit[313] = 0;  horsit[314] = 0;
+        horsit[307] = 0;  horsit[308] = 0;
+        horsit[016] = 0; 
+      }
+        
+      Se (horsit[904] > 480) {
+        horsit[906] = horsit[904] - 480;
+        horsit[904] = 480;
+      }
+    }
+  }
+
+  Senao
+    Se((DiaSem  >= 1) e (DiaSem <= 5) e (CodHor < 9996)) {
+      Se(xnumemp = 30) {
+        horsit[901] = horsit[901] + horsit[016] + horsit[066] + horsit[301] + horsit[302] + horsit[303] + horsit[305] + horsit[306] + horsit[309];
+      }
+    
+      horsit[901] = horsit[016] + horsit[901];       
+      nHorAut = horsit[016] + horsit[066];
+      Se(nHorAut = 0) {
+        horsit[901] = horsit[311] + horsit[312] + horsit[313] + horsit[314] + horsit[307] + horsit[308] + horsit[901]; 
+      }
+      
+      horsit[311] = 0;  horsit[312] = 0;
+      horsit[313] = 0;  horsit[314] = 0;
+      horsit[307] = 0;  horsit[308] = 0;
+      horsit[016] = 0;
+    }
+}
+ 
+Se((aTemBco <> "S") e (xNumEmp <> 8) e (xCodFil <> 9)) {
+  horsit[901] = 0;
+  horsit[077] = 0;
+  horsit[070] = 0;   
+}
+
+Se((aTemBco = "N") e (xNumEmp = 8)) {
+  horsit[901] = 0;
+  horsit[902] = 0;
+}
+
+Se ((R034Fun.NumEmp = 28) e (horsit[020]>0)) {
+  horsit[020] = 0;
+}
+
+Se ((xNumEmp = 8) e (xCodFil = 9) e (xCodSin = 23)) {
+  nHorSit20 = horsit[020];
+  horsit[075] = nHorSit20;
+  horsit[020] = 0;
+}
+
+NQTDHOR = 0 ;
+cur_r034fun.sql"Select QTDHOR               \ 
+                From R064CMP                \
+                Where NUMEMP = :xnumemp AND \
+                      TIPCOL = :xtipcol AND \
+                      NUMCAD = :xnumcad AND \      
+                      codsit = 100 AND \
+                      ((:DDATPRO >= DATINI) AND (:DDATPRO <= DATFIM))"; 
+cur_r034fun.AbrirCursor();
+Se(cur_r034fun.ACHOU)
+  INICIO
+    NQTDHOR = cur_r034fun.QTDHOR ;
+  FIM;
+cur_r034fun.FecharCursor();
+
+SE(NQTDHOR <> 0)
+  INICIO
+    HORSIT[100] = HORSIT[001] ;
+    HORSIT[001] = HORSIT[001]-NQTDHOR ;
+  FIM;

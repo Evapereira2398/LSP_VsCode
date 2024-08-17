@@ -1,0 +1,2302 @@
+@ REGRA 101 @
+@--------------------------------------------Definições--------------------------------------------------------@
+Definir cursor Cur_r66sit; 
+definir cursor cur_escala;
+definir cursor cur_r70acc;
+definir cursor Cur_r038afa;
+definir cursor Cur_r006esc;                                                
+
+definir cursor Cur_r004hor;
+definir alfa xcodccu; 
+definir data ddatpro;
+definir data xdaux;
+definir data xdatfim;
+Definir Data dIniApu;
+Definir Data dFimApu;
+definir alfa conTrab;
+definir alfa consit;
+definir alfa Msg;
+definir alfa xcodcar;
+@---------------------------------------------Variaveis--------------------------------------------------------@
+xnumemp = R034FUN.NumEmp;
+xtipcol = R034FUN.TipCol;
+xnumcad = R034FUN.NumCad;
+xcodfil = R034FUN.CodFil;
+xcodccu = R034fun.CodCcu;
+xcodcar = R034FUN.CodCar;
+xlimite = 0;
+xlimatr = 0;
+conTrab   = " ";
+consit    = " ";
+dIniApu = IniApu;
+dFimApu = FimApu;
+
+/******************************************************************************* 
+rotina desenvolvida para alimentar a 66apu com o cargo e o local do colaborador
+necessário para gerar os relatórios de contrato e os de horas por p.s  
+********************************************************************************/
+Se (xnumemp = 1)
+    {
+    Se (xcodfil = 2)
+        {
+        Se (horsit[017] = 420)
+            {
+            CodRat = 0;  /* Código Rateio */
+            SitRes = 17; /* Situação para resultado da operação de rateio */
+            MinOpe = 0;  /* Minutos para operação. Somente números inteiros.*/
+            TipOpe = '0'; /* 	Tipo de operação. */
+
+            CodRat = 0; /* Código Rateio */
+            SitRes = 17; /* Situação para resultado da operação de rateio */
+            MinOpe = 480; /* Minutos para operação. Somente números inteiros.*/
+            TipOpe = '+'; /* 	Tipo de operação. */
+            }
+        }
+    }
+
+Se ((xnumemp = 1) e (xcodfil = 3) e (horsit[017] > 60)) 
+   {
+    CodRat = 0; 
+    SitRes = 369;
+    MinOpe = 60;
+    TipOpe = '+';
+   }
+ 
+definir data dDatPro;
+dDatPro = datpro; /* Retorna a data que está sendo processada. */
+
+
+@----------------------------------pega o cargo-----------------------------------------------------------------@
+Definir Alfa xcargo;
+RetCarEmp (R034Fun.NumEmp, R034Fun.TipCol, R034Fun.NumCad, dDatPro);
+xestcar = EstCarEmp;
+xcargo  = CarEmp;
+
+
+@----------------------------------pega o local-----------------------------------------------------------------@
+definir cursor Cur_r38hlo;
+Cur_r38hlo.sql"select * from r038hlo  \
+               where numemp =:xnumemp \
+               and tipcol =:xtipcol   \
+               and numcad =:xnumcad   \
+               and DatAlt <=:dDatPro order by DatAlt desc";
+Cur_r38hlo.abrircursor();
+Se (Cur_r38hlo.achou)
+ {
+  xtaborg = Cur_r38hlo.TabOrg;
+  xcodloc = Cur_r38hlo.NumLoc;
+ } 
+Senao
+{
+  xtaborg = R034FUN.TabOrg;
+  xcodloc = R034FUN.NumLoc;
+ } 
+ 
+@----------------------------------update na 66apu------------------------------------------------------------@
+execsql"update R066APU       \
+        set USU_TabOrg =:xtaborg , USU_NumLoc=:xcodloc , USU_EstCar=:xestcar ,  USU_CodCar=:xcargo   \
+        where numemp=:xnumemp \
+        and  tipcol=:xtipcol  \
+        and  numcad=:xnumcad  \
+        and  DatApu=:dDatPro  ";
+@-------------------------------------------------------------------------------------------------------------@        
+
+  CodRat = 0;
+  SitRes = 17;
+  TipOpe = '0';
+  
+  CodRat = 0;
+  SitRes = 17;
+  SitOpe[1] = 302;
+  SitOpe[2] = 304;
+  SitOpe[3] = 312;
+  SitOpe[4] = 314;
+  SitOpe[5] = 316;
+  SitOpe[6] = 318;
+  SitOpe[7] = 336;
+  SitOpe[8] = 337;
+  SitOpe[9] = 338;
+  SitOpe[10] = 339;
+  TipOpe = '+';
+
+  CodRat = 0;
+  SitRes = 17;
+  SitOpe[1] = 340;
+  SitOpe[2] = 342;
+  SitOpe[3] = 343;
+  SitOpe[4] = 382;
+  SitOpe[5] = 51;
+  TipOpe = '+';
+  CodRat = 0;
+  SitRes = 301;
+  SitOpe[1] = 302;
+  TipOpe = '+';
+  
+  CodRat = 0;
+  SitRes = 303;
+  SitOpe[1] = 304;
+  TipOpe = '+';
+  
+  CodRat = 0;
+  SitRes = 317;
+  SitOpe[1] = 318;
+  TipOpe = '+';
+  
+  CodRat = 0;
+  SitRes = 313;
+  SitOpe[1] = 314;
+  TipOpe = '+';
+  
+  CodRat = 0;
+  SitRes = 315;
+  SitOpe[1] = 316;
+  TipOpe = '+';
+  
+  CodRat = 0;
+  SitRes = 311;
+  SitOpe[1] = 312;
+  TipOpe = '+';
+  
+  CodRat = 0;
+  SitRes = 330;
+  SitOpe[1] = 336;
+  TipOpe = '+';
+  
+  CodRat = 0;
+  SitRes = 331;
+  SitOpe[1] = 337;
+  SitOpe[2] = 342;
+  TipOpe = '+';
+  
+  CodRat = 0;
+  SitRes = 332;
+  SitOpe[1] = 338;
+  SitOpe[2] = 343;
+  TipOpe = '+';
+  
+  CodRat = 0;
+  SitRes = 333;
+  SitOpe[1] = 339;
+  TipOpe = '+';
+  
+  CodRat = 0;
+  SitRes = 334;
+  SitOpe[1] = 340;
+  TipOpe = '+';
+  
+  CodRat = 0;
+  SitRes = 380;                            
+  SitOpe[1] = 382;
+  TipOpe = '+';
+  
+  CodRat = 0;
+  SitRes = 1;
+  SitOpe[1] = 51;
+  TipOpe = '+';
+
+Se (xNumEmp = 9) @@@ Empresa que não usa Rateio até 27/04/2017 @@@
+  {
+    HorSit[1]  = HorSit[1] + HorSit[51];
+    HorSit[47] = HorSit[51];
+    HorSit[51] = 0;
+    
+    CodRat = 0;
+    SitRes = 1;
+    SitOpe[1] = 51;
+    TipOPe = '+';
+    SitRes = 47;
+    SitOpe[1] = 51;
+    TipOpe = '+';
+    SitRes = 47;
+    TipOpe = '0';
+  }
+  CodRat = 0;
+  SitRes = 302;
+  TipOpe = '0';
+  SitRes = 304;
+  TipOpe = '0';
+  SitRes = 312;
+  TipOpe = '0';
+  SitRes = 314;
+  TipOpe = '0';
+  SitRes = 316;
+  TipOpe = '0';
+  SitRes = 318;
+  TipOpe = '0';
+  SitRes = 336;
+  TipOpe = '0';
+  SitRes = 337;
+  TipOpe = '0';
+  SitRes = 338;
+  TipOpe = '0';
+  SitRes = 339;
+  TipOpe = '0';
+  SitRes = 340;
+  TipOpe = '0';
+  SitRes = 342;
+  TipOpe = '0';
+  SitRes = 343;
+  TipOpe = '0';
+  SitRes = 382;
+  TipOpe = '0';
+  SitRes = 51;
+  TipOpe = '0';
+
+@-----------------------------------------pega o sindicato----------------------------------------------------------------------------@  
+  RetSinEmp(R034FUN.NumEmp, R034FUN.TipCol, R034FUN.NumCad, datpro);
+  vsinemp = CodSinEmp;
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+
+@-------------------------------------- ajuste para adicional not. ---------------------------------------------------------------------@  
+definir cursor cur_sindicato;
+    cur_sindicato.Sql"Select IniNot, FimNot from R014SIN \
+                   where codsin=:vsinemp "; 
+    cur_sindicato.abrircursor();
+    Se(cur_sindicato.achou)
+     Inicio
+          HorNotIni  = cur_sindicato.IniNot;
+          HorNotFim  = cur_sindicato.FimNot;
+     Fim
+    cur_sindicato.fecharcursor();
+@------------------------------------------------------------------------------------------------------------------------------------@    
+xHorEnt = 0;
+xHorSai = 0;
+xMarRea = 0;  
+ddatpro = datpro;                                                                        
+cur_r70acc.sql"Select HorAcc,datacc from r070acc  \
+               where numemp =:xnumemp \
+                 and tipcol =:xtipcol \
+                 and numcad =:xnumcad \ 
+                 and datapu =:ddatpro \
+                 order by datacc, horacc ";
+cur_r70acc.abrircursor();
+Enquanto(cur_r70acc.achou)
+     {
+      Se ( xMarRea = 0 )
+         xHorEnt = cur_r70acc.HorAcc;
+      Senao
+         xHorSai = cur_r70acc.HorAcc;        
+        xMarRea++;
+      cur_r70acc.proximo();
+     }
+cur_r70acc.fecharcursor();
+vret = totmar;
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+
+
+@------------------------------------------------------------------------------------------------------------------------------------@
+@---------------------------------------------informe os códigos das situações-------------------------------------------------------@
+definir alfa vlimsem; @ limite semanal @
+definir alfa vHorRed; @ hora reduzido  @
+definir alfa vTipSdf; @ escala tipo SDF @
+definir alfa vRefTra; @ refeição para horas trabalhadas @
+definir alfa vExtAci; @ pagar acima de 12 horas @
+vlimsem   = 'N';
+vTipSdf   = 'N';
+vRefTra   = 'N';
+vExtAci   = 'N';
+vHorRed   = 'N';
+
+RetornaEscala(r034fun.numemp,r034fun.tipcol,r034fun.numcad,datpro,vcodesc,vcodtma,vturint,vCodEqp,vCodCat,Msg);
+/*RetornaEscala(Numero NumEmp, Numero TipCol, Numero NumCad, Numero Data, Numero End CodEsc, Numero End CodTma, Numero End TurInt, Numero End CodEqp, Numero End CodCat, Alfa End Mensagem);*/
+cur_escala.sql"select USU_HorLim , USU_HorRed , USU_TipSdf , USU_RefTra , USU_ExtAci\  
+               from R006ESC where CodEsc =:vcodesc";
+cur_escala.abrircursor();
+Se (cur_escala.achou) @ tem limite semanal @
+   {
+    Se (cur_escala.USU_HorLim > 0 )
+     {
+       vlimsem = 'S';
+       xlimite = cur_escala.USU_HorLim;  @ limite semanal definido na escala @
+      }
+        vhorRed = cur_escala.USU_HorRed;       
+        vTipSdf = cur_escala.USU_TipSdf;       
+        vRefTra = cur_escala.USU_RefTra;
+        vExtAci = cur_escala.USU_ExtAci;
+   }
+cur_escala.fecharcursor();
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+@--------------------------------------------------hora trabalhada------------------------------------------------------------------@
+xhorTrab = 1;
+xhor50 = 301;
+
+Se (( xnumemp = 1 ) e (xnumemp = 2))@ definições de apuração somente empresas 1 e 2 @
+    {
+      @cancel(1);@
+      @}@
+
+      @converte os codigos p/ horas trabalhadas @
+      intparaalfa(xhorTrab ,conTrab);
+
+      @ concatena condição p/ cursor @ 
+      consit  = "and codsit in (" + conTrab + ")";
+
+      @ zera as variáves na segunda   @
+
+      xdatfim = datpro;
+      Se (( diasem = 1 ) e (vlimsem = 'S')) @se for segunda zera tudo @
+        {
+          xvolta  = 0;
+          xsoma   = 0;
+          fal     = 0;
+          dif     = 0;
+          set     = 0;    
+        }
+
+      @  tratar a 1ª semana   @
+      Se (( datpro = iniapu ) e (vlimsem = 'S'))
+        inicio
+          xvolta  = 0;
+          xsoma   = 0;
+          fal     = 0;
+          dif     = 0;
+          set     = 0;
+          
+          Se ((diasem <> 1 ) e (diasem <> 0))
+            {
+              xvolta  = diasem - 1;
+            }
+          
+          Se (diasem = 0) 
+            {
+              xvolta  = 6;
+            }
+          Se (xvolta <> 0) @tem q voltar datas@
+            {
+              xdaux = datpro;
+              xdaux = xdaux - xvolta;
+              Enquanto (xdaux < datpro)
+                {
+                  Cur_r66sit.Sql"Select * from r066sit \
+                                where numemp=:xnumemp \
+                                and tipcol=:xtipcol \
+                                and numcad=:xnumcad \
+                                __inserir(:consit)  \
+                                and datapu=:xdaux ";  
+                  
+                  Cur_r66sit.abrircursor();
+                    Enquanto(Cur_r66sit.achou)
+                    {
+                      xsoma = xsoma + Cur_r66sit.qtdhor;
+                      Cur_r66sit.proximo();
+                    }
+                  Cur_r66sit.fecharcursor();
+                
+                xdaux++;
+                } @fim enquanto@
+            } @fim voltar datas @
+    } @fim tratar 1ª semana@
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+
+
+@--------------------------------------------tratar demais dias------------------------------------------------------@
+@ soma a hora de refeição para horas trabalhadas @
+Se ( vRefTra = 'S' )
+  {
+    Se (temafs = 1) @tem algum afastamento ? @
+     {
+       Se ( horsit[xhorTrab] > 0 )
+         {
+         horsit[xhorTrab]  = horsit[xhorTrab] + apudiu[16] + apunot[16];
+         }
+       senao
+        {
+          xcodafa = codafs;
+          horsit[xcodafa]  = horsit[xcodafa]  + apudiu[16] + apunot[16];
+         }  
+     }
+     Senao
+          horsit[xhorTrab] = horsit[xhorTrab] + apudiu[16] + apunot[16];
+  }
+  auxsom = 0;
+  xsoma  = xsoma + horsit[xhorTrab];
+  auxsom = horsit[xhorTrab];
+
+
+
+@----------------------------------------------converte as horas------------------------------------------------------------------------@
+Se (vlimsem = 'S')
+ {
+ Se (( xsoma > xlimite ) e ( auxsom > 0 )) @passou do limite e tem extra @
+    {
+     fal = 0;
+     dif = 0;
+     set = 0;
+     dif = xsoma - auxsom;
+     fal = xlimite - dif;
+     Se ( dif < xlimite ) @ verifica proporcionalidade @
+      {
+        dif = 0;
+        dif =  xsoma - xlimite;
+       @ verificar proporção @
+        Se ( horsit[xhorTrab]  >= fal ) @horas 50 diu.@
+         {
+          set = 1;
+          dif = horsit[xhorTrab] - fal;
+          horsit[xhorTrab] = fal;
+          fal = 0;
+          horsit[xhor50] = dif;
+           Se (horsit[xhorTrabn] > 0)
+            {
+             CodRat = 0;
+             SitRes = xHor50n;
+             SitOpe[1] = xhor50;
+             SitOpe[2] = xHorTrabn;
+             Tipope = '+';
+             SitRes = xhorTrabn;
+             TipOpe = '0';
+            }
+         } 
+      } @senão do limite @
+     senao
+     {
+        CodRat = 0;
+        SitRes = xhor50;
+        SitOpe[1] = xhorTrab;
+        TipOpe = '+';
+        SitRes = xhorTrab;
+        TipOpe = '0';
+   }
+ }
+} @ fim do limite @
+
+@------------------------------------------tratamentos por escala---------------------------------------------------------------@
+@--------------------tratamento para hora reduzida , replicar situação 17 para 335----------------------------------------------@
+Se (vHorRed = 'S')
+{
+  CodRat = 0;
+  SitRes = 335;
+  SitOpe[1] = 17;
+  TipOpe = '+';
+}
+@--------------------------------tratamento para escalas SDF após 8 horas gerar situação 334-----------------------------------@
+Se ( vTipSdf = 'S' )
+  {
+   Se ( horsit[001] > 480 )
+   {
+      CodRat = 0;
+      SitRes = 341;
+      MinOpe = HorSit[001] - 480;
+      TipOpe = '+';
+   }
+  }
+Se (vsinemp = 2)
+    {
+    CodRat = 0;
+    SitRes = 345;
+    SitOpe[1] = 341;
+    TipOpe = '+';
+    SitRes = 341;
+    TipOpe = '0';
+    }
+@--------------------------------complemento somente em dias normais e não tem afastamentos------------------------------------@
+Se ((codhor < 9995 ) e (temafs = 0)) 
+ {
+      definir cursor cur_34fun;
+      xcomplt1 = 0;
+      xcomplt2 = 0;
+      cur_34fun.sql"select USU_ComEx1, USU_ComEx2 from r034fun \
+                    where numemp=:xnumemp \ 
+                      and TipCol=:xtipcol \
+                      and NumCad=:xnumcad ";
+      cur_34fun.abrircursor();
+       Se (cur_34fun.achou)
+        {
+         Se ( cur_34fun.USU_ComEx1 > 0 )  @se tiver complemento a 50% @
+            {
+              xcomplt1 = cur_34fun.USU_ComEx1; 
+              CodRat = 0;
+              SitRes = 350;
+              MinOpe = xcomplt1;
+              TipOpe = '+';
+             }
+             Se ( cur_34fun.USU_ComEx2 > 0 ) @se tiver complemento a 100% @
+            {
+              xcomplt2 = cur_34fun.USU_ComEx2; 
+              CodRat = 0;
+              SitRes = 351;
+              SitOpe[1] = xcomplt2;
+              TipOpe = '+';
+             }
+            @dependendo do sindicato troca a situação @
+            Se (vsinemp =  9)  @ renault @
+             {
+               CodRat = 0;
+               SitRes = 356;
+               SitOPe[1] = 350;
+               TipOpe = '+';
+               SitRes = 350;
+               TipOpe = '0';
+               
+               CodRat = 0;
+               SitRes = 357;
+               SitOpe[1] = 351;
+               TipOpe = '+';
+               SitRes = 351;
+               TipOpe = '0';
+             
+             }
+             Senao
+            Se (vsinemp =  8) @petrobras @
+             {
+               CodRat = 0;
+               SitRes = 354;
+               SitOpe[1] = 350;
+               TipOPe = '+';
+               SitRes = 350;
+               TipOpe = '0';
+               
+               CodRat = 0;
+               SitRes = 355;
+               SitOpe[1] = 351;
+               TipOpe = '+';
+               SitRes = 351;
+               TipOpe = '0';
+            }
+        } @ fim do achou @
+      cur_34fun.fecharcursor(); 
+}               
+@--------------------------------------------pagar extra acima de 12 horas----------------------------------------------------------@
+Se ( vExtAci = 'S' )
+ {
+   @ se tiver mais que 12 horas gera a diferença como extra especial @
+   Se (horsit[001] > 720 )
+   {
+       CodRat = 0;
+       SitRes = 305;
+       MinOpe = HorSit[001] - 720;
+       TipOpe = '+';
+   }
+ }
+@----------------------------------------------------------------------------------------------------------------------------------@
+/*
+   Regra de Apuração
+    Por: Emerson Valério Pechiski, em: 18/03/2013
+ Motivo: Gerar as horas de intrajornada conforme a escala do dia, antes estava
+         gerando na integração conforme a última escala do mês. 
+*/
+Definir Cursor C006ESC;
+Definir Numero nCodEsc;
+Definir Numero nIntHor;
+Definir Alfa   aTemMar;
+nCodEsc = EscAtu;
+nIntHor = 0;
+aTemMar = "NAO";
+@------------------------------------------Cursor para Buscar o Tipo de Intrajornada----------------------------------------------@
+C006ESC.SQL "SELECT USU_IntHor \
+               FROM R006ESC \
+              WHERE CodEsc = :nCodEsc ";
+C006ESC.AbrirCursor();
+Se (C006ESC.Achou)
+   nIniHor = C006ESC.USU_IntHor;
+C006ESC.FecharCursor();
+@---------------------------------------------Verifica se existem marcações no dia-----------------------------------------------@
+ConGer = 1;
+nRet = FLeMar;
+Se (nRet <> 0)
+   aTemMar = "SIM"; 
+@----------------------------------------------Se tem intrajornada na Escala-----------------------------------------------------@ 
+Se ((nIniHor >= 2) e (aTemMar = "SIM"))
+Inicio
+@--------------------------------------------------Recebe 50% de 1:00------------------------------------------------------------@
+   Se (nIniHor = 2)
+   {
+      CodRat = 0;
+      SitRes = 402;
+      MinOPe = 60;
+      TipOpe = '+';
+    }
+   Senao
+   Se (nIniHor = 3)
+    {  
+      CodRat = 0;
+      SitRes = 403;
+      MinOpe = 60;
+      TipOpe = '+';
+    }  
+   Senao
+   Se (nIniHor = 4)
+   {
+      CodRat = 0;
+      SitRes = 404;
+      MinOpe = 30;
+      TipOpe = '+';
+    }
+   Senao
+   Se (nIniHor = 5)
+   {
+      CodRat = 0;
+      SitRes = 405;
+      MinOpe = 60;
+      TipOpe = '+';
+    }
+   Senao
+   Se (nIniHor = 6)
+   {
+      CodRat = 0;
+      SitRes = 406;
+      MinOpe = 30;
+      TipOpe = '+';
+    }
+   Senao
+   Se (nIniHor = 7)
+   {
+      CodRat = 0;
+      SitRes = 407;
+      MinOpe = 15;
+      TipOpe = '+';
+    }
+@------Se tem menos que 6:00 de treinamento no dia, zera a intrajornada---------@
+   Se ((HorSit[030] > 0) e (HorSit[030] < 360))
+   {
+      HorSit[402] = 0;
+      HorSit[403] = 0;
+      HorSit[404] = 0;
+      HorSit[405] = 0;
+      HorSit[406] = 0;
+      HorSit[407] = 0;
+   }
+@-------------Se tem hora extra especial, zera a intrajornada-------------------@
+   Se (HorSit[305] > 0)
+   {
+      CodRat = 0;
+      SitRes = 402;
+      TipOpe = '0';
+      SitRes = 403;
+      TipOpe = '0';
+      SitRes = 404;
+      TipOpe = '0';
+      SitRes = 405;
+      TipOpe = '0';
+      SitRes = 406;
+      TipOpe = '0';
+      SitRes = 407;
+      TipOpe = '0';
+   }
+Fim;         
+x = 0;
+
+@-------------------------------------------------------------------------------@
+Definir Cursor Cur_r038not;
+Definir Cursor Cur_Usu_THConRea;
+Definir Cursor Cur_r032emc;
+Definir Cursor Cur_r066sit;
+Definir alfa aNumCon;
+Definir data dDatPro;
+dDatPro = DatPro;
+Cur_r038not.Sql "Select usu_taborg, \
+                        usu_numloc, \
+                        nrodoc \
+                   from r038not \
+                  where numemp = :xNumEmp \
+                    and tipcol = :xTipCol \
+                    and numcad = :xNumCad \
+                    and tipnot = 28 \
+                    and datnot = :dDatPro";
+Cur_r038not.AbrirCursor()
+Se (Cur_r038not.Achou)
+  {
+    nTabOrg = Cur_r038not.usu_taborg;
+    nNumLoc = Cur_r038not.usu_numloc;
+    aNumCon = Cur_r038not.nrodoc;
+    AlfaParaInt(aNumCon,nNumCon);
+    
+    ConverteMascara(1,nNumCon, aNumCon, "999999999999999");
+    
+    Cur_r032emc.Sql "Select CodOem from r032emc where numcon = :aNumCon";
+    Cur_r032emc.AbrirCurSor()
+    Se (Cur_r032emc.Achou)
+      nCodOem = Cur_r032emc.CodOem;
+    Cur_r032emc.FecharCursor()  
+
+    ExecSql "delete Usu_THConRea \
+               where usu_numemp = :xNumEmp \
+                 and usu_tipcol = :xTipCol \
+                 and usu_numcad = :xNumCad \
+                 and usu_datapu = :dDatPro";
+    
+    Cur_r066sit.sql "Select CodSit, \
+                            qtdhor \
+                       from r066sit \
+                      where numemp = :xNumEmp \
+                        and tipcol = :xTipCol \
+                        and NumCad = :xNumCad \
+                        and DatApu = :dDatpro ";
+    Cur_r066sit.AbrirCursor()
+    Enquanto (Cur_r066sit.Achou)
+      {
+         nCodSit = Cur_r066sit.CodSit;
+         nQtdHor = Cur_r066sit.QtdHor; 
+         nCalAtu = CalAtu;
+    
+         ExecSql "Insert into Usu_THConRea (Usu_NumEmp,Usu_TipCol,Usu_NumCad,Usu_CodCal,Usu_CodOem, \
+                                             Usu_NumCon,Usu_datapu,Usu_CodSit,Usu_taborg,Usu_numloc,usu_qtdhor,usu_codccu) \
+                                    Values (:xNumEmp,:xTipCol,:xNumCad,:nCalAtu,:nCodOem, \
+                                            :aNumCon,:dDatPro,:nCodSit,:nTabOrg,:nNumLoc,:nQtdHor,:xcodccu)";
+                                             
+         Cur_r066sit.Proximo()                                            
+                                             
+       }                        
+    Cur_r066sit.FecharCursor()
+    
+     
+  }
+Cur_r038not.FecharCursor()  
+@-------------------------------FIM DA REGRA PRINCIPAL--------------------------@  
+@----------------------------------------------------------------------------------------------------------------------------------------------------------@
+
+definir data ddatpr1;
+nnumemp = 0;
+ntipcol = 0;
+nnumcad = 0;
+abtipnot = 0;
+xasitafa = 0;
+xacodsit = 0;
+xacodrat = 0;
+xaqtdhor = 0;
+xamotsit = 0;
+xacodusu = 0;
+xaqtdhnc = 0;
+xahordat = 0;
+xasitafa = 0;
+nahorini = 0;
+nahorins = 0;
+nahorinr = 0;
+nahorfim = 0;
+natothod = 0;
+natothon = 0;
+aacolext = 0;
+nacodext = 0;
+nnumloc = 0;
+xacodesc = 0;
+xainthor = 0;
+nnumemp = r034fun.numemp;
+ntipcol = r034fun.tipcol;
+nnumcad = r034fun.numcad;
+ddatpr1 = (ddatpro - 1);
+nnumloc = r034fun.numloc;
+
+@----------------------------------------------------------------------------------------------------------------------------@
+definir cursor cur_38not;
+cur_38not.sql"select * from r038not where numemp=:nnumemp and tipcol=:ntipcol and numcad=:nnumcad and datnot=:dDatPro";
+cur_38not.abrircursor();
+Se (cur_38not.achou)
+    {
+    abtipnot=cur_38not.tipnot;
+    nahorini=cur_38not.usu_horini;
+    nahorins=cur_38not.usu_Thorins;
+    nahorinr=cur_38not.usu_Thorinr;
+    nahorfim=cur_38not.usu_horfim;
+    aacolext=cur_38not.usu_colext;
+    nacodext=cur_38not.usu_Tcodext;
+    }
+cur_38not.fecharcursor();
+
+
+@----------------------------------------------------------------------------------------------------------------------------------------------------------@
+definir cursor cur_666apu;
+cur_666apu.sql"Select * from r066apu where numemp=:nnumemp and tipcol=:ntipcol and numcad=:nnumcad and datapu=:ddatpro";
+                cur_666apu.abrircursor();
+                Se (cur_666apu.achou)
+                    {
+                    xahordat = cur_666apu.hordat;
+                    xacodesc = cur_666apu.codesc;
+                    }
+cur_666apu.fecharcursor();                     
+@----------------------------------------------------------------------------------------------------------------------------------------------------------@
+definir cursor cur_r0006esc;
+cur_r0006esc.sql"select * from r006esc where codesc=:xacodesc"
+cur_r0006esc.abrircursor();
+Se (cur_r0006esc.achou)
+    {
+    xainthor = cur_r0006esc.USU_IntHor;
+    }
+cur_r0006esc.fecharcursor();    
+@----------------------------------------------------------------------------------------------------------------------------@
+natothod = ((nahorfim-nahorini)-(nahorinr-nahorins));
+natothon = ((nahorini-nahorfim)-(nahorinr-nahorins));
+Se ((abtipnot=43)e(nahorfim>nahorini))
+    {
+    CodRat = 0;
+    SitRes = 24;
+    SitOPe[1] = 332;
+    TipOpe = '+';
+    SitRes = 332;
+    TipOpe = '0';
+    }
+@----------------------------------------------------------------------------------------------------------------------------@
+Se ((abtipnot=43)e(nahorfim<nahorini))
+    {
+    CodRat = 0;
+    SitRes = 24;
+    SitOPe[1] = 332;
+    TipOpe = '+';
+    SitRes = 332;
+    TipOpe = '0';
+    }
+@----------------------------------------------------------------------------------------------------------------------------------------------------------@
+definir cursor cur_666sit;
+cur_666sit.sql"select * from r066sit where numemp=:nnumemp and tipcol=:ntipcol and numcad=:nnumcad and datapu=:ddatpr1";
+        cur_666sit.abrircursor();
+        Se (cur_666sit.achou)
+            {
+            xacodsit = cur_666sit.codsit;
+            xacodrat = cur_666sit.codrat;
+            xaqtdhor = cur_666sit.qtdhor;
+            xamotsit = cur_666sit.motsit;
+            xacodusu = cur_666sit.codusu;
+            xaqtdhnc = cur_666sit.qtdhnc;
+            }
+cur_666sit.fecharcursor();
+@----------------------------------------------------------------------------------------------------------------------------------------------------------@
+definir cursor cur_666apu;
+cur_666apu.sql"Select * from r066apu where numemp=:nnumemp and tipcol=:ntipcol and numcad=:nnumcad and datapu=:ddatpro";
+                cur_666apu.abrircursor();
+                Se (cur_666apu.achou)
+                    {
+                    xahordat = cur_666apu.hordat;
+                    xacodesc = cur_666apu.codesc;
+                    }
+cur_666apu.fecharcursor();                     
+@----------------------------------------------------------------------------------------------------------------------------------------------------------@
+RetSitEmp(nnumemp, ntipcol, nnumcad, ddatpro);
+xasitafa = sitemp;
+
+Se (xasitafa=14)
+    {
+    Se((xahordat=9996)ou(xahordat=9997))
+    {
+      CodRat = 0;
+      SitRes = 14;
+      MinOpe = xaqtdhor;
+      TipOpe = '+';
+    }  
+    }    
+@----------------------------------------------------------------------------------------------------------------------------------------------------------@
+Se (xasitafa=11)
+    {
+    Se((xahordat=9996)ou(xahordat=9997))
+    {
+      CodRat = 0;
+      SitRes = 11;
+      MinOpe = xaqtdhor;
+      TipOpe = '+';
+    }  
+    }    
+@----------------------------------------------------------------------------------------------------------------------------------------------------------@
+Se (xasitafa=18)
+    {
+    Se((xahordat=9996)ou(xahordat=9997))
+    {
+      CodRat = 0;
+      SitRes = 18;
+      MinOpe = xaqtdhor;
+      TipOpe = '+';
+    }  
+    }    
+@----------------------------------------------------------------------------------------------------------------------------------------------------------@
+Se (xasitafa=27)
+    {
+    Se((xahordat=9996)ou(xahordat=9997))
+    {
+      CodRat = 0;
+      SitRes = 27;
+      MinOpe = xaqtdhor;
+      TipOpe = '+';
+    }  
+    }    
+@----------------------------------------------------------------------------------------------------------------------------------------------------------@
+Se (xasitafa=32)
+    {
+    Se((xahordat=9996)ou(xahordat=9997))
+    {
+      CodRat = 0;
+      SitRes = 32;
+      MinOpe = xaqtdhor;
+      TipOpe = '+';
+    }  
+    }    
+@----------------------------------------------------------------------------------------------------------------------------------------------------------@
+Se (xasitafa=36)
+    {
+    Se((xahordat=9996)ou(xahordat=9997))
+    {
+      CodRat = 0;
+      SitRes = 36;
+      MinOpe = xaqtdhor;
+      TipOpe = '+';
+    }  
+    }
+
+
+@---inserir horas extras conforme codigo informado no historico de anotação-----@   
+Se ((abtipnot>=20)e(abtipnot<=32)e(aacolext='S')e(nnumemp=1))
+   {
+    CodRat = 0;
+    SitRes = nacodext;
+    SitOPe[1] = 332;
+    TipOpe = '+';
+    SitRes = 332;
+    TipOpe = '0';
+   }            
+
+
+@---inserir horas extras conforme codigo informado no historico de anotação-----@   
+Se ((abtipnot>=20)e(abtipnot<=32)e(aacolext='S')e(nnumemp=2))
+   {
+    CodRat = 0;
+    SitRes = nacodext;
+    SitOPe[1] = 305;
+    TipOpe = '+';
+    SitRes = 305;
+    TipOpe = '0';
+   }                   
+
+
+
+@---inserir horas extras conforme codigo informado no historico de anotação-----@   
+Se ((abtipnot>=20)e(abtipnot<=32)e(aacolext='S')e(nnumemp=1)e(vsinemp=1))
+   {
+    CodRat = 0;
+    SitRes = nacodext;
+    SitOPe[1] = 305;
+    TipOpe = '+';
+    SitRes = 305;
+    TipOpe = '0';
+   }   
+
+
+@---inserir horas extras conforme codigo informado no historico de anotação-----@   
+Se ((abtipnot>=20)e(abtipnot<=32)e(aacolext='S')e(nnumemp=2))
+   {
+    CodRat = 0;
+    SitRes = nacodext;
+    SitOPe[1] = 333;
+    TipOpe = '+';
+    SitRes = 333;
+    TipOpe = '0';
+   }    
+
+
+@---inserir horas extras conforme codigo informado no historico de anotação-----@   
+Se ((abtipnot>=20)e(abtipnot<=32)e(aacolext='S')e(nnumemp=2))
+   {
+   Se((vsinemp=10)ou(vsinemp=43)ou(vsinemp=39)ou(vsinemp=18))
+    {
+    CodRat = 0;
+    SitRes = nacodext;
+    SitOPe[1] = 332;
+    TipOpe = '+';
+    SitRes = 332;
+    TipOpe = '0';
+   }
+   }                                                                             
+@----------------------------------------------------------------------------------------------------------------------------------------------------------@
+Se ((abtipnot>=20)e(abtipnot<=32)e(aacolext='S')e(nnumemp=1)e(XCODFIL=3))
+   {
+Se (horsit[017] > 60) 
+   {
+   CodRat = 0;
+   SitRes = 369;
+   MinOpe = 60;
+   TipOpe = '+';
+   }
+   }
+@----------------------------------------------------------------------------------------------------------------------------------------------------------@   
+Se ((abtipnot=43)e(nnumemp=1)e(XCODFIL=3))
+   {
+Se (horsit[017] > 60) 
+   {
+   CodRat = 0;
+   SitRes = 369;
+   MinOpe = 60;
+   TipOpe = '+';
+   }
+   }   
+@----------------------------------------------------------------------------------------------------------------------------------------------------------@
+Se ((abtipnot=43)e(xnumemp=2))
+    {
+    CodRat = 0;
+    SitRes = 24;
+    SitOPe[1] = 305;
+    TipOpe = '+';
+    SitRes = 305;
+    TipOpe = '0';  
+    }  
+@----------------------------------------------------------------------------------------------------------------------------------------------------------@
+Se ((abtipnot=43)e(xnumemp=2))
+    {
+    CodRat = 0;
+    SitRes = 24;
+    SitOPe[1] = 333;
+    TipOpe = '+';
+    SitRes = 333;
+    TipOpe = '0';
+    }
+/*@----------------------------------------------------------------------------------------------------------------------------------------------------------@
+Se ((abtipnot=43)e(vsinemp=2)e(xnumemp=2))
+    {
+      CodRat = 0;
+      SitRes = 402;
+      MinOpe = 60;
+      TipOpe = '+';
+    }  
+@----------------------------------------------------------------------------------------------------------------------------------------------------------@*/    
+Se ((abtipnot=43) e (xnumemp=2))
+{ 
+   
+     Se (nIniHor = 2) 
+     {
+       se(horsit[402] = 0)
+       {
+        CodRat = 0;
+        SitRes = 402;
+        MinOPe = 60;
+        TipOpe = '+';
+        }
+      }
+     Senao
+     Se (nIniHor = 3)
+      { se(horsit[403] = 0)
+       { 
+        CodRat = 0;
+        SitRes = 403;
+        MinOpe = 60;
+        TipOpe = '+';
+        }
+      }  
+     Senao
+     Se (nIniHor = 4)
+     {   
+     se(horsit[404] = 0)
+       {
+        CodRat = 0;
+        SitRes = 404;
+        MinOpe = 30;
+        TipOpe = '+';
+        }
+      }
+     Senao
+     Se (nIniHor = 5)
+     {
+     se(horsit[405] = 0)
+       {
+        CodRat = 0;
+        SitRes = 405;
+        MinOpe = 60;
+        TipOpe = '+';
+        }
+      }
+     Senao
+     Se (nIniHor = 6)
+     {  
+     se(horsit[406] = 0)
+       {
+        CodRat = 0;
+        SitRes = 406;
+        MinOpe = 30;
+        TipOpe = '+';
+        }
+      }
+     Senao
+     Se (nIniHor = 7)
+     {
+      se(horsit[407] = 0)
+       {
+        CodRat = 0;
+        SitRes = 407;
+        MinOpe = 15;
+        TipOpe = '+';
+        }
+      }  
+}
+
+@-----------------------------------------------------------------------------------------------------------------------------------@
+nqtdnot1 = (nahorfim + 60);
+Se ((abtipnot=43) e (xnumemp=2))
+    {
+    Se((nahorfim < nahorini)e(nahorfim < 365))
+    {
+      CodRat = 0;
+      SitRes = 17;
+      MinOpe = nqtdnot1;
+      TipOpe = '0';
+      CodRat = 0;
+      SitRes = 17;
+      MinOpe = nqtdnot1;
+      TipOpe = '+';
+      }  
+    }        
+@-----------------------------------------------------------------------------------------------------------------------------------@
+Se ((abtipnot=43) e (xnumemp=2))
+    {
+    Se((nahorfim < nahorini)e(nahorfim > 365))
+    {
+      CodRat = 0;
+      SitRes = 17;
+      MinOpe = nahorfim;
+      TipOpe = '0';
+      CodRat = 0;
+      SitRes = 17;
+      MinOpe = nahorfim;
+      TipOpe = '+';
+      }  
+    }        
+@-----------------------------------------------------------------------------------------------------------------------------------@
+
+Se ((abtipnot=73))
+    {
+    CodRat = 0;
+    SitRes = 45;
+    SitOPe[1] = 1;
+    TipOpe = '+';
+    SitRes = 1;
+    TipOpe = '0';
+    }
+@----------------------------------------------------------------------------------------------------------------------------------------------------------@    
+Se ((xcodcar = "000244")e(xnumemp=2))
+    {
+    CodRat = 0;
+    SitRes = 345;
+    SitOPe[1] = 341;
+    TipOpe = '+';
+    SitRes = 341;
+    TipOpe = '0';
+    }
+
+@----------------------------------------------------------------------------------------------------------------------------------------------------------@   
+RetornaEscala(r034fun.numemp,r034fun.tipcol,r034fun.numcad,datpro,scodesc,vcodtma,vturint,vCodEqp,vCodCat,Msg);   
+
+Definir Cursor C1;
+Definir Numero nNumEmp;
+Definir Numero nTipCol;
+Definir Numero nNumCad;
+Definir Numero nHorTra;
+Definir Numero nHorExt;
+Definir Data   dDatIni;
+Definir Data   dDatFim;
+Definir Data   dDatPro;
+
+Se ((xLimite <> 0) e (xnumemp <> 10))
+Inicio
+
+   nNumEmp = R034FUN.NumEmp;
+   nTipCol = R034FUN.TipCol;
+   nNumCad = r034FUN.NumCad;
+   dDatPro = DatPro;
+   dDatIni = 0;
+   dDatFim = 0;
+   nHorTra = 0;
+   nHorExt = 0;
+   
+   @- Tratamento para a Sexta-feira e Sábado -@
+   Se ((DiaSem = 5) ou (DiaSem = 6))
+   Inicio
+      
+      dDatFim = DatPro - 1;
+      Se (DiaSem = 5)
+         dDatIni = DatPro - 4;   
+      Senao   
+         dDatIni = DatPro - 5;   
+         
+      CodRat = 0;
+      SitRes = 301;
+      TipOpe = '0';         
+      
+
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+      @- Cursor para Totalizar as Horas Trabalhadas -@
+      C1.SQL "SELECT QtdHor FROM R066SIT \
+               WHERE 0 = 1 \
+               UNION \
+              SELECT SUM(QtdHor) FROM R066SIT \
+               WHERE NumEmp = :nNumEmp \
+                 AND Tipcol = :nTipCol \
+                 AND NumCad = :nNumCad \
+                 AND CodSit = 1 \
+                 AND DatApu BETWEEN :dDatIni AND :dDatFim ";
+      C1.AbrirCursor();
+      Enquanto (C1.Achou)
+      {
+         nHorTra = nHorTra + C1.QtdHor;
+         C1.Proximo();
+      }
+      C1.FecharCursor();
+      
+      nHorTra = nHorTra + HorSit[001];
+      
+      Se (nHorTra > xLimite)
+         nHorExt = nHorTra - xLimite;
+      
+      Se (nHorExt > 0)
+      {
+         @- Diminuir as Horas Normais -@
+         CodRat = 0;
+         SitRes = 1;
+         SitOpe[1] = 1;
+         MinOpe = nHorExt;
+         TipOpe = '-';
+         
+         @- Somar as Horas Extras -@
+         CodRat = 0;
+         SitRes = 301;
+         MinOpe = nHorExt;
+         TipOpe = '+';
+     }
+   Fim;
+Fim;
+ 
+@--- soma diferença de horas para hora extra para escala com limite de 8 horas--@
+
+definir numero sTemLimiteHoras;
+sTemLimiteHoras = 0;
+Se ((scodesc = 920) ou (scodesc = 1005))
+  inicio
+  sTemLimiteHoras = 1;
+  fim;
+Se ((scodesc > 906) e (scodesc < 912))
+  inicio 
+  sTemLimiteHoras = 1;
+  fim;   
+Se ((scodesc = 1053) ou (scodesc = 1004))
+  inicio 
+  sTemLimiteHoras = 1;
+  fim; 
+Se(scodesc = 2014)
+  inicio 
+  sTemLimiteHoras = 1;
+  fim; 
+Se ((scodesc = 581) ou (scodesc = 1112))    @--Incluido em 29/10/2020--@
+  inicio 
+  sTemLimiteHoras = 1;
+  fim;   
+Se ((scodesc = 2048) ou (scodesc = 2049))   @--Incluido em 29/10/2020--@
+  inicio 
+  sTemLimiteHoras = 1;
+  fim;   
+           
+Se (sTemLimiteHoras = 1)
+  inicio
+  Definir Cursor Cur_TotHorTrab;
+  Definir Numero sNumEmp;
+  Definir Numero sTipCol;
+  Definir Numero sNumCad;
+  Definir Numero sHorTra;
+  Definir Numero sHorExt;
+  Definir Numero sLimite;
+  Definir Data   sDatPro; 
+   
+   sNumEmp = R034FUN.NumEmp;
+   sTipCol = R034FUN.TipCol;
+   sNumCad = r034FUN.NumCad;
+   sDatPro = DatPro;
+   sHorTra = 0;
+   sHorExt = 0;  
+   sLimite = 480;
+   
+   @- Cursor para Totalizar as Horas Trabalhadas -@
+      Cur_TotHorTrab.SQL "SELECT QtdHor FROM R066SIT \
+               WHERE 0 = 1 \
+               UNION \
+              SELECT SUM(QtdHor) FROM R066SIT \
+               WHERE NumEmp = :sNumEmp \
+                 AND Tipcol = :sTipCol \
+                 AND NumCad = :sNumCad \
+                 AND CodSit = 1 \
+                 AND DatApu = :sDatPro ";
+                 
+      Cur_TotHorTrab.AbrirCursor();
+      Enquanto (Cur_TotHorTrab.Achou)
+      {
+        @-- sHorTra = sHorTra + Cur_TotHorTrab.QtdHor;--@
+         Cur_TotHorTrab.Proximo();
+      }
+      Cur_TotHorTrab.FecharCursor(); 
+     sHorTra = HorSit[001]; 
+  Se (sHorTra > sLimite)
+   {
+         sHorExt = sHorTra - sLimite;
+       
+      Se (sHorExt > 0)
+      {
+         @- Diminuir as Horas Normais -@
+         CodRat = 0;
+         SitRes = 1;
+         SitOpe[1] = 1;
+         MinOpe = sHorExt;
+         TipOpe = '-';
+         
+         @- Somar as Horas Extras -@
+         CodRat = 0;
+         SitRes = 301;
+         MinOpe = sHorExt;
+         TipOpe = '+';
+     } 
+   }  
+fim; 
+
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+
+@-- Tratamento para excedente de 44 horas semanais na escala 1006 escala com uma folga semanal--@
+Se(scodesc = 1006)
+  inicio       
+   Definir Cursor Ct;
+   Definir Cursor CursorFolga;
+   Definir Numero wNumEmp;
+   Definir Numero wTipCol;
+   Definir Numero wNumCad;
+   Definir Numero wHorTra;
+   Definir Numero wHorExt;
+   Definir Data   wDatIni;
+   Definir Data   wDatFim;
+   Definir Data   wDatPro;
+   Definir Data   wDatDom;
+   Definir Alfa   wProcessa;
+   Definir Alfa wCodHor;
+   Definir numero zLimite;
+
+   wNumEmp = R034FUN.NumEmp;
+   wTipCol = R034FUN.TipCol;
+   wNumCad = r034FUN.NumCad;
+   wDatPro = DatPro;
+   wDatIni = 0;
+   wDatFim = 0;
+   wHorTra = 0;
+   wHorExt = 0;
+   zLimite = 2640;
+   wProcessa ="S";
+   
+   @- Tratamento para a Sábado e Domingo -@
+   Se ((DiaSem = 6) ou (DiaSem = 0))
+   Inicio 
+     se(DiaSem = 0)
+       inicio
+         wProcessa = "S";
+       fim;             
+     se (DiaSem = 6)
+      inicio          
+          wDatDom = DatPro + 1;         
+           CursorFolga.SQL "SELECT QtdHor FROM R066SIT \
+               WHERE 0 = 1 \
+               UNION \
+              SELECT SUM(QtdHor) FROM R066SIT \
+               WHERE NumEmp = :wNumEmp \
+                 AND Tipcol = :wTipCol \
+                 AND NumCad = :wNumCad \
+                 AND CodSit = 1 \
+                 AND DatApu = :wDatDom";
+                 
+         CursorFolga.AbrirCursor();            
+                 
+        se(CursorFolga.Achou)
+         inicio
+           wProcessa = "N";
+         fim;
+         CursorFolga.FecharCursor();
+      fim;
+      se(wProcessa = "S")
+      inicio
+          wDatFim = DatPro -1;
+            Se (DiaSem = 6)
+               wDatIni = DatPro - 5;   
+            Senao   
+               wDatIni = DatPro - 6;   
+         
+            CodRat = 0;
+            SitRes = 301;
+            TipOpe = '0';         
+      
+            @- Cursor para Totalizar as Horas Trabalhadas -@
+            Ct.SQL "SELECT QtdHor FROM R066SIT \
+                    WHERE 0 = 1 \
+                    UNION \
+                    SELECT SUM(QtdHor) FROM R066SIT \
+                     WHERE NumEmp = :wNumEmp \
+                       AND Tipcol = :wTipCol \
+                       AND NumCad = :wNumCad \
+                       AND CodSit = 1 \
+                       AND DatApu BETWEEN :wDatIni AND :wDatFim ";
+            Ct.AbrirCursor();
+            Enquanto (Ct.Achou)
+              {
+               wHorTra = wHorTra + Ct.QtdHor;
+               Ct.Proximo();
+              }
+              Ct.FecharCursor();    
+              wHorTra = wHorTra + HorSit[001];
+            Se (wHorTra > zLimite)
+             inicio
+                 
+                 wHorExt = wHorTra - zLimite;
+            
+               Se (wHorExt > 0)
+                  {
+                   @- Diminuir as Horas Normais -@
+                   CodRat = 0;
+                   SitRes = 1;
+                   SitOpe[1] = 1;
+                   MinOpe = wHorExt;
+                   TipOpe = '-';
+         
+                   @- Somar as Horas Extras -@
+                   CodRat = 0;
+                   SitRes = 301;
+                   MinOpe = wHorExt;
+                   TipOpe = '+';
+                 }
+           fim;
+      Fim;
+   Fim; 
+Fim;
+        
+xaaqtdref = 0;
+RetMinRefHTr(xaaqtdref);
+
+xacodhor = CodHor;
+Se ((xacodhor < 900) ou (xacodhor = 9996))
+   {                                
+Se (horsit[017] > 120)  @--alterado de 90 para 120 em função das jornadas que encerram antes da meia noite--@
+   Inicio
+   CodRat = 0;
+   SitRes = 17;
+   MinOpe = xaaqtdref;
+   TipOpe = '+';
+   Fim; 
+   
+   
+Se (horsit[017] > 420)
+   {
+   CodRat = 0;
+   SitRes = 17;
+   MinOpe = 0;
+   TipOpe = '0';
+   CodRat = 0;
+   SitRes = 17;
+   MinOpe = 420;
+   TipOpe = '+';
+   }
+   }
+Se (horsit[017] = 360)
+   {
+   CodRat = 0;
+   SitRes = 17;
+   MinOpe = 0;
+   TipOpe = '0';
+   CodRat = 0;
+   SitRes = 17;
+   MinOpe = 420;
+   TipOpe = '+';
+   }
+
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+
+@@@@@@ ----------------------------------------- @@@@@
+Se (xnumemp = 1)
+    {
+    Se (xcodfil = 2)
+        {
+        Se (horsit[017] = 420)
+            {
+            CodRat = 0;
+            SitRes = 17;
+            MinOpe = 0;
+            TipOpe = '0';
+            CodRat = 0;
+            SitRes = 17;
+            MinOpe = 480;
+            TipOpe = '+';
+            }
+        }
+    }
+
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+@----------------------------------------------------------------------------------------------------------------------------------------------------------@
+/*
+Se (xnumemp=10)
+   {   
+    CodRat = 0; 
+    SitRes = 17;
+    SitOPe[1] = 302;
+    TipOpe = '+';
+    
+    CodRat = 0; 
+    SitRes = 16;
+    MinOpe = 420;
+    TipOpe = '+'; 
+    
+       
+   }    
+*/      
+x = 0;
+
+regra(600);
+@------------------------------------------------------------------------------@
+Definir cursor ranot;
+
+ranumemp = 0;
+ratipcol = 0;
+ranumcad = 0;
+ratipnot = 0;
+racodext = 0;
+racodfil = 0;
+ranumemp = r034fun.numemp;
+ratipcol = r034fun.tipcol;
+ranumcad = r034fun.numcad;
+racodfil = r034fun.codfil;
+definir data radatnot;
+radatnot = datpro;
+ranot.sql"select usu_tcodext from r038not \
+              where numemp = :ranumemp \
+                and tipcol = :ratipcol \
+                and numcad = :ranumcad \
+                and datnot = :radatnot";
+ranot.abrircursor();
+Se (ranot.achou)
+    Inicio
+    racodext = ranot.usu_tcodext;
+    Fim
+ranot.fecharcursor(); 
+@-------------------------------------------------------------------------------@
+definir cursor rescala;
+raesctra = 0;
+rainthor = 0;
+raesctra = escatu;
+
+rescala.sql" Select USU_inthor from r006esc \
+                  where codesc = :raesctra";
+rescala.abrircursor();
+Se (rescala.achou)
+    Inicio
+    rainthor = rescala.usu_inthor;
+    Fim
+rescala.fecharcursor();
+
+Se ((racodext <> 0))
+    Inicio
+    CodRat = 0;
+    SitRes = 17;
+    SitOPe[1] = 306;
+    TipOpe = '+';
+    CodRat = 0;
+    SitRes = racodext;
+    SitOPe[1] = 305;
+    TipOpe = '+';
+    SitRes = 305;
+    TipOpe = '0';
+    CodRat = 0;
+    SitRes = racodext;
+    SitOPe[1] = 306;
+    TipOpe = '+'; 
+    SitRes = 306;
+    TipOpe = '0';
+    Fim 
+
+Se ((racodext <> 0))
+    Inicio
+    CodRat = 0;
+    SitRes = 17;
+    SitOPe[1] = 343;
+    TipOpe = '+';
+    CodRat = 0;
+    SitRes = racodext;
+    SitOPe[1] = 332;
+    TipOpe = '+';
+    SitRes = 332;
+    TipOpe = '0';
+    CodRat = 0;
+    SitRes = racodext;
+    SitOPe[1] = 343;
+    TipOpe = '+';
+    SitRes = 343;
+    TipOpe = '0'; 
+    Fim 
+
+Se (ranumemp = 1)   @empresa - 1 @
+    Inicio
+      Se (rainthor = 3) 
+         Inicio
+         CodRat = 0;
+         SitRes = 403;    
+         MinOpe = 0;
+         TipOpe = '0';
+         CodRat = 0;
+         SitRes = 403;    
+         MinOpe = 60;
+         TipOpe = '+';
+      Fim; 
+      Se (rainthor = 4) 
+         Inicio
+         CodRat = 0;
+         SitRes = 404;
+         MinOpe = 0;
+         TipOpe = '0';
+         CodRat = 0;
+         SitRes = 404;
+         MinOpe = 30;
+         TipOpe = '+';
+      Fim;
+    Fim
+Se (ranumemp = 2)@ empresa = 2@
+    Inicio
+      Se (rainthor = 2) 
+         Inicio
+          CodRat = 0;
+         SitRes = 402;
+         MinOpe = 0;   @402 gera uma hora @
+         TipOpe = '0';
+         CodRat = 0;
+         SitRes = 402;
+         MinOpe = 60;   @402 gera uma hora @
+         TipOpe = '+';
+      Fim; 
+      Se (rainthor = 6) 
+         Inicio
+         CodRat = 0;
+         SitRes = 406;
+         MinOpe = 0;    @406 gera 30 minutos @
+         TipOpe = '0';
+         CodRat = 0;
+         SitRes = 406;
+         MinOpe = 30;    @406 gera 30 minutos @
+         TipOpe = '+';
+      Fim;
+    Fim  
+
+@------------------------------------------------------------------------------@
+rasitapu = 0;
+RetSitEmp (ranumemp, ratipcol, raNumCad, radatnot);
+rasitapu = sitemp;
+ 
+Se ((rasitapu >= 2) e (rasitapu <= 299))
+    Inicio
+    CodRat = 0;
+    SitRes = 403;
+    MinOpe = 0;
+    TipOpe = '0';
+    CodRat = 0;
+    SitRes = 404;                                     
+    MinOpe = 0;
+    TipOpe = '0';
+    CodRat = 0;
+    SitRes = 402;
+    MinOpe = 0;
+    TipOpe = '0';
+    CodRat = 0;
+    SitRes = 406;
+    MinOpe = 0;
+    TipOpe = '0';
+    Fim
+@------------------------------------------------------------------------------@
+raqtdhor = 0;
+raqtdhor1 = 0;
+raqtdhor2 = 0;
+raqtdhor3 = 0;
+raqtdhor4 = 0;
+raqtdhor5 = 0;
+raqtdhor6 = 0;
+raqtdhor7 = 0;
+raqtdhor8 = 0;
+raqtdhor9 = 0;
+raqtdhor10 = 0;
+raqtdhor1 = (horsit[430]+horsit[431]+horsit[432]+horsit[433]+horsit[434]+horsit[435]);
+raqtdhor2 = (horsit[436]+horsit[437]+horsit[438]+horsit[439]+horsit[440]+horsit[441]);
+raqtdhor3 = (horsit[442]+horsit[443]+horsit[444]+horsit[446]+horsit[448]+horsit[449]); 
+raqtdhor4 = (horsit[450]+horsit[451]+horsit[303]+horsit[332]+horsit[025]+horsit[530]); 
+raqtdhor5 = (horsit[531]+horsit[532]+horsit[533]+horsit[534]+horsit[535]+horsit[536]);
+raqtdhor6 = (horsit[537]+horsit[538]+horsit[539]+horsit[540]+horsit[541]+horsit[543]);
+raqtdhor7 = (horsit[544]+horsit[546]+horsit[630]+horsit[631]+horsit[632]+horsit[633]);
+raqtdhor8 = (horsit[637]+horsit[638]+horsit[639]+horsit[640]+horsit[641]+horsit[642]);
+raqtdhor9 = (horsit[643]+horsit[644]+horsit[648]+horsit[646]+horsit[647]+horsit[649]);
+raqtdhor10 = (horsit[307]+horsit[65]);
+racodhor = 0;
+raqtdhor = (raqtdhor1 + raqtdhor2 + raqtdhor3 + raqtdhor4 + raqtdhor5 + raqtdhor6 + raqtdhor7 + raqtdhor8 + raqtdhor9 + raqtdhor10);
+
+racodhor = codhor;
+
+Se ((racodhor = 9996))
+    Inicio
+    Se (raqtdhor = 0)
+    Inicio
+    CodRat = 0;
+    SitRes = 403;
+    MinOpe = 0;
+    TipOpe = '0';
+    CodRat = 0;
+    SitRes = 404;
+    MinOpe = 0;
+    TipOpe = '0';
+    CodRat = 0;
+    SitRes = 402;
+    MinOpe = 0;
+    TipOpe = '0';
+    CodRat = 0;
+    SitRes = 406;
+    MinOpe = 0;
+    TipOpe = '0';
+    Fim
+    Fim
+@-------------------------------------------------------------------------------@
+
+Se ((horsit[306] > 0) e (horsit[305] > 0))
+    Inicio
+    CodRat = 0;
+    SitRes = 17;
+    SitOPe[1] = 306;
+    TipOpe = '+';
+    SitRes = 306;
+    TipOpe = '0';
+    CodRat = 0;
+    CodRat = 0;
+    SitRes = 305;
+    SitOPe[1] = 17;
+    TipOpe = '+';
+    Fim 
+@-------------------------------------------------------------------------------@    
+definir cursor rcracha;
+ratipcra = 1;
+ranumcra = 0;
+definir data ddatalt;
+
+rcracha.sql"select numcra, datini from r038hch \
+                where tipcra = :ratipcra\
+                  and numemp = :ranumemp\
+                  and tipcol = :ratipcol\
+                  and numcad = :ranumcad\
+                  order by datini desc";
+rcracha.abrircursor();
+Se (rcracha.achou)
+    Inicio
+    ranumcra = rcracha.numcra;
+    fim
+rcracha.fecharcursor();
+@-------------------------------------------------------------------------------@
+/*Se ((codhor = 9996) e (racodext = 0))  excluir marcação na folga do tipo eletronica
+    Inicio
+    ExecSql "Delete from R070acc where numcra = :ranumcra and datacc = :radatnot and oriacc = 'E'";
+    Fim */
+@-------------------------------------------------------------------------------@ 
+ra1 = 0;
+ra2 = 0;
+ra3 = 0;
+ra1 = (horsit[630]+horsit[631]+horsit[632]+horsit[633]+horsit[065]);
+ra2 = (horsit[637]+horsit[638]+horsit[639]+horsit[640]+horsit[641]+horsit[642]);
+ra3 = (horsit[643]+horsit[644]+horsit[648]+horsit[646]+horsit[647]+horsit[649]);
+
+Se ((ra1 + ra2 + ra3) > 0)
+    Inicio
+    SitRes = 17;
+    TipOpe = '0';
+    SitRes = 402;
+    TipOpe = '0';
+    SitRes = 403;
+    TipOpe = '0';
+    SitRes = 404;
+    TipOpe = '0';
+    SitRes = 406;
+    TipOpe = '0';
+    Fim
+    
+@-- -------Atualização de regra Raphael 12/2022-----------------@
+Definir cursor ranot;
+
+ranumemp = 0;
+ratipcol = 0;
+ranumcad = 0;
+ratipnot = 0;
+racodext = 0;
+ratipnot = 0;
+ranumemp = r034fun.numemp;
+ratipcol = r034fun.tipcol;
+ranumcad = r034fun.numcad;
+definir data radatnot;
+radatnot = datpro;
+ranot.sql"select usu_tcodext, tipnot from r038not \
+              where numemp = :ranumemp \
+                and tipcol = :ratipcol \
+                and numcad = :ranumcad \
+                and datnot = :radatnot";
+ranot.abrircursor();
+Se (ranot.achou)
+    Inicio
+    racodext = ranot.usu_tcodext;
+    ratipnot = ranot.tipnot;
+    Fim
+ranot.fecharcursor(); 
+@-------------------------------------------------------------------------------@
+definir cursor rescala;
+raesctra = 0;
+rainthor = 0;
+raesctra = escatu;
+
+rescala.sql" Select USU_inthor from r006esc \
+                  where codesc = :raesctra";
+rescala.abrircursor();
+Se (rescala.achou)
+    Inicio
+    rainthor = rescala.usu_inthor;
+    Fim
+rescala.fecharcursor();
+
+Se (racodext <> 0) 
+    Inicio
+    CodRat = 0;
+    SitRes = 17;
+    SitOPe[1] = 306;
+    TipOpe = '+';
+    SitRes = 306;
+    TipOpe = '0';
+    CodRat = 0;
+    SitRes = racodext;
+    SitOPe[1] = 305;
+    TipOpe = '+';
+    SitRes = 305;
+    TipOpe = '0';
+    CodRat = 0;
+    /*SitRes = racodext;
+    SitOPe[1] = 17;
+    TipOpe = '+'; */
+    Fim 
+
+Se (racodext <> 0)
+    Inicio
+    CodRat = 0;
+    SitRes = 17;
+    SitOPe[1] = 343;
+    TipOpe = '+';
+    SitRes = 343;
+    TipOpe = '0';
+    CodRat = 0;
+    SitRes = racodext;
+    SitOPe[1] = 332;
+    TipOpe = '+';
+    SitRes = 332;
+    TipOpe = '0';
+    CodRat = 0;
+    /*SitRes = racodext;
+    SitOPe[1] = 17;
+    TipOpe = '+';  */
+    Fim 
+
+Se (ranumemp = 1)   @empresa - 1 @
+    Inicio
+      Se (rainthor = 3) 
+         Inicio
+         CodRat = 0;
+         SitRes = 403;    
+         MinOpe = 0;
+         TipOpe = '0';
+         CodRat = 0;
+         SitRes = 403;    
+         MinOpe = 60;
+         TipOpe = '+';
+      Fim; 
+      Se (rainthor = 4) 
+         Inicio
+         CodRat = 0;
+         SitRes = 404;
+         MinOpe = 0;
+         TipOpe = '0';
+         CodRat = 0;
+         SitRes = 404;
+         MinOpe = 30;
+         TipOpe = '+';
+      Fim;
+    Fim
+Se (ranumemp = 2)@ empresa = 2@
+    Inicio
+      Se (rainthor = 2) 
+         Inicio
+          CodRat = 0;
+         SitRes = 402;
+         MinOpe = 0;   @402 gera uma hora @
+         TipOpe = '0';
+         CodRat = 0;
+         SitRes = 402;
+         MinOpe = 60;   @402 gera uma hora @
+         TipOpe = '+';
+      Fim; 
+      Se (rainthor = 6) 
+         Inicio
+         CodRat = 0;
+         SitRes = 406;
+         MinOpe = 0;    @406 gera 30 minutos @
+         TipOpe = '0';
+         CodRat = 0;
+         SitRes = 406;
+         MinOpe = 30;    @406 gera 30 minutos @
+         TipOpe = '+';
+      Fim;
+    Fim  
+
+@------------------------------------------------------------------------------@
+rasitapu = 0;
+RetSitEmp (ranumemp, ratipcol, raNumCad, radatnot);
+rasitapu = sitemp;
+ 
+Se ((rasitapu >= 2) e (rasitapu <= 299))
+    Inicio
+    CodRat = 0;
+    SitRes = 403;
+    MinOpe = 0;
+    TipOpe = '0';
+    CodRat = 0;
+    SitRes = 404;                                     
+    MinOpe = 0;
+    TipOpe = '0';
+    CodRat = 0;
+    SitRes = 402;
+    MinOpe = 0;
+    TipOpe = '0';
+    CodRat = 0;
+    SitRes = 406;
+    MinOpe = 0;
+    TipOpe = '0';
+    Fim
+@------------------------------------------------------------------------------@
+raqtdhor = 0;
+raqtdhor1 = 0;
+raqtdhor2 = 0;
+raqtdhor3 = 0;
+raqtdhor4 = 0;
+raqtdhor5 = 0;
+raqtdhor6 = 0;
+raqtdhor7 = 0;
+raqtdhor8 = 0;
+raqtdhor9 = 0;
+raqtdhor10 = 0;
+raqtdhor1 = (horsit[430]+horsit[431]+horsit[432]+horsit[433]+horsit[434]+horsit[435]);
+raqtdhor2 = (horsit[436]+horsit[437]+horsit[438]+horsit[439]+horsit[440]+horsit[441]);
+raqtdhor3 = (horsit[442]+horsit[443]+horsit[444]+horsit[446]+horsit[448]+horsit[449]); 
+raqtdhor4 = (horsit[450]+horsit[451]+horsit[303]+horsit[332]+horsit[025]+horsit[530]); 
+raqtdhor5 = (horsit[531]+horsit[532]+horsit[533]+horsit[534]+horsit[535]+horsit[536]);
+raqtdhor6 = (horsit[537]+horsit[538]+horsit[539]+horsit[540]+horsit[541]+horsit[543]);
+raqtdhor7 = (horsit[544]+horsit[546]+horsit[630]+horsit[631]+horsit[632]+horsit[633]);
+raqtdhor8 = (horsit[637]+horsit[638]+horsit[639]+horsit[640]+horsit[641]+horsit[642]);
+raqtdhor9 = (horsit[643]+horsit[644]+horsit[648]+horsit[646]+horsit[647]+horsit[649]);
+raqtdhor10 = (horsit[307]+horsit[65]);
+racodhor = 0;
+raqtdhor = (raqtdhor1 + raqtdhor2 + raqtdhor3 + raqtdhor4 + raqtdhor5 + raqtdhor6 + raqtdhor7 + raqtdhor8 + raqtdhor9 + raqtdhor10);
+
+racodhor = codhor;
+
+Se ((racodhor = 9996))
+    Inicio
+    Se (raqtdhor = 0)
+    Inicio
+    CodRat = 0;
+    SitRes = 403;
+    MinOpe = 0;
+    TipOpe = '0';
+    CodRat = 0;
+    SitRes = 404;
+    MinOpe = 0;
+    TipOpe = '0';
+    CodRat = 0;
+    SitRes = 402;
+    MinOpe = 0;
+    TipOpe = '0';
+    CodRat = 0;
+    SitRes = 406;
+    MinOpe = 0;
+    TipOpe = '0';
+    Fim
+    Fim
+@-------------------------------------------------------------------------------@
+
+/*Se (horsit[306] > 0)
+    Inicio
+    CodRat = 0;
+    SitRes = 17;
+    SitOPe[1] = 306;
+    TipOpe = '+';
+    SitRes = 306;
+    TipOpe = '0';
+    CodRat = 0;
+    CodRat = 0;
+    SitRes = 305;
+    SitOPe[1] = 17;
+    TipOpe = '+';
+    Fim  */
+@-------------------------------------------------------------------------------@    
+definir cursor rcracha;
+ratipcra = 1;
+ranumcra = 0;
+definir data ddatalt;
+
+rcracha.sql"select numcra, datini from r038hch \
+                where tipcra = :ratipcra\
+                  and numemp = :ranumemp\
+                  and tipcol = :ratipcol\
+                  and numcad = :ranumcad\                                          
+                  order by datini desc";
+rcracha.abrircursor();
+Se (rcracha.achou)
+    Inicio
+    ranumcra = rcracha.numcra;
+    fim
+rcracha.fecharcursor();
+
+Se ((codhor = 9996) e (racodext = 0))
+    Inicio
+    ExecSql "Delete from R070acc where numcra = :ranumcra and datacc = :radatnot and oriacc = 'E'";
+    Fim
+@-------------------------------------------------------------------------------@ 
+Se (horsit[001] > 0)
+    Inicio
+    SitRes = 301;
+    SitOPe[1] = 305;                               
+    TipOpe = '+';
+    SitRes = 305;
+    TipOpe = '0';
+    CodRat = 0;
+    Fim 
+@-------------------------------------------------------------------------------@
+raextra1 = 0;
+raextra2 = 0;
+raextra3 = 0;
+raextra4 = 0;
+raextras = 0;
+raextra1 = (horsit[630]+horsit[631]+horsit[632]+horsit[633]+horsit[634]+horsit[635]); 
+raextra2 = (horsit[636]+horsit[637]+horsit[638]+horsit[639]+horsit[640]+horsit[641]);
+raextra3 = (horsit[642]+horsit[643]+horsit[644]+horsit[648]+horsit[646]+horsit[647]);
+raextra4 = (horsit[649]+horsit[065]);
+
+raextras = (raextra1 + raextra2 + raextra3 + raextra4); 
+
+Se (raextras <> 0)
+    Inicio
+    SitRes = 403;
+    TipOpe = '0';
+    CodRat = 0;
+    SitRes = 404;
+    TipOpe = '0';
+    CodRat = 0;
+    SitRes = 402;
+    TipOpe = '0';
+    CodRat = 0;
+    SitRes = 406;
+    TipOpe = '0';
+    CodRat = 0;
+    SitRes = 17;
+    TipOpe = '0';
+    CodRat = 0;
+    Fim
+@-------------------------------------------------------------------------------@
+Se (ratipnot = 43)
+    Inicio
+    SitRes = 24;
+    SitOPe[1] = 305;
+    TipOpe = '+';
+    SitRes = 305;
+    TipOpe = '0';
+    CodRat = 0;
+     Fim    
+    
+Se (ranumemp = 1)   @empresa - 1 @
+    Inicio
+      Se (rainthor = 3) 
+         Inicio
+         Se (ratipnot = 43)
+         Inicio
+         CodRat = 0;
+         SitRes = 403;    
+         MinOpe = 0;
+         TipOpe = '0';
+         CodRat = 0;
+         SitRes = 403;    
+         MinOpe = 60;
+         TipOpe = '+';
+         Fim
+      Fim; 
+      Se (rainthor = 4) 
+         Inicio
+         Se (ratipnot = 43)
+         Inicio
+         CodRat = 0;
+         SitRes = 404;
+         MinOpe = 0;
+         TipOpe = '0';
+         CodRat = 0;
+         SitRes = 404;
+         MinOpe = 30;
+         TipOpe = '+';
+         Fim
+      Fim;
+    Fim
+Se (ranumemp = 2)@ empresa = 2@
+    Inicio
+      Se (rainthor = 2) 
+         Inicio
+         Se (ratipnot = 43)
+         Inicio
+         CodRat = 0;
+         SitRes = 402;
+         MinOpe = 0;   @402 gera uma hora @
+         TipOpe = '0';
+         CodRat = 0;
+         SitRes = 402;
+         MinOpe = 60;   @402 gera uma hora @
+         TipOpe = '+';
+         Fim
+      Fim; 
+      Se (rainthor = 6) 
+         Inicio
+         Se (ratipnot = 43)
+         Inicio
+         CodRat = 0;
+         SitRes = 406;
+         MinOpe = 0;    @406 gera 30 minutos @
+         TipOpe = '0';
+         CodRat = 0;
+         SitRes = 406;
+         MinOpe = 30;    @406 gera 30 minutos @
+         TipOpe = '+';
+         Fim
+      Fim;
+    Fim  
+
+Se ((ratipnot = 43) e (horsit[17] > 0) e (horsit[024] < 660))
+    Inicio
+    CodRat = 0;
+    SitRes = 306;
+    TipOpe = '0';
+    CodRat = 0;
+    SitRes = 305;
+    TipOpe = '0';
+    CodRat = 0;
+    SitRes = 024;
+    SitOPe[1] = 17;
+    TipOpe = '+';
+    Fim 
+
+Se ((ratipnot = 43) e (horsit[332] > 0))
+    Inicio
+    CodRat = 0;
+    SitRes = 024;
+    TipOpe = '0';
+    CodRat = 0;
+    SitRes = 024;
+    SitOPe[1] = 332;
+    TipOpe = '+';
+    CodRat = 0;
+    SitRes = 332;
+    TipOpe = '0';
+    Fim       
+    
+Se ((ranumemp = 1) e (racodfil = 2) e (horsit[017] >= 420))
+    Inicio
+    CodRat = 0;
+    SitRes = 17;
+    TipOpe = '0';
+    CodRat = 0;
+    SitRes = 17;
+    MinOpe = 480;    
+    TipOpe = '+';
+    Fim 
+    
+Se ((ratipnot <> 0) e (ranumemp = 1) e (racodfil = 3))
+   {
+    Se (horsit[017] > 60) 
+       {
+       CodRat = 0;
+       SitRes = 369;
+       MinOpe = 60;
+       TipOpe = '+';
+       }
+    }
+
+Se ((ratipnot <> 0))
+   {
+    Se (horsit[335] > 0) 
+       {
+       CodRat = 0;
+       SitRes = 17;
+       SitOPe[1] = 335;
+       TipOpe = '+';
+       }
+       }
+@-------------------------------------------------------------------------------@
+definir cursor rmarca;
+raseqacc = 0;
+
+rmarca.sql"select seqacc from r070acc \
+            where numcra = :ranumcra\
+            and datacc = :ddatalt";
+                  
+rmarca.abrircursor();
+Se (rmarca.achou)
+    Inicio
+    raseqacc = rmarca.seqacc;
+    fim
+rmarca.fecharcursor();
+
+Se ((codhor = 9997) e (raseqacc = 0))
+    Inicio
+     CodRat = 0;
+     SitRes = 403;
+     TipOpe = '0';
+    Fim
+
+
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+Se ((horsit[001] > 0) e (horsit[306] > 0) e (ranumemp = 1))
+    Inicio
+      CodRat = 0;
+      SitRes = 017;
+      SitOPe[1] = 306;
+      TipOpe = '+';
+      SitRes = 301;
+      SitOPe[1] = 306;
+      TipOpe = '+';
+      CodRat = 0;
+      SitRes = 306;
+      TipOpe = '0';
+    Fim    
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@

@@ -1,0 +1,311 @@
+/*
+  Regra: de Cálculo para buscar a Base de Cálculo da Insalubridade
+         Deverá estar vinculada ao todos os eventos de Insalubridade
+    Por: Emerson Valério Pechiski, em: 01/09/2014
+ Motivo: Alguns Sindicatos determinam uma Base de Cálculo diferente para a 
+         Insalubridade, por exemplo: Salário Mínimo Regional, Salário Normativo,
+         um valor acima do Salário Mínimo e o Salário Mínimo.
+         Como o sistema faz o cálculo nativamente para o Salário Mínimo, para 
+         este não será realizado nenhum tratamento, somente para os demais bases.
+         Estas deverão estar configuradas no Sindicato, conforme DFP - .
+*/
+
+Definir Cursor C014SIN;
+Definir Cursor C006ESC;
+Definir Numero nCodSin;
+Definir Numero nCodEsc;
+Definir Numero nHorMes;
+Definir Numero nBasEvt;
+Definir Alfa   aTipIns;
+Definir Alfa   aEstCid;
+
+
+Definir Numero nCodCid;
+Definir Numero nBasIns;
+Definir Numero nPerIns;
+
+
+
+Definir Cursor C_R044Mov;
+
+nNumEmp = R034Fun.NumEmp; /* eMPRESA */
+nTipCol = R034Fun.TipCol; /* TIPO COLABORADOR */
+nNumCad = R034Fun.NumCad; /* MATRICULA */
+nCodCal = CodCal; /* Codigo do calculo atual*/
+
+
+/* ----------- OriMov ------------ 
+Origem do movimento, podendo ser:
+
+Valor	Descriçao
+D	Digitado
+C	Calculado
+X	O evento que está sendo consultado possui lançamentos fixos */
+
+
+
+/* Se a origem do movimento for digitado o valor do evento calculado recebe */
+Se (OriMov = "D")
+   {
+      ValEvt = ValMov;
+      Cancel(1);
+   }
+
+/* Cursor busca o valor do evento e a referencia do evento quando os parametros forem correspondentes (CodEve = 303)*/
+C_R044Mov.Sql"Select ValEve, RefEve      \
+                From R044Mov             \ 
+               Where NumEmp = :nNumEmp   \
+                 And TipCol = :nTipCol   \
+                 And NumCad = :nNumCad   \
+                 And CodEve = 303        \
+                 And CodCal = :nCodCal   ";
+
+/* Se o cursor achar ele atirbui o valor do evento e a referencia dentro das variaveis */
+C_R044Mov.AbrirCursor();
+   Se(C_R044Mov.Achou)
+      Inicio
+      ValEvt = C_R044Mov.ValEve;
+      RefEvt = C_R044Mov.RefEve;  
+      Fim
+
+/* Se não achar nada ... */
+   Senao
+      Inicio
+      
+         nBasEvt = 0;
+         nRefEve = RefEvt;
+         
+         /* ========================================= // ============================================================= */ 
+         /* RetAdiEmm - Esta função retorna o Adicional do funcionário em uma determinada data. */
+         
+         /*
+            Parâmetros:
+               Nome	     Tipo	     Descrição
+               xNumEmp	  Numérico	  Número da empresa.
+               xTipCol	  Numérico	  Tipo do colaborador.
+               xNumCad	  Numérico	  Cadastro (código) do colaborador.
+               xDatAdi	  Numérico	  Data que se deseja saber o adicional do funcionário.
+
+            Tipo de retorno: Carrega as seguintes variáveis de sistema:
+
+            - PerInsEmp - Percentual insalubridade empregado;
+         */
+
+         @ --- Buscar o Percentual de Insalubridade na Data de Hoje --- @
+         RetAdiEmp (R034FUN.NumEmp, R034FUN.TipCol, R034FUN.NumCad, DatSis); /* DatSis - Data do sistema (Data atual) */ 
+         nPerIns = PerInsEmp;
+         /* ========================================= // ============================================================= */ 
+         
+
+         @ --- Buscar o Sindicato do Colaborador na Data de Hoje --- @
+         RetSinEmp (R034FUN.NumEmp, R034FUN.TipCol, R034FUN.NumCad, DatSis);
+         nCodSin = CodSinEmp;
+   
+         @ --- Buscar a Escala do Colaborador na Data de Hoje --- @
+         RetEscEmp (R034FUN.NumEmp, R034FUN.TipCol, R034FUN.NumCad, DatSis);
+         nCodEsc = EscEmp;
+   
+         @ --- Cursor para Buscar as Horas do Mês da Escala --- @
+         C006ESC.SQL "SELECT HorMes \
+                        FROM R006ESC \
+                        WHERE CodEsc = :nCodEsc";
+         
+         C006ESC.AbrirCursor();
+            Se (C006ESC.Achou)
+               nHorMes = C006ESC.HorMes / 60;
+         C006ESC.FecharCursor();    
+
+         /* ========================================= // ============================================================= */ 
+         @ --- Cursor para Buscar o Tipo de Base para o Cálculo da Insalubridade --- @
+         
+         
+         /* Cursor busca a informação na tabela R014SIN - Sindicatos
+            Campos que ele verifica: 
+            USU_TipIns - Tipo de insalubridade
+            USU_BasIns - Valor base insabubridade
+            CodCid - Codigo da cidade do sindicato
+
+            Quando o Codigo do sindicato for o mesmo que retorno acima 
+         */
+
+         C014SIN.SQL "SELECT USU_TipIns, USU_BasIns, CodCid \
+                        FROM R014SIN \
+                        WHERE CodSin = :nCodSin ";
+         
+
+         /* Se as informações forem encontradas cada valor encontrado pelo cursor é atribuido para as variaveis */
+         C014SIN.AbrirCursor();
+            Se (C014SIN.Achou)
+            {
+               aTipIns = C014SIN.USU_TipIns;
+               nBasIns = C014SIN.USU_BasIns;
+               nCodCid = C014SIN.CodCid;
+            }
+         C014SIN.FecharCursor();
+         /* ========================================= // ============================================================= */ 
+   
+         @ --- N - Salário Normativo --- @
+         Se (aTipIns = "N")
+            nBasEvt = AcuCal[9013];
+         Senao
+   
+         @ --- R - Salário Mínimo Regional --- @
+         Se (aTipIns = "R")
+            nBasEvt = nBasIns;
+         Senao
+   
+         @ --- V - Valor Base --- @
+         Se (aTipIns = "V")
+            nBasEvt = nBasIns;
+         Senao
+   
+         @ --- Salário Mínimo --- @
+         nBasEvt = AcuCal[9015];
+   
+         @ --- Férias --- @
+         Se ((CodEvt = 205) e (ValEvt > 0))
+         {
+            CodEvt = 200;
+            BusEvt = 1;
+            nRefEve = RefEv2;
+            CodEvt = 201;
+            BusEvt = 1;
+            nRefEve = nRefEve + RefEv2;
+         }
+         Senao
+   
+         @ --- Abono Pecuniário --- @
+         Se ((CodEvt = 233) e (ValEvt > 0))
+         {
+            CodEvt = 230;
+            BusEvt = 1;
+            nRefEve = RefEv2;
+         }
+         Senao
+   
+         @ --- Aviso Prévio Indenizado --- @
+         Se ((CodEvt = 263) e (ValEvt > 0))
+         {
+            CodEvt = 260;
+            BusEvt = 1;
+            nRefEve = RefEv2;
+         }
+         Senao
+   
+         @ --- Gratificação --- @
+         Se ((CodEvt = 273) e (ValEvt > 0))
+         {
+            CodEvt = 270;
+            BusEvt = 1;
+            nRefEve = RefEv2;
+         }
+         Senao
+   
+         @ --- Estabilidade --- @
+         Se ((CodEvt = 293) e (ValEvt > 0))
+         {
+            CodEvt = 290;
+            BusEvt = 1;
+            nRefEve = RefEv2;
+         }
+         Senao
+   
+         @ --- 13º Adiantado --- @
+         Se ((CodEvt = 303) e (ValEvt > 0))
+         {
+            CodEvt = 300;
+            BusEvt = 1;
+            nRefEve = RefEv2;
+            nRefEve = nRefEve / 12 * nHorMes;
+         }
+         Senao
+   
+         @ --- 13º Integral --- @
+         Se ((CodEvt = 323) e (ValEvt > 0))
+         {
+            CodEvt = 320;
+            BusEvt = 1;
+            nRefEve = RefEv2;
+               
+            Se (TipCal <> 35)
+               nRefEve = nRefEve / 12 * nHorMes;
+            Senao
+               nRefEve = RefEvt;    
+         }
+         Senao
+   
+         @ --- 13º Proporcional --- @
+         Se ((CodEvt = 343) e (ValEvt > 0))
+         {
+            CodEvt = 340;
+            BusEvt = 1;
+            nRefEve = RefEv2;
+            nRefEve = nRefEve / 12 * nHorMes;
+         }
+         Senao
+   
+         @ --- 13º Indenizado --- @
+         Se ((CodEvt = 363) e (ValEvt > 0))
+         {
+            CodEvt = 360;
+            BusEvt = 1;
+            nRefEve = RefEv2;
+            nRefEve = nRefEve / 12 * nHorMes;
+         }
+         Senao
+   
+         @ --- Férias Rescisão --- @
+         Se ((CodEvt = 384) e (ValEvt > 0))
+         {
+            CodEvt = 381;
+            BusEvt = 1;
+            nRefEve = RefEv2;
+         
+            Se (nRefEve = 0)
+            {
+               CodEvt = 380;
+               BusEvt = 1;
+               nRefEve = RefEv2;
+            }
+         }
+         Senao
+   
+         @ --- Maternidade --- @
+         Se ((CodEvt = 403) e (ValEvt > 0))
+         {
+            CodEvt = 400;
+            BusEvt = 1;
+            nRefEve = RefEv2;
+         }
+         Senao
+   
+         @ --- Ind.Térm.Contr.Antec - Empresa --- @
+         Se ((CodEvt = 423) e (ValEvt > 0))
+         {
+            CodEvt = 420;
+            BusEvt = 1;
+            nRefEve = RefEv2;
+         }
+   
+         Se (ValEvt > 0)
+            Inicio
+               nRefEvt = nRefEve;
+               @ --- Rotina para Converter os minutos para Centésimos --- @
+               nRefInt = nRefEve;
+               TruncarValor (nRefInt);
+               nRefCen = nRefEve - nRefInt;
+               nRefCen = nRefCen / 60 * 100;
+               ArredondarValor (nRefCen, 2);
+               nRefEve = nRefInt + nRefCen;
+               
+               RefEvt = nRefEvt;
+            
+               ValEvt = ((nBasEvt / nHorMes) * nRefEve) * (nPerIns/100);
+               
+               Se (TipCal = 31) @Acrescentado em 16/11/2015. Chamado 47636 - Vanessa e Eduardo - Senior Consulting@
+                  ValEvt = ValEvt / 2;
+            Fim;
+      Fim; 
+C_R044Mov.FecharCursor();
+
+x = 0;

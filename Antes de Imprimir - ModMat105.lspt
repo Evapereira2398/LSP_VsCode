@@ -1,0 +1,403 @@
+Definir Alfa ECodCar; @ Declaracao Criada na Conversao @
+Definir Cursor CCan;
+Definir Cursor CFun;
+Definir Cursor CAfa;
+Definir Alfa xdeslis;
+Definir Alfa xitelis;                     
+Definir Alfa xcodcar;
+Definir Alfa xcodcar_can;
+Definir Alfa xpostra_can;
+Definir Alfa xPosTra;
+Definir Alfa xnomfun;
+Definir Data xdatrqu;
+Definir Data lc_datate;
+Definir Numero EEstPos;
+Definir Alfa EPosTra;
+Definir Numero xNulo;
+Definir Alfa xAuxStr;
+Definir Alfa xInfoFilial;
+                                               
+gb_nomloc = "";
+gb_titred = "";
+gb_nomcid = "";
+xestcar = 0;
+xcodcar = "";
+aEstPos = 0;
+xPosTra = "";
+xtaborg = 0;
+xnumloc = 0;
+xestcar_can = 0;
+xcodcar_can = "";
+xtaborg_can = 0;
+xnumloc_can = 0;
+xcodfil_can = 0;
+xestpos_can = 0;
+xpostra_can = "";
+xsitafa = 0;
+xcodfil = 0;
+xdatrqu = 0;
+
+/* 0 = Não; 1 = Sim */
+xDepoisImprimir = 0;
+
+xnumcpf = 0;
+xnumcpf_can = 0;
+xdatnas = 0;
+xdatnas_can = 0;
+xdatadm = 0;
+xnumemp = R110MAM.NUMEMP;
+xcodfic = R110MAM.CODFIC;
+xdatate = R110MAM.DATATE;
+
+/*  COLABORADOR  */
+Se (R110FIC.TipAtn = 1)
+  {
+  FCodAte = R110FIC.NumCad;
+  xtipcol = R110FIC.TipCol;
+  xnumcad = R110FIC.NumCad;
+
+  /* Data de Admissão */
+  CFun.SQL "SELECT DatAdm FROM R034FUN WHERE NUMEMP = :xnumemp AND \ 
+                                             TIPCOL = :xtipcol AND \ 
+                                             NUMCAD = :xnumcad";
+  CFun.AbrirCursor();
+  Se (CFun.Achou)
+  {
+    /* Se a data de admissão é maior que a data de emissão do atestado então 
+       usa a data da admissão como referencia para buscar o cargo e local do colaborador */
+    Se (CFun.DatAdm > xdatate)
+      xdatate = CFun.DatAdm;
+  }  
+  CFun.FecharCursor();
+  
+    /* LOCAL -- ENumLoc  */
+   EstaNulo (ENumLoc, nulo_numloc);
+   Se ((nulo_numloc = 0) E (ENumLoc <> "0"))  {
+	    RetornaTabOrgEmpresa(xnumemp, xdatate, xtaborg);
+      xnumloc = RetornaNumLoc (xtaborg, ENumLoc);
+      xdatalt = xdatate;
+   } 
+   Senao {
+	    /* CARREGA O LOCAL DO ATENDIDO NA DATA DO ATESTADO */
+      RetLocEmp(xnumemp, xtipcol, xnumcad, xdatate);
+      xtaborg = TabOrgEmp;
+      xnumloc = LocEmp;
+      xdatalt = DatAltLoc;
+   }
+   
+   /* CARGO  -- ECodCar  */
+   TiraEspacos (ECodCar, ECodCar);
+   Se ((ECodCar <> "")) {
+       xestcar = RetEstCarEmp(xnumemp, xdatate);
+       xcodcar = ECodCar;
+   } 
+   Senao
+   {
+     RetCarEmp(xnumemp, xtipcol, xnumcad, xdatate);
+     xestcar = EstCarEmp;
+     xcodcar = CarEmp;
+   } 
+   
+      /* FILIAL  -- ECodFil  */
+   EstaNulo (ECodFil, nulo_codfil);
+   Se ((nulo_codfil = 0) E (ECodFil <> "0")){
+        AlfaParaInt (ECodFil, xcodfil);
+   } 
+   Senao {
+	   RetFilEmp(xnumemp, xtipcol, xnumcad, xdatate);
+     xcodfil = FilEmp;
+   }
+  
+  /* NOME DO LOCAL */
+  CarregaNomeLocal(xtaborg, xnumloc, xdatalt);
+
+  /* NOME DO CARGO */
+  CarregaNomeCargo(xestcar);
+
+  /* SITUAÇÃO DO COLABORADOR NA DATA DO ATESTADO */
+  RetSitEmp(xnumemp, xtipcol, xnumcad, xdatate);
+  xsitafa = TipSitEmp;
+  
+  Se ((R110MAM.TipAso = 3) E 
+     ((xsitafa <> 3) E (xsitafa <> 4) E (xsitafa <> 6) E (xsitafa <> 19) E (xsitafa <> 24)))  
+  {
+    lc_datate = xdatate;
+    CAfa.SQL "SELECT R010SIT.TIPSIT, R038AFA.DATAFA, R038AFA.HORAFA FROM R038AFA, R010SIT \ 
+               WHERE R038AFA.NUMEMP = :xnumemp AND \
+                     R038AFA.TIPCOL = :xtipcol AND \ 
+                     R038AFA.NUMCAD = :xnumcad AND \ 
+                     R038AFA.DATAFA <= :lc_datate AND \ 
+                     R038AFA.SITAFA = R010SIT.CODSIT AND \ 
+                     (R010SIT.TIPSIT = 3 OR \
+                      R010SIT.TIPSIT = 4 OR \
+                      R010SIT.TIPSIT = 6 OR \                      
+                      R010SIT.TIPSIT = 19 OR \                      
+                      R010SIT.TIPSIT = 24) \
+                     ORDER BY R038AFA.DATAFA DESC, R038AFA.HORAFA DESC";
+    xsitafa = 0;
+    CAfa.AbrirCursor();
+    Se (CAfa.Achou)
+      xsitafa = CAfa.TipSit;
+    CAfa.FecharCursor();
+  }
+
+  /* CIDADE DA FILIAL */
+  CarregaCidadeFilial(xnumemp, xcodfil, xdatate);
+  
+  /* INFORMAÇÕES DA FILIAL */
+  CarregaInfoFilial(xnumemp, xcodfil);
+
+  /* DATA NASCIMENTO */
+  CFun.SQL "SELECT DATNAS, NUMCPF FROM R034FUN WHERE NUMEMP = :xnumemp AND \ 
+                                             TIPCOL = :xtipcol AND \ 
+                                             NUMCAD = :xnumcad";
+  CFun.AbrirCursor();
+  Se (CFun.Achou) {
+    xdatnas = CFun.DatNas;
+    xnumcpf = CFun.NumCpf;
+  }
+  CFun.FecharCursor();
+  
+  
+  Se (R110MAM.TipAso = 4) {
+    EstaNulo (EPosTra, xNulo);
+    Se (xNulo = 0)
+    {
+      Definir Alfa xEstutura;
+      Definir Alfa xDescricao;
+      Definir Alfa xWhere;
+      Definir Numero xAchou;
+      
+      NumeroParaAlfa (EEstPos, xEstutura);
+      xWhere = "EstPos = " +  xEstutura + " AND PosTra = '" + EPosTra + "'";       
+      RetornaCampoAlfaTabela ("DesRed", "R017POS", xWhere, xDescricao, xAchou);
+      
+      Se (xAchou = 0) {
+        xDescricao = EPosTra + " - " + xDescricao;
+      } Senao {
+        xDescricao = EPosTra;
+      }
+      
+      AlteraControle ("DDescricaoPosto", "Imprimir", "Verdadeiro");
+      AlteraControle ("DPosto", "Imprimir", "Verdadeiro");
+      AlteraControle ("DPosto", "Descrição", xDescricao);
+      
+    }
+  }
+}
+Senao            
+
+/*  CANDIDATO  */
+Se (R110FIC.TipAtn = 4) {
+  
+  FCodAte = R110FIC.NumCan;
+  xNumCan = R110FIC.NumCan;
+  xsitafa = 0;
+
+  /* SE INFORMAR REQUISICAO NA TELA DE ENTRADA, UTILIZA REQUISICAO COMO CLÁUSULA WHERE */
+    Se (ECodRqu <> 0) {
+        xCodRqu = ECodRqu;
+        CCan.Sql "SELECT R126RQU.ESTCAR, R126RQU.CODCAR, R126RQU.TABORG, R126RQU.NUMLOC, R126RQU.DATRQU, R126RQU.NUMEMP, R126RQU.CODFIL, R126RQU.ESTPOS, R126RQU.PosTra \
+                FROM R126RQU, R126CAN \
+                WHERE R126CAN.CodRqu = R126RQU.CodRqu AND \
+                        R126CAN.NUMCAN = :xnumcan AND \
+                        R126CAN.CodRqu = :xCodRqu \
+                ORDER BY R126RQU.DATRQU DESC";
+        CCan.AbrirCursor();
+    }
+    
+    Senao {
+        /* SELECIONA REQUISICAO  DO CANDIDATO NA R126CPE (ADMITIDOS/TRANSFERIDOS) */
+        CCan.Sql   "SELECT R126RQU.ESTCAR, R126RQU.CODCAR, R126RQU.TABORG, R126RQU.NUMLOC, R126RQU.DATRQU, R126RQU.NUMEMP, R126RQU.CODFIL, R126RQU.ESTPOS, R126RQU.PosTra \
+                    FROM R126RQU, R126CPE \
+                    WHERE R126CPE.NUMCAN = :xnumcan AND \
+                    R126CPE.CodRqu = R126RQU.CodRqu \
+                    ORDER BY R126RQU.DATRQU DESC";
+        
+        CCan.AbrirCursor();
+        Se (CCan.NaoAchou) {
+            /* SELECIONA REQUISICAO DO CANDIDATO NA R126CAN COM SITUACAO 1, 5 OU 8 */
+            CCan.FecharCursor();
+                
+            CCan.Sql"SELECT R126RQU.ESTCAR, R126RQU.CODCAR, R126RQU.TABORG, R126RQU.NUMLOC, R126RQU.DATRQU, R126RQU.NUMEMP, R126RQU.CODFIL, R126RQU.ESTPOS, R126RQU.PosTra \
+                    FROM R126RQU, R126CAN \
+                    WHERE R126CAN.NUMCAN = :xnumcan AND \
+                    R126CAN.CodRqu = R126RQU.CodRqu AND \
+                    (R126CAN.SITCAN = 1 OR R126CAN.SITCAN = 5 OR R126CAN.SITCAN = 8) \
+                    ORDER BY R126RQU.DATRQU DESC";
+                
+            CCan.AbrirCursor();
+            Se (CCan.NaoAchou)
+            /* SENAO, SELECIONA QUALQUER REQUISICAO DO CANDIDATO NA R126CAN */
+            {
+                CCan.FecharCursor();
+                            
+                CCan.Sql"SELECT R126RQU.ESTCAR, R126RQU.CODCAR, R126RQU.TABORG, R126RQU.NUMLOC, R126RQU.DATRQU, R126RQU.NUMEMP, R126RQU.CODFIL, R126RQU.ESTPOS, R126RQU.PosTra \
+                        FROM R126RQU, R126CAN \
+                        WHERE R126CAN.NUMCAN = :xnumcan AND \
+                        R126CAN.CodRqu = R126RQU.CodRqu \
+                        ORDER BY R126RQU.DATRQU DESC";
+                    
+                CCan.AbrirCursor();
+            }
+        }
+    }
+
+    Se (CCan.Achou) {
+        xestcar = CCan.EstCar;
+        xcodcar = CCan.CodCar;
+        xEstPos = CCan.EstPos;
+        xPosTra = CCan.PosTra;
+        xtaborg = CCan.TabOrg;
+        xnumloc = CCan.NUMLOC;
+        xdatrqu = CCan.DatRqu;
+        rqu_numemp = CCan.NumEmp;
+        xcodfil = CCan.CODFIL;
+    }
+    CCan.FecharCursor();
+  
+    /* VERIFICA O CARGO E O LOCAL PRIMEIRO NO CADASTRO DO CANDIDATO */
+    CCan.Sql "SELECT R122CEX.ESTCAR, R122CEX.CODCAR, R122CEX.TABORG, R122CEX.NUMLOC, R122CEX.EMPFIL, R122CEX.CODFIL, R122CEX.DATNAS, R122CEX.ESTPOS, R122CEX.POSTRA, R122CEX.CPFCAN \
+              FROM R122CEX WHERE R122CEX.NUMCAN = :xNumCan";
+    
+    CCan.AbrirCursor();
+        Se (CCan.Achou) {
+            xestcar_can = CCan.EstCar;
+            xcodcar_can = CCan.CodCar;
+            xtaborg_can = CCan.Taborg;
+            xnumloc_can = CCan.NUMLOC;
+            rqu_numemp_can = CCan.EMPFIL;
+            xcodfil_can = CCan.CODFIL;
+            xdatnas_can = CCan.DatNas;
+            xestpos_can = CCan.EstPos;
+            xpostra_can = CCan.PosTra;
+            xnumcpf_can = CCan.CpfCan;
+        }
+     CCan.FecharCursor();
+     
+    /* LOCAL -- ENumLoc  */	
+    EstaNulo (ENumLoc, nulo_numloc);
+    Se ((nulo_numloc = 0) E (ENumLoc <> "0")) {
+       RetornaTabOrgEmpresa(xnumemp, xdatate, xtaborg);
+       xnumloc = RetornaNumLoc (xtaborg, ENumLoc);	
+    }
+	
+    /* CARGO  -- ECodCar  */
+    TiraEspacos (ECodCar, ECodCar);
+    Se ((ECodCar <> "")) {
+        xestcar = RetEstCarEmp(xnumemp, xdatate);
+        xcodcar = ECodCar;
+    }
+   
+    /* FILIAL  -- ECodFil  */
+    EstaNulo (ECodFil, nulo_codfil);
+    Se ((nulo_codfil = 0) E (ECodFil <> "0")) {
+        AlfaParaInt (ECodFil, xcodfil);
+    } 
+    
+    Se (xestcar = 0)  {
+        xestcar = xestcar_can;
+    }
+
+    Se (xcodcar = "") {
+        xcodcar = xcodcar_can;
+    }
+
+    Se (xtaborg = 0) { 
+        xtaborg = xtaborg_can;
+    }
+
+    Se (xnumloc = 0) { 
+        xnumloc = xnumloc_can;
+    }
+
+    Se (rqu_numemp = 0) { 
+        rqu_numemp = rqu_numemp_can;
+    }
+
+    Se (xcodfil = 0) { 
+        xcodfil = xcodfil_can;
+    }
+
+    Se (xdatnas = 0) { 
+        xdatnas = xdatnas_can;
+    }
+
+    Se (xEstPos = 0) { 
+        xEstPos = xestpos_can;
+    }
+
+    Se ((xposTra = "0") OU (xPosTra = "")) {
+        xPosTra = xpostra_can;
+    }
+
+    Se (xnumcpf = 0) {
+        xnumcpf = xnumcpf_can;
+    }
+
+    Se (xdatrqu = 0) {
+      DataHoje(xdatrqu);
+    }
+
+    /* NOME DO LOCAL */
+    CarregaNomeLocal(xtaborg, xnumloc, xdatrqu);
+  
+    /* NOME DO CARGO */
+    CarregaNomeCargo(xestcar);
+  
+    /* CIDADE DA FILIAL */
+    CarregaCidadeFilial(rqu_numemp, xcodfil, xdatate);
+    
+    /* INFORMAÇÕES DA FILIAL */
+    CarregaInfoFilial(rqu_numemp, xcodfil);
+  }
+
+@ Parâmetro 1 para validar com mensagem @                                   
+CarregaResponsavelPCMSO(xnumemp, xcodfil, xdatate, 1 );
+
+/*  SITUAÇÃO DO COLABORADOR  */
+xdeslis = "";
+Se ((xsitafa <> 0) E (xsitafa <> 1) E (xsitafa <> 999))
+  {
+  IntParaAlfa (xsitafa, xitelis);
+  DescItemLista("LTipSit", xitelis, xdeslis);
+  }
+AlteraControle("DNomLoc", "Descrição", gb_nomloc); 
+AlteraControle("DTitCar", "Descrição", gb_titred);
+se (R110MAM.TipAso = 3) 
+  AlteraControle("DDesSit", "Descrição", xdeslis);
+senao
+  AlteraControle("DDesSit", "Descrição", "");
+AlteraControle("DLocAso", "Descrição", gb_nomcid);
+
+/* FILIAL */
+xInfoFilial = gb_razsoc;
+
+Se (gb_tipins = 1) {
+  IntParaAlfa(gb_tipins, xIteLis);
+  DescItemLista("LTipIns", xIteLis, xAuxStr);
+  xInfoFilial = xInfoFilial + " - " + xAuxStr + ": ";
+  ConverteMascara(1, gb_numcgc, xAuxStr, "z99.999.999/9999.99");
+  xInfoFilial = xInfoFilial + xAuxStr;
+}
+Se (gb_ncaepf > 0) {
+  NumeroParaAlfa(gb_ncaepf, xAuxStr); 
+  xInfoFilial = xInfoFilial + " - CAEPF: " + xAuxStr;
+}
+
+AlteraControle("DInfoFilial", "Descrição", xInfoFilial);
+
+/* DATA NASCIMENTO */
+FDatNas = xdatnas;
+
+/* CPF */
+FNumCpf = xNumCpf;
+
+/* IDADE */
+Se (xdatnas > 0)
+  RetDifDat(3, xdatnas, DatSis, Idade);
+Senao
+  Idade = 0;
+FIdade = Idade;
+
+xDepoisImprimir = 1;

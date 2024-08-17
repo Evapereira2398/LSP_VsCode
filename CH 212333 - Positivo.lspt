@@ -1,0 +1,1050 @@
+/* 
+100 - POSINFO - Apuração.
+Organização Responsável pelo Desenvolvimento: Grupo GCI.    
+Última Alteração: Fábio Freire,06/02/15.
+
+Observações sobre a regra:
+.Esta regra foi alterada para atender o chamado 34229 (Banco de Horas Manaus - Empresa 18)
+.Esta regra foi alterada em 25/05/2017 para atender o chamado 68367 - Ajuste regra de Apuração - Ponto - Empresa 28: Boreo.
+*/
+Definir Cursor Cur_R064SOB;
+Definir Data   dDatPro;
+Definir Data   dDatZer;
+definir Data   xDatInt;
+Definir Data   dDatFer;
+Definir Alfa   aMensagem;
+Definir Alfa   aTemBco;
+Definir numero xCodSin;
+Definir numero nHorSit20;
+Definir cursor cur_r034fun;
+Definir cursor C_R002Fec;
+
+/* --- Inicialização das Variáveis --- */
+xNumEmp = R034FUN.NumEmp;
+xCodFil = R034FUN.CodFil;
+xTipCol = R034FUN.TipCol;
+xNumCad = R034FUN.NumCad;
+aTemBco = "";
+montadata(03,06,2011,xdatret); /*data de retorno do BH*/
+dDatPro = DatPro;
+dDatZer = 0;
+dIniApu = IniApu;
+dFimApu = FimApu;
+
+montadata(16,03,2012,xdtbco01); /* data inicial Banco Bettega  - ATENÇÃO ALTERAR PARA 16/03/2012 NA BASE OFICIAL */
+montadata(16,12,2014,xdtbco08); /* data de alteração do banco 18 - Manaus (empresa 18)*/
+
+/* --- Busca o código da Filial do Colaborador na Data --- */
+RetFilEmp(xNumEmp, xTipCol, xNumCad, dDatPro);
+xCodFil = FilEmp;
+Se (FilEmp = 29)
+  Cancel(1);
+
+Definir Numero xCodEqp; Definir Numero xCodCat;
+RetornaEscala (xNumEmp, xTipCol, xNumCad, dDatPro, xPCodEsc, XpCodTma, xPTurInt, xCodEqp, xCodCat, aMensagem); 
+xCodEsc = xpCodEsc;
+
+@ Encontra sindicato do colaborador @
+RetSinEmp(r034fun.numemp, r034fun.tipcol, r034fun.numcad, FimApu);
+xCodSin = codsinemp;
+
+/* 
+Somente Empresa 8.
+Tratamento incluso em 09/02/15, por fabio.freire@grupogci.com.br com acompanhamento do consultor Cesar.
+Calcula interjornada como Extra ou Banco de Horas.
+Obs: No final desta regra tem outro tratamento que calculas as situações 70 e 77. Estas situações (70 e 77),
+são calculadas somente para consulta/informativo (de Interjornada), não sendo consideradas para pagamento.
+*/
+
+Se ((xnumemp = 8) ou (xnumemp = 30) e (xCodFil <> 19)) {
+  
+    @ --- Cálculo de Interjornada ---@
+    xDatInt = datpro - 1;
+    
+    @ -- Primeira marcação do dia atual -- @ 
+    @ Verifica se existem marcações no dia. @
+    vret = FLeMar;
+      Se(vret <> 0)
+        {
+          @ Lê as várias marcaçöes do dia. @
+          vret = FPxMar;
+          Se (vret <> 0)
+            {
+              xPriMar = HorMar;
+            }
+        }
+
+      Se (DulMar = xDatInt)
+        {
+          xHorInt = (1440 - HulMar) + xPrimar; 
+        }
+      
+      senao
+        Se (DulMar = DatPro)
+        {
+          xHorInt = xPriMar - HulMar; 
+        }
+          
+        @ Horas a Pagar de Interjornada @
+        Se((xHorInt < 660) e (xHorInt > 0))
+          Inicio
+            xPagInter = 660 - xHorInt;  
+
+            @ Se tem extras 50%, calcula como 50% @
+            Se (horsit[301] + horsit[302] > 0)
+              {
+                horsit[301] = horsit[301] +  xPagInter;
+              }
+            
+            Senao
+            @ Senão calcula como  HE Não Autorizada @ 
+            Se (horsit[16] + horsit[66] > 0)
+              {
+                horsit[16] = horsit[16] +  xPagInter;
+              } 
+          Fim 
+           
+  }
+
+/* Encontra colaboradores que utilizam Banco de horas (Bco 01-Bettega) a partir de 16/03/2012.
+Verifica também se o colaborador tem na ficha básica campo "Utiliza Banco de Horas"  = "S" e é
+do sindicato 8 ou 12 ou  27 (conforme cadastrado na abrangência do banco 01).*/
+
+VerAbrBHR(xNumEmp,xTipCol,xNumCad,1,datpro,xColBhr);
+VerAbrBHR(xNumEmp,xTipCol,xNumCad,9,datpro,xColBhr9); @ adicionado busca para banco 09 - filial 09 Ilhéus @
+VerAbrBHR(xNumEmp,xTipCol,xNumCad,18,datpro,xColBhr18);
+VerAbrBHR(xNumEmp,xTipCol,xNumCad,28,datpro,xColBhr28);
+VerAbrBHR(xNumEmp,xTipCol,xNumCad,30,datpro,xColBhr30);
+
+  Se (((xColBhr = 1) e (datpro >= xdtbco01)) ou ((xColBhr18 = 1) e (datpro >= xdtbco01)) ou ((xColBhr30 = 1) e (datpro >= xdtbco01)) ou (xColBhr28 = 1) ou (xColBhr9 = 1))
+    {
+      cur_r034fun.sql"select numemp, tipcol, numcad,usu_tembco \
+                    from r034fun \
+                    where \
+                    numemp = :xnumemp and \
+                    tipcol = :xtipcol and \
+                    numcad = :xnumcad";
+                    cur_r034fun.abrircursor();                     
+                      Se (cur_r034fun.achou)
+                        aTemBco = cur_r034fun.usu_tembco;  
+                    
+                    cur_r034fun.fecharcursor();                                             
+    }
+
+/* Sindicato 23-Ilheus, separacao das extras no meio dia
+para dias da semana que for sabado quando tiver jornada prevista de trabalho*/
+horas = HorSit[301] + HorSit[302] + HorSit[309] + HorSit[310];
+
+Se ((xcodsin = 23) e (diasem = 6) e (codhor < 9996) e (horas > 0)) 
+  Inicio
+    tem50d = HorSit[301]; 
+    tem50n = HorSit[302];
+    tem75d = HorSit[309];            
+    tem75n = HorSit[310];
+       
+    /* Retorna a Qtd de Horas Extras Efetuadas entre as 00:00 e 12:00 horas. */
+    ExtrasIntervalo(0,720,0,ate12diu,ate12not);
+    horsit[301] = ate12diu;
+    horsit[302] = ate12not;
+
+    /* Retorna a Qtd de Horas Extras Efetuadas entre as 12:00 e 23:59 horas. */
+    ExtrasIntervalo (720, 1440, 0, apo12diu, apo12not);
+    horsit[303] = apo12diu;
+    horsit[304] = apo12not;
+
+    horsit[309] = 0;
+    horsit[310] = 0;     
+  fim;
+
+/* --- Calcula as Horas de Sobreaviso --- */
+HorSit[032] = 0;
+Cur_R064SOB.SQL"SELECT * \
+                FROM R064SOB \
+                WHERE NumEmp = :xNumEmp \
+                AND TipCol = :xTipCol \
+                AND NumCad = :xNumCad \
+                AND DatIni <= :dDatPro \
+                AND (DatFim >= :dDatPro OR DatFim = :dDatZer)";
+
+Cur_R064SOB.AbrirCursor();
+  Enquanto (Cur_R064SOB.Achou)
+    {
+      dDatIni = Cur_R064SOB.DatIni;
+      xHorIni = Cur_R064SOB.HorIni;
+      dDatFim = Cur_R064SOB.DatFim;
+      xHorFim = Cur_R064SOB.HorFim;
+    
+      Se ((dDatIni = dDatPro) e (dDatFim = dDatPro))
+        HorSit[032] = HorSit[032] + (xHorFim - xHorIni);
+      
+      Senao
+        Se ((dDatIni = dDatPro) e (dDatFim > dDatPro))
+          HorSit[032] = HorSit[032] + (1440 - xHorIni);
+      Senao
+        Se ((dDatIni < dDatPro) e (dDatFim = dDatPro))
+          HorSit[032] = HorSit[032] + xHorFim;
+      Senao
+        Se ((dDatIni < dDatPro) e (dDatFim < dDatPro))
+          HorSit[032] = HorSit[032] + 1440;
+      
+      Cur_R064SOB.Proximo();
+    }
+Cur_R064SOB.FecharCursor();
+
+/* --- Banco de Horas - Gera o banco negativo usando os eventos 101, 102, 103, 104, 105, 106, 065, 015 */
+
+/* Alterações para remover banco de horas em 10/03/2011- Rubens Burkot Jr */
+se (datpro < xdatret)
+    vapara l_final_bh;
+se ((xnumemp <> 8) ou (xcodfil <> 9))
+    vapara l_final_bh;
+
+/* Se ((xNumEmp = 8) e (xCodFil = 9))
+  {
+    HorSit[902] = HorSit[101] + HorSit[102] + HorSit[103] + HorSit[104] + HorSit[105] + HorSit[106] + HorSit[15] + HorSit[65];
+    HorSit[101] = 0;HorSit[102] = 0;
+    HorSit[103] = 0;HorSit[104] = 0;
+    HorSit[105] = 0;HorSit[106] = 0;
+    HorSit[015] = 0;HorSit[065] = 0;
+  }
+*/
+
+/* Gera o banco POSITIVO para Administração para saber se é administração testa se escala é = 79 ou se na ficha básica campo Possui Banco de Horas é Sim */
+
+@ ADMINISTRATIVO @ 
+Se ((xNumEmp = 8) e (xCodFil = 9) e (((xCodEsc = 105) e (aTemBco <> "N")) ou (aTemBco = "S")))     
+  {
+    Se ( CodHor < 9996 )  
+      @-- ADMINISTRAÇÃO Dia de semana normal @
+      {
+        xExtras = HorSit[301] + HorSit[302] + HorSit[309] + HorSit[310];
+        xExtDiu = HorSit[301] + HorSit[309];
+        xExtNot = HorSit[302] + HorSit[310];
+        HorSit[301] = 0;
+        HorSit[302] = 0;
+        HorSit[309] = 0;
+        HorSit[310] = 0;
+    
+        HorSit[901] = 0;
+        @HorSit[901] = xExtras * 1.50;@
+        HorSit[901] = xExtras;
+        xExtras = 0;
+      }
+      
+    Senao @ ADMINISTRAÇÃO Sábado e Domingos e Feriados @
+      
+      {
+        xExtras = HorSit[303] + HorSit[304] + HorSit[307] + HorSit[308];
+        xExtDiu = HorSit[303] + HorSit[307];
+        xExtNot = HorSit[304] + HorSit[308];
+        HorSit[303] = 0;
+        HorSit[304] = 0;
+        HorSit[307] = 0;
+        HorSit[308] = 0;
+
+        HorSit[901] = 0;
+        @HorSit[901] = xExtras * 2;@
+        HorSit[901] = xExtras;
+        xExtras = 0;
+      }
+  }
+
+/* Gera o HORAS EXTRAS para PRODUÇÃO para saber se é administração testa se escala é <> 105 ou se na ficha básica campo Possui Banco de Horas é Não */
+    Senao
+      {    
+        Se ((xNumEmp = 8) e (xCodFil = 9) e ((xCodEsc <> 105) ou (aTemBco = "N")))     
+    
+    @ PRODUÇÃO @
+      {
+        Se ( (CodHor < 9996) e (CodHor <> 0078) )  
+    
+    @ PRODUÇÃO Dia de semana normal  @
+          {
+            xExtras = HorSit[301] + HorSit[302] + HorSit[309] + HorSit[310];
+            xExtDiu = HorSit[301] + HorSit[309];
+            xExtNot = HorSit[302] + HorSit[310];
+            HorSit[301] = 0;
+            HorSit[302] = 0;
+            HorSit[309] = 0;
+            HorSit[310] = 0;            
+            HorSit[901] = 0;
+          
+            Se (xExtras <= 120)           
+            @--menos de 2 horas no dia @
+              {
+                @HorSit[301] = xExtDiu * 1.50;@
+                @HorSit[302] = xExtNot * 1.50;@
+                HorSit[301] = xExtDiu;
+                HorSit[302] = xExtNot;
+                xExtras = 0;
+              }
+            
+            Senao @ mais de 2 horas no dia @
+              {
+                Se(xExtDiu > 0) { 
+                  @HorSit[301] = 120 * 1.50;@
+                  HorSit[301] = 120;
+                  xExtDiu = xExtDiu - 120;
+                }
+
+                Senao Se(xExtNot > 0) {
+                  @HorSit[302] = 120 * 1.50;@
+                  HorSit[302] = 120;
+                  xExtNot = xExtNot - 120;
+                }
+          
+                @HorSit[309] = HorSit[309] + (xExtDiu * 1.75);@
+                @HorSit[310] = HorSit[310] + (xExtNot * 1.75);@ 
+                HorSit[309] = HorSit[309] + xExtDiu;
+                HorSit[310] = HorSit[310] + xExtNot;        
+              }  
+          }
+
+        Senao @ PRODUÇÃO Sábado ou Domingos ou Feriados @ 
+          { 
+            Se ( (CodHor >= 9996)) @-- Sábado ou Domingos ou Feriados @
+              {
+                xExtras = HorSit[303] + HorSit[304] + HorSit[307] + HorSit[308];
+                xExtDiu = HorSit[303] + HorSit[307];
+                xExtNot = HorSit[304] + HorSit[308];
+                HorSit[303] = 0;
+                HorSit[304] = 0;
+                HorSit[307] = 0;
+                HorSit[308] = 0;
+                HorSit[901] = 0;
+                
+                @HorSit[303] = xExtDiu * 2;@
+                @HorSit[304] = xExtNot * 2;@ 
+                HorSit[303] = xExtDiu;
+                HorSit[304] = xExtNot;       
+                xExtras = 0;
+              }
+          }
+      }  
+  }
+
+l_final_bh:
+
+@ Se o colaborador esquecer marcação @
+Se (((QtdMar = 1) ou (QtdMar = 3)) e (ClaEsc = 7))
+  Inicio
+    HorSit[015] = PrvTrd + PrvTrn;
+    HorSit[999] = 0;
+  Fim;  
+
+@ Se o colaborador Faltar mas não o dia todo @
+  Se ((ClaEsc = 7) e (QtdMar > 0))
+    Inicio
+      xSitCmD = 0;
+      xHorSai = HorSai;
+      HorSit[103] = HorSit[015]; 
+      HorSit[104] = HorSit[065];
+      HorSit[015] = 0;
+      HorSit[065] = 0;
+      HorSit[021] = 0; 
+      HorSit[330] = 0;
+      HorSit[205] = 0;
+      HorSit[325] = 0;  
+      HorSit[334] = 0;
+      HorSit[343] = 0;
+
+      xConta = 1;
+      Enquanto ( xConta < 7 )
+        Inicio
+          Se ( (TemCmp[xConta] = 1) )
+            Inicio
+              xSitCmD = SitCmD[xConta];
+              HorSit[xSitCmD] = HorSit[xSitCmD] + QtdCmp[xConta];
+              HorSit[103] = HorSit[103] - HorSit[xSitCmD] - HorSit[001] - HorSit[051];
+            Fim;   
+          xConta = xConta + 1; 
+        Fim;
+
+      xConta = 1;
+        Enquanto ( xConta < 7 )
+          Inicio
+            Se ( (TemCmp[xConta] = 2) )
+              Inicio
+                xSitCmD = SitCmD[xConta];
+                HorSit[xSitCmD] = HorSit[xSitCmD] + QtdCmp[xConta];
+                HorSit[103] = HorSit[103] - HorSit[xSitCmD] - HorSit[001] - HorSit[051];
+              Fim;   
+            xConta = xConta + 1; 
+          Fim;
+
+      xConta = 1;
+        Enquanto ( xConta < 7 )
+          Inicio
+            Se ( (TemCmp[xConta] = 4) )
+              Inicio
+                xSitCmD = SitCmD[xConta];
+                HorSit[xSitCmD] = HorSit[xSitCmD] + QtdCmp[xConta];
+                HorSit[103] = HorSit[103] - HorSit[xSitCmD];
+              Fim;   
+            xConta = xConta + 1; 
+          Fim;
+    
+      xConta = 1;
+        Enquanto ( xConta < 7 )
+          Inicio
+            Se ( (TemCmp[xConta] = 5) )
+              Inicio
+                xSitCmD = SitCmD[xConta];
+                HorSit[xSitCmD] = HorSit[xSitCmD] + QtdCmp[xConta];
+                HorSit[103] = HorSit[103] - HorSit[xSitCmD];
+              Fim;   
+            xConta = xConta + 1; 
+          Fim;
+    Fim; 
+
+/* tratamento entra em um dia e sai na folga, feriado e compensado, limite de 8horas a 100 e o restante a 150  */
+
+Se (( codhor = 9999 ) ou (codhor = 9997))
+  {
+    Se (( Escatu = 10 ) ou ( Escatu = 99 )ou ( Escatu = 98 )ou ( Escatu = 119 ) ou ( Escatu = 131 ) ou ( Escatu = 136 ) ou ( Escatu = 138 )ou ( Escatu = 142 )) 
+      {
+        horsit[303] = horsit[303] + horsit[301];
+        horsit[304] = horsit[304] + horsit[302];
+        horsit[301] = 0;
+        horsit[302] = 0;
+      }
+  }
+
+Se (( codhor = 9999 ))
+  {
+    xsomadiu = 0;
+    xsomaMe  = 0;
+    xsomaMa  = 0;
+    xsomanot = 0;
+    xtothor  = 0;
+    xtothor  = 0;
+    xresta   = 0;
+    
+    xNumEmp = R034FUN.NumEmp;
+
+    x++;
+    @- Se( xNumEmp <> 18 ) - Alterado na migração da empresa 18 para filial 19 da empresa 8 -@ 
+    Se((xNumEmp <> 8) E (xnumemp <> 30) Ou ((xNumEmp = 8) E (xCodFil <> 19)))
+      {
+        xsomadiu = horsit[303] + horsit[307];
+        xsomaMe  = horsit[303] + horsit[304];
+        xsomanot = horsit[304] + horsit[308];
+      }
+     
+      xtothor  = xsomadiu + xsomanot;
+      
+    Se (xtothor > 480 ){
+      xresta = 0;
+
+      Se (xsomaMe < 480 ) {
+        Se ( horsit[307] > 0 ){
+          xresta = 480 - xsomaMe;
+            Se (horsit[307] > xresta )               
+              aux = horsit[307] - xresta;
+            senao  
+              aux = xresta - horsit[307];
+              
+            @ Se ( xNumEmp = 18 ) - Alterado na migração da empresa 18 para filial 19 da empresa 8 @
+            Se (( xNumEmp = 8 ) e (xCodFil = 19))
+              horsit[313] = horsit[313] + xresta;
+            senao
+              horsit[303] = horsit[303] + xresta;
+              horsit[307] = aux;
+            }
+      }        
+
+    } 
+    
+    senao {
+      @Se (xNumEmp <> 18 ) - Alterado na migração da empresa 18 para filial 19 da empresa 8 -@
+      Se((xNumEmp <> 8) e (xnumemp <> 30) e (xnumemp <> 28) Ou ((xNumEmp = 8) E (xCodFil <> 19))) {
+          horsit[303] = xsomadiu;
+          horsit[304] = xsomanot ;
+          horsit[307] = 0;
+          horsit[308] = 0;
+        }
+    }
+  }
+
+/* Calcula o Adicional Noturno */
+@Se( xNumEmp = 18 ) - Alterado na migração da empresa 18 para filial 19 da empresa 8 -@
+
+Se (( xNumEmp = 8 ) e (xCodFil = 19)) { 
+  HorSit[075] = HorSit[051] + HorSit[302] 
+  + HorSit[304] + HorSit[306] 
+  + HorSit[308] + HorSit[310] 
+  + HorSit[312] + HorSit[314]
+  + HorSit[071] + HorSit[336]
+  + HorSit[337] + HorSit[360] 
+  + HorSit[364];
+}
+
+Senao { 
+  HorSit[020] = HorSit[051] + HorSit[302]   @ Retirada a situação 308 da soma - Cesar Oliveira - 10/09/2015 @
+  + HorSit[304] + HorSit[306] 
+  + HorSit[308] + HorSit[310] 
+  + HorSit[312] + HorSit[314]
+  + HorSit[071] + HorSit[336]
+  + HorSit[337] + HorSit[360] 
+  + HorSit[364];
+}
+
+@ tira a hora compensado noturno só é gerada para gerar o adicional noturno @
+HorSit[325] = HorSit[325] + HorSit[364];
+HorSit[364] = 0;
+ 
+/* Banco de Horas / Extras - alterna Sábados, sendo 1 é banco e o outro é Extra.
+Trata banco de horas para colaboradores que estejam no sindicato 
+8 ou 12 ou 27 (conforme abrangência cadastrada no banco 01 e que 
+esteja assinalado com "S"  no campo "Utiliza Banco de Horas" da Ficha Básica */ 
+
+@Se ((aTemBco = "S") e (xnumemp <> 18)) - Alterado na migração da empresa 18 para filial 19 da empresa 8 -@
+Se((aTemBco = "S") E ((xnumemp <> 8) Ou (xnumemp = 8) E (xCodFil <> 19))) {
+
+/*Se((aTemBco = "S") E ((xnumemp <> 8) e (xnumemp <> 30) e (xnumemp <> 28) ou ((((xnumemp = 8) E (xCodFil <> 19)) OU xnumemp = 30))))*/
+            /* Verifica se hoje é sábado e se trabalhou hoje. Caso também tenha trabalhado
+               sábado passado, hoje é apurado como extra e não é banco */
+  
+  Se (diasem = diasab) {
+    jafoi = 0;  /* Indica se já verificou se teve marcações sábado passado */
+    vtemhoj = 0; /*1-Indica que teve marcações neste sábado (hoje), 0-Não teve */
+    vtempas = 0; /*1-Indica que teve marcações sábado passado, 0-Não teve */
+
+    @ Verifica se existem marcações no dia. @
+    vret = FLeMar;
+      Se(vret <> 0)
+        Inicio
+          @ Verifica se tem pelo menos uma marcação no dia. @
+          vret = FPxMar;
+          Se (vret <> 0)
+            Inicio @ A partir daqui pode-se usar as variáveis HorMar, RlgMar, FncMar e OriMar. @
+              Se (jafoi = 0)
+                  vtemhoj = FPxMar;
+              Fim;
+        Fim;
+
+/* Este cursor retorna as marcações do sábado passado, pois o FleMar, FpxMar... funcionam somente na data atual*/
+Definir Cursor CurMar;
+Definir Data vdatacc;
+Definir Data vdatpro;
+Definir Data vdatbco;
+                                    
+vdatpro = DatPro -7; /* atribui sábado passado */
+vdatbco = xdtbco01; 
+
+/* CurMar.Sql  "SELECT NUMCRA, DATACC, HORACC, SEQACC, CODRLG, CODFNC, ORIACC, DATAPU FROM R070ACC \
+                WHERE NUMEMP = :xnumemp AND \
+                TIPCOL = :xtipcol AND \
+                NUMCAD = :xnumcad AND \
+                USOMAR IN (2,4,5,6,7,8,10) AND \ 
+                DATAPU = :vdatpro AND \
+                DATACC > :vdatbco \
+                ORDER BY NUMCRA, DATACC, DATAPU, HORACC"; */
+                                    
+CurMar.Sql  "SELECT NUMCAD, DATAPU, QTDHOR, CODSIT FROM R066SIT \
+            WHERE NUMEMP = :xnumemp AND \
+            TIPCOL = :xtipcol AND \
+            NUMCAD = :xnumcad AND \
+            ((CODSIT >= 301 and CODSIT <= 314 ) OR CODSIT = 901) AND \ 
+            DATAPU = :vdatpro AND \
+            DATAPU > :vdatbco \
+            ORDER BY NUMCAD, DATAPU";
+                                    
+CurMar.AbrirCursor();
+  Se (CurMar.Achou)
+    Inicio
+      vtempas = 1;
+      /* vhoracc = CurMar.HorAcc; 
+      vdatacc = CurMar.DatAcc; */
+      vhoracc = CurMar.QtdHor;
+      vdatacc = CurMar.DatApu;                                        
+    Fim;
+CurMar.FecharCursor();
+
+}
+
+/* Quando: NÃO trabalhou sábado passado e trabalhou hoje e hoje é sábado, ou
+Hoje é dia de semana (seg a sex) e o código do horário é menor que 9996 vai para banco */
+
+Se (((vtemhoj = 1) e (vtempas = 0)) ou ((diasem  >= 1) e (diasem <= 5) e (codhor < 9996))) {
+                    
+/*Empresa 8 filiais 3, 29, 35 - chamado 187460*/
+  Se((aTemBco = "S") e (xnumemp = 8) e ((xCodFil = 3) ou (xCodFil = 35) ou (xCodFil = 29))){
+    
+    @ Chamado 200916 @
+    Se((xCodFil = 3) ou (xCodFil = 35)) { 
+      HorSit[901] = HorSit[901] + HorSit[301] + HorSit[16];
+      HorSit[301] = 0;
+      HorSit[16] = 0;
+    } 
+    
+    Senao {                           
+      horsit[901] = Horsit[16];
+        Se (HorSit[901] < 60 ){
+          HorSit[901] = HorSit[901] + HorSit[66];
+          HorSit[16] = 0;
+        } 
+        
+        Senao {
+          HorSit[16] = HorSit[16] - 60;
+          HorSit[901] = 60;
+        } 
+                            
+        Se (HorSit[901] < 60 ) {
+          HorSit[901] = HorSit[901] + HorSit[301];
+          HorSit[66] = 0;
+        } 
+        
+        Senao {
+          HorSit[66] = HorSit[66] - 60;
+          HorSit[901] = 60;
+        }
+
+        Se (HorSit[901] < 60 ){
+          HorSit[901] = HorSit[901] + HorSit[302];
+          HorSit[301] = 0;
+        }
+
+        Senao {
+          HorSit[301] = HorSit[301] - 60;
+          HorSit[901] = 60;
+        }
+
+        Se (HorSit[901] < 60 ){
+          HorSit[901] = HorSit[901] + HorSit[303];
+          HorSit[302] = 0;
+        }
+
+        Senao {
+          HorSit[302] = HorSit[302] - 60;
+          HorSit[901] = 60;
+        } 
+
+        Se (HorSit[901] < 60 ){
+          HorSit[901] = HorSit[901] + HorSit[305];
+          HorSit[303] = 0;
+        } 
+
+        Senao {
+          HorSit[303] = HorSit[303] - 60;
+          HorSit[901] = 60;
+        } 
+    
+        Se (HorSit[901] < 60 ){
+          HorSit[901] = HorSit[901] + HorSit[306];
+          HorSit[305] = 0;
+        } 
+
+        Senao {
+          HorSit[305] = HorSit[305] - 60;
+          HorSit[901] = 60;
+        }  
+    
+        Se (HorSit[901] < 60 ){
+          HorSit[901] = HorSit[901] + HorSit[309];
+          HorSit[306] = 0;
+        } 
+
+        Senao {
+          HorSit[306] = HorSit[306] - 60;
+          HorSit[901] = 60;
+        } 
+    
+        Se (HorSit[901] > 60 ){
+          HorSit[309] = HorSit[901] -60;
+          HorSit[901] = 60;
+        }
+    }
+  }
+  
+  Senao { 
+    /* situações que serão consideradas para crédito automático no banco de horas */
+    horsit[901] = horsit[901] + horsit[016] + horsit[066] + horsit[301] + horsit[302] + horsit[303] + horsit[305] + horsit[306] + horsit[309];
+    
+    /* zera as situações que foram creditadas no banco */ PRODUÇÃO Sábado ou Domingos ou 
+
+    
+    horsit[016] = 0; horsit[066] = 0; 
+    horsit[301] = 0; horsit[302] = 0; 
+    horsit[305] = 0; horsit[306] = 0;
+    horsit[303] = 0; horsit[309] = 0;
+  }
+}
+  Senao Se(xCodFil = 9) {
+    HorSit[303] = HorSit[303] + HorSit[901];
+    HorSit[901] = 0;
+  }
+}
+
+/* COMEÇA ACERTO DIA 27/10/13 - REFERENTE DIA 07/09/13 TRATA SOMENTE EMPRESA 8, LOTE 9 
+Organização Responsável pelo Desenvolvimento: Grupo GCI.
+Desenvolvido por: Fábio Freire em 25/10/2013.
+Última Alteração: Fábio Freire, 25/10/13.
+                
+Observações sobre a regra:
+Regra para inserir/somar em 27/10/13, crédito em banco de horas (situação 901),
+Regra a ser executada conforme Lote 009. 
+
+Período a ser apurado: 02 a 06/09/2013
+Data para gravar os créditos de Banco de Horas : 11/11/2013
+
+Gerar crédito de 4 horas(0:48 dia) de banco de horas, para colaboradores que 
+cumpriram jornada diária de 8:48h , na semana que antecedeu o feriado de 7 de setembro.
+
+OBS: cliente forneceu excle com os colaboradore envolvidor, e foi gerado o Lote 9, 
+desta forma esta regra abange somente dolaboradores do lote 9, empresa 8.
+                         
+Para o dia 07/09/13 foi gravado (por regra de acerto coletivo) a sit 500. Esta situação
+foi criada exclusivamente para tratar este caso. A sit. 500 não interfere em nenhum cálculo de apuração
+Para o dia 11/09/13 é gravada a sit 901 (crédito banco), se no dia já existir, soma.*/
+                
+definir data xdatauxini;
+definir data xdatauxfim;
+definir data xdatace;
+definir data xdatace01;
+definir data xdatace02;                
+                
+definir numero nqtdhor;
+definir numero ncrebco;
+definir numero nnumemp;
+definir numero ntipcol;
+definir numero nnumcad; 
+definir numero ncodsit;                                               
+nnumemp = r034fun.numemp;
+ntipcol = r034fun.tipcol;
+nnumcad = r034fun.numcad; 
+ncrebco = 0;
+montadata (02,09,2013,xdatauxini);  @ período inicial a ser verificado @
+montadata (06,09,2013,xdatauxfim);  @ período final a ser verificado @
+montadata (07,09,2013,xdatace01);   @ data a ser gravado o resultado (nesta data grava a sit 500, que foi criada só para destacar/conferir @
+montadata (27,10,2013,xdatace02);   @ data a ser gravado o resultado (nesta data grava a sit 901, que trata crédito em banco de horas @                
+
+@ dia 07/09/13 apura na sit 500, somente para conferência @
+Se (datpro = xdatace01) {
+  ncodsit = 500; @ situação a ser apurado o crédito @  
+  xdatace = xdatace01;                  
+} 
+
+@ dia 27/10/13 @
+Senao Se (datpro = xdatace02) {
+  ncodsit = 901; @ situação a ser apurado o crédito @ 
+  xdatace = xdatace02;                                      
+} 
+
+@ Trata somente colaboradores da empresa 8, lote 9 @
+definir cursor cur_R034LCO;
+
+cur_r034lco.sql"select * from r034lco \
+                where numemp = 8 \
+                and codlot = 9 \
+                and tipcol = :ntipcol \
+                and numcad = :nnumcad";
+
+cur_r034lco.abrircursor();
+  Se (cur_r034lco.achou) {
+    Se (datpro = xdatace) {
+      xdataux = xdatauxini;
+        enquanto (xdataux <= xdatauxfim) {
+        
+          @ retorna total de horas conforme totalizador 150 @
+          BuscaTotalizadoresSituacoes(r034fun.numemp,r034fun.tipcol,r034fun.numcad,xdataux,xdataux,150,nqtdhor);
+                        
+          @ Se teve horas no tot. 150, cumula as "Horas a devolver" @
+          Se (nqtdhor > 0) {
+            ncrebco = ncrebco + 48;
+            nqtdhor = 0;
+          }
+                        
+          xdataux ++;
+        }
+                       
+        @ data a ser gravada para acerto @
+        Se (datpro = xdatace) {
+          horsit[ncodsit] = horsit[ncodsit]+ ncrebco;
+          ncrebco = 0;
+        }
+    }
+  }
+
+cur_r034lco.fecharcursor();
+
+/* TERMINA ACERTO DIA 27/10/13 - REFERENTE DIA 07/09/13 TRATA SOMENTE EMPRESA 8, LOTE 9  ***/                                   
+@  Cálculo de Interjornada @
+
+xDatInt = datpro - 1;
+
+@ -- Primeira marcação do dia atual -- @
+@ Verifica se existem marcações no dia. @
+vret = FLeMar;
+Se(vret <> 0) {
+    @ Lê as várias marcaçöes do dia. @
+    vret = FPxMar;
+    Se (vret <> 0)
+     {
+       xPriMar = HorMar;
+      
+     }
+  }
+  
+Senao
+@Cancel(1);@
+vapara seqregra;
+
+@ Criada nova situação 77 - Diferença Intrajornada por Cesar de Oliveira em 09/02/2015 @
+Se (DulMar = xDatInt) {
+  xHorInt = (1440 - HulMar) + xPrimar; 
+    
+  Se(xHorInt < 660)
+    Inicio
+      HorSit[70] = xHorInt;
+      HorSit[77] = 660 - xHorInt;  @ Inserido por Cesar de Oliveira em 09/02/2015 @
+        Se ((aTemBco = "S") e (HorSit[901]=0))
+          Inicio
+            HorSit[901] = HorSit[077];
+          Fim;                                                 
+      Fim;
+}
+  
+Senao
+  Se (DulMar = DatPro) {
+    xHorInt = xPriMar - HulMar; 
+      Se(xHorInt < 660)
+        Inicio
+          HorSit[70] = xHorInt;
+          HorSit[77] = 660 - xHorInt;  @ Inserido por Cesar de Oliveira em 09/02/2015 @
+          
+          /* Trecho abaixo incluído em 24/10/2016 por João Paulo para atendimento de chamado 60684, aberto junto à FORBIZ.*/
+          Se (((aTemBco = "S") e HorSit[901] = 0 e (horSit[77] > 0))) {
+             HorSit[901] = HorSit[77];
+          }
+        Fim;      
+  }
+  
+seqregra;
+
+/* Tratamento de tolerancia de horários para os feriados que caem no sábado 
+NÃO TRATA SOMENTE dia 27/10/13, que teve ajuse especial (ver acima nesta regra) */  
+
+Se (datpro <> xdataace2) {
+
+  Definir cursor CUR_R064TES;
+  Definir data dDatPro;
+  @apuracao@     
+  
+  dDatPro = DatPro;
+  dDatIni = IniApu;
+  dDatFim = FimApu;
+        
+  CUR_R064TES.SQL " select CodEsc \
+                    from R064TES \
+                    where 0=1 \
+                    union all \
+                    select CodEsc \
+                    from R064TES \
+                    where NumEmp = :xNumEmp \
+                      and   TipCol = :xTipCol \
+                      and   NumCad = :xNumCad \
+                      and ( DatIni >= :dIniApu \
+                            and  DatFim <= :dFimApu) \
+                            and CodEsc in (190,191,192)";
+  CUR_R064TES.AbrirCursor();
+    Se (CUR_R064TES.Achou) {
+        xCodEsc = CUR_R064TES.COdEsc;
+    }                  
+  
+  CUR_R064TES.FecharCursor();                                                                                                        
+}          
+   
+/* Empresa 8 menos filial 9 e empresa 24 todas as filiais
+Tratamento incluso em 19/02/15, por aline pires.
+Tratamento para domingos e feriados que devera gerar como extra a dif. da intrajornada que em dias
+normais vai pra banco. 
+*/
+
+Se ((Codhor = 9997) ou (CodHor = 9999)) {
+    Se (((xnumemp = 8) e (xCodFil <> 9) e (xCodFil <> 19) ) ou (xnumemp = 30) ou (xnumemp = 24)) {
+      Se (HorSit[077] > 0)
+          HorSit[303] = HorSit[303] + HorSit[077];           
+    }    
+}  
+
+/* 
+Empresa 8,  Filial 19 - Manaus - possui sabádos intercalados.
+Primeiro sabádo sempre será banco de horas e o próximo será hora extra não autorizada, após autorizado o sistema 
+irá apurar os valores de hora extra na situação correta de forma nativa. 
+ */       
+
+Definir Cursor CUR_R034Fun; 
+Definir Cursor CurMar;  
+Definir Data dSabPas;
+Definir Data dDatBco;
+
+CUR_R034Fun.sql"SELECT NumEmp, TipCol, NumCad, USU_TemBco \
+                FROM r034fun \
+                WHERE NumEmp = :xnumemp \
+                AND TipCol = :xtipcol \
+                AND NumCad = :xnumcad";
+
+CUR_R034Fun.abrircursor();                     
+  Se(CUR_R034Fun.achou) { 
+    aTemBco = CUR_R034Fun.Usu_TemBco;  
+}
+
+CUR_R034Fun.fecharcursor(); 
+
+@Se((aTemBco = "S") E (xNumEmp = 18))- Alterado na migração da empresa 18 para filial 19 da empresa 8 -@
+@Se((aTemBco = "S") E ((xNumEmp = 8) E (xCodFil = 19)) ou (xNumEmp = 28) OU (xnumemp = 30)) Por Luis Merlini, 11-12-2020@
+
+Se((aTemBco = "S") E ((xNumEmp = 8) E (xCodFil = 19)) ou ((aTemBco = "S") E ((xNumEmp = 28) OU (xnumemp = 30)))) {
+
+/* 
+Verifica se hoje é sábado e se trabalhou hoje. Caso também tenha trabalhado
+sábado passado, hoje é apurado como extra não autorizada no banco.
+*/
+  
+  @ 6 Sábado @
+  Se(DiaSem = 6) {
+    nTemMarHoj = 0; /*1-Indica que teve marcações neste sábado (hoje), 0-Não teve */
+    nMarSabPasBco = 0; /*1-Indica que teve marcações sábado passado em banco de horas, 0-Não teve */
+    nMarSabPasExt = 0; /*1-Indica que teve marcações sábado passado em hora extra, 0-Não teve */
+    nTemMarHoj = FLeMar;
+    dSabPas = DatPro - 7; /* Atribui Sábado Passado */
+    MontaData(16,12,2014,dDatBco);
+    
+    Se(nTemMarHoj > 0) {
+      @- Busca as marcações de extra e banco de horas no sabado.-@
+      CurMar.Sql  "SELECT NUMCAD, DATAPU, \
+                  QTDHOR, CODSIT \
+                  FROM R066SIT \
+                  WHERE NUMEMP = :xnumemp AND \
+                  TIPCOL = :xtipcol AND \
+                  NUMCAD = :xnumcad AND \
+                  ((CODSIT >= 301 and CODSIT <= 314 ) \
+                  OR (CODSIT = 901) OR (CODSIT = 16)  \
+                  OR (CODSIT = 904)) \
+                  AND DATAPU =:dSabPas \   
+                  AND DATAPU >:dDatBco \
+                  ORDER BY NUMCAD,DATAPU";                    
+                                  
+      CurMar.AbrirCursor();
+      
+      Se(CurMar.Achou) {
+        @- Banco de Horas -@
+        Se((CurMar.CodSit = 904) ou (CurMar.CodSit = 906)) {
+           nMarSabPasBco = 1; @- Banco de Horas no Sábado-@
+        }
+         
+        Senao {
+           nMarSabPasExt = 1; @- Hora Extra no Sábado-@
+         }                  
+      }
+
+      CurMar.FecharCursor();
+      
+      @- Hora Extra no Sábado passado e Tem Marcação Hoje, Gera HE Automáticamente-@
+      @- Se não tem nenhuma marcação de sabado anterior seja banco ou extra gera o primeiro banco -@
+      Se ((nMarSabPasExt = 0) e (nMarSabPasBco = 0)) {                                                
+        horsit[904] = horsit[016];       
+        nHorAut = horsit[016] + horsit[066];
+        Se(nHorAut = 0) {
+          horsit[904] = horsit[311] + horsit[312] + horsit[313] + horsit[314] + horsit[307] + horsit[308];   
+        }
+        
+        horsit[311] = 0;  horsit[312] = 0;
+        horsit[313] = 0;  horsit[314] = 0;
+        horsit[307] = 0;  horsit[308] = 0;
+        horsit[016] = 0; 
+      }
+        
+      Se (horsit[904] > 480) {
+        horsit[906] = horsit[904] - 480;
+        horsit[904] = 480;
+      }
+    }
+  }
+
+  Senao
+    @- De Segunda a Sexta não sendo folga irá gerar banco de horas positivo. -@
+    Se((DiaSem  >= 1) e (DiaSem <= 5) e (CodHor < 9996)) {
+      Se(xnumemp = 30) {
+        horsit[901] = horsit[901] + horsit[016] + horsit[066] + horsit[301] + horsit[302] + horsit[303] + horsit[305] + horsit[306] + horsit[309];
+      }
+    
+      horsit[901] = horsit[016] + horsit[901];       
+      nHorAut = horsit[016] + horsit[066];
+      Se(nHorAut = 0) {
+        horsit[901] = horsit[311] + horsit[312] + horsit[313] + horsit[314] + horsit[307] + horsit[308] + horsit[901]; 
+      }
+      
+      horsit[311] = 0;  horsit[312] = 0;
+      horsit[313] = 0;  horsit[314] = 0;
+      horsit[307] = 0;  horsit[308] = 0;
+      horsit[016] = 0;
+    }
+}
+ 
+Se((aTemBco <> "S") e (xNumEmp <> 8) e (xCodFil <> 9)) {
+  horsit[901] = 0;
+  horsit[077] = 0;
+  horsit[070] = 0;   
+}
+
+Se((aTemBco = "N") e (xNumEmp = 8)) {
+  horsit[901] = 0;
+  horsit[902] = 0;
+}
+
+/* CHAMADO 2021008229 REFERENTE A SIT 020 - BOREO - INICIO */
+Se ((R034Fun.NumEmp = 28) e (horsit[020]>0)) {
+  horsit[020] = 0;
+}
+
+/* Chamado 169379 referente ao Adiconal Noturno / Empresa 8 - Filial 9 - Sindicato 23 em 28/06/2021 - Cesar Oliveira*/
+Se ((xNumEmp = 8) e (xCodFil = 9) e (xCodSin = 23)) {
+  nHorSit20 = horsit[020];
+  horsit[075] = nHorSit20;
+  horsit[020] = 0;
+}
+
+@Comentado para testes no chamado 167498 por Ednilson Freitas@
+/*Se (R034Fun.NumEmp = 28)
+Inicio
+  nCodFil = R034Fun.CodFil;
+  dDatFer = DatPro;
+  C_R002Fec.Sql"Select CodFer                         \
+                From R002Fec, R030Fil                 \
+                Where R002Fec.CodFer = R030Fil.TabFed \
+                  And R002fec.DatFer = :dDatFer       \
+                  And R030Fil.CodFil = :nCodFil       ";
+  C_R002Fec.AbrirCursor();
+  Se (C_R002Fec.Achou)
+  Inicio
+    HorSit[313] = HorSit[311];
+    HorSit[311] = 0;
+    HorSit[314] = HorSit[312];
+    HorSit[312] = 0;    
+  Fim
+  C_R002Fec.FecharCursor();                      
+Fim  */
+
+@> REGRA PARA CALCULO DO HOME OFFICE - DESENVOLVIDA PELO CONSULTOR DOUGLAS <@
+NQTDHOR = 0 ;
+cur_r034fun.sql"Select QTDHOR               \ 
+                From R064CMP                \
+                Where NUMEMP = :xnumemp AND \
+                      TIPCOL = :xtipcol AND \
+                      NUMCAD = :xnumcad AND \      
+                      codsit = 100 AND \
+                      ((:DDATPRO >= DATINI) AND (:DDATPRO <= DATFIM))"; 
+cur_r034fun.AbrirCursor();
+Se(cur_r034fun.ACHOU)
+  INICIO
+    NQTDHOR = cur_r034fun.QTDHOR ;
+  FIM;
+cur_r034fun.FecharCursor();
+
+SE(NQTDHOR <> 0)
+  INICIO
+    HORSIT[100] = HORSIT[001];
+    HORSIT[001] = HORSIT[001]-NQTDHOR;
+  FIM;
