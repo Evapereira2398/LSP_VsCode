@@ -1,0 +1,179 @@
+Definir Cursor Cur_R070ACC; @- marcações -@
+Definir Cursor Cur_R038HCH; @- histórico de crachá -@
+Definir Cursor Cur_R006ESC; @- escala de trabalho -@
+Definir Cursor Cur_R004MHR; @- marcações do horário -@
+
+Definir Alfa aTurEsc;
+Definir Data dDatAcc;
+Definir Alfa string;
+
+@- verifica horário do colaborador -@
+RetCodHor (R034FUN.NumEmp, R034FUN.TipCol, R034FUN.NumCad, eDatRef, nCodHor);
+
+nNumEmp = R034FUN.NumEmp;
+nTipCol = R034FUN.TipCol;
+nNumCad = R034FUN.NumCad;
+dDatAcc = eDatRef;
+                    
+string = "";
+nNumCra = 0;
+
+Se ((nCodHor < 9996) e (nCodHor <> 0)) { 
+  @- busca crachá de colaborador -@
+  Cur_R038HCH.Sql "SELECT * FROM R038HCH    \
+                    WHERE NumEmp = :nNumEmp \
+                      AND TipCol = :nTipCol \
+                      AND NumCad = :nNumCad \
+                      ORDER BY DatIni DESC";
+  Cur_R038HCH.AbrirCursor();
+  Se (Cur_R038HCH.Achou) {
+    nNumCra = Cur_R038HCH.NumCra;
+  }
+
+  Cur_R038HCH.FecharCursor();
+  
+  Se (nNumCra <> 0) {
+    Cur_R070ACC.Sql "SELECT * FROM R070ACC WHERE NumCra = :nNumCra AND DatAcc = :dDatAcc";
+    Cur_R070ACC.AbrirCursor();
+    Se (Cur_R070ACC.Achou) {
+      Cur_R070ACC.FecharCursor();
+      Cancel(1);
+    }
+    
+    Senao {
+      @- mostra informação -@
+      x = 0;
+    }
+    Cur_R070ACC.FecharCursor();
+  }
+}
+
+Senao {
+  Cancel(1);
+}
+  
+@- retorno turno do colaborador -@
+RetEscEmp (nNumEmp, nTipCol, nNumCad, eDatRef);
+nEscEmp = EscEmp;
+
+
+@- Busca turno da escala -@
+Cur_R006ESC.Sql "SELECT * FROM R006ESC WHERE CodEsc = :nEscEmp";
+Cur_R006ESC.AbrirCursor();
+Se (Cur_R006ESC.Achou) {
+  nTurEsc = Cur_R006ESC.TurEsc;
+}
+Cur_R006ESC.FecharCursor();
+
+Se (nTurEsc = 0){
+  aTurEsc = "Não Definido";
+}
+
+Senao Se (nTurEsc = 1) {
+  aTurEsc = "1º Turno";
+}
+
+Senao Se (nTurEsc = 2) {
+  aTurEsc = "2º Turno";
+}
+
+Senao Se (nTurEsc = 3) {
+  aTurEsc = "3º Turno";
+}
+
+Senao Se (nTurEsc = 4) {
+  aTurEsc = "4º Turno";
+}
+
+Senao Se (nTurEsc = 8) {
+  aTurEsc = "Misto";
+}
+
+Senao {
+  aTurEsc = "Geral";
+}        
+  
+@- verifica turno -@
+Se (eAbrTur = 0){
+  x = 0;
+}
+
+Senao {
+  Se ((nTurEsc = 1) e (eAbrTur <> 1)) {
+    Cancel(1);
+  }
+
+  Senao Se ((nTurEsc = 2) e (eAbrTur <> 2))  {
+    Cancel(1);
+  }
+
+  Senao Se ((nTurEsc = 3) e (eAbrTur <> 3)) {
+    Cancel(1);
+  }
+
+  Senao Se ((nTurEsc = 4) e (eAbrTur <> 4)) {
+    Cancel(1);
+  }
+
+  Senao Se ((nTurEsc = 9) e (eAbrTur <> 9)) {
+    Cancel(1);
+  }
+}
+  
+@- retorna horário previsto -@
+Cur_R004MHR.Sql "SELECT * FROM R004MHR \
+                  WHERE CodHor = :nCodHor \
+                  ORDER BY SeqMar ASC";
+Cur_R004MHR.AbrirCursor();
+Enquanto (Cur_R004MHR.Achou) {
+  hor = Cur_R004MHR.HorBat;
+  
+  Se (hor <> 0) {
+    
+    Se (hor = 1440) {
+      string = string + " 00:00";
+    }
+
+    Senao {
+      Enquanto (hor >= 60) {
+        hor = hor-60; 
+        horas = horas + 1;
+      };
+         
+      Se (horas >= 10) {
+        string = string + " " +formatar(horas,"%2.0f");
+      }
+
+      Senao {
+        string = string + " 0"+formatar(horas,"%1.0f"); 
+      }
+
+      Se (hor >= 10) {
+         string = string + ":" +formatar(hor,"%2.0f");
+      }
+      
+      Senao {
+        string = string + ":0"+formatar(hor,"%1.0f");
+      }
+
+      horas = 0;
+    }
+  }      
+      
+  Cur_R004MHR.Proximo();
+}
+Cur_R004MHR.FecharCursor();
+
+
+@- verifica situaçao do colaborador -@
+@- se férias, aux. doença, acid.trabalho, não deve demonstrar que não tem marcação -@
+RetSitEmp (R034FUN.NumEmp, R034FUN.TipCol, R034FUN.NumCad, eDatRef);
+nSitEmp = SitEmp;
+
+Se ((nSitEmp = 2) OU (nSitEmp = 3) OU (nSitEmp = 4) OU 
+    (nSitEmp = 52) OU (nSitEmp = 53) OU (nSitEmp = 54) OU
+    (nSItEmp = 6)){
+    Cancel(1);
+}
+   
+x=0;      

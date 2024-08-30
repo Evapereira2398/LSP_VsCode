@@ -1,0 +1,14 @@
+Insert into USU_THISFUN  \
+              (USU_NumEmp,USU_TipCol,USU_NumCad,USU_NomFun,USU_DatAdm,USU_DatRef,USU_DatAfa,USU_CodCcu,USU_NomCcu,USU_CodFil,                        \
+              USU_EstCar,USU_CodCar,USU_TitRed,USU_CauDem,USU_DesCau,USU_NomFil,USU_EstPos,USU_PosTra,USU_TabOrg,USU_NumLoc,                         \
+              USU_NomLoc,USU_DesCon,USU_TipCon,USU_LinOrc,USU_ValSal,USU_TipSex,USU_GraIns,USU_DesGra,USU_DatNas,USU_CluFun,USU_ConDef,              \
+              USU_DesDef,USU_NatDes,USU_SitAfa,USU_DesSit,USU_DesNat,USU_FamCar,USU_NomEmp,USU_TipRes,USU_RegFil,USU_QtdDeb,                         \
+              USU_QtdCre,USU_QtdSal,USU_GozFer,USU_ProMes,USU_CarGes,USU_CotApr,USU_CHoMes,USU_HorPre,USU_NumCpf,USU_RacCor,USU_HouAci,USU_DatAci,   \
+              USU_AfaAci,USU_ObiAci,USU_Interj,USU_Intraj,USU_RegTra,USU_SinSal)                                                                     \
+              Values     \
+              (:nNumEmp,:nTipCol,:nNumCad,:aNomFun,:dDatAdm,:dDatRef,:dDatAfa,:aCodCcu,:aNomCcu,:nCodFil,              \
+              :nEstCar,:aCodCar,:aNomCar,:nCauDem,:aDesCau,:aNomFil,:nEstPos,:aPosTra,:nTabOrg,:nNumLoc,               \
+              :aNomLoc,:aDesCon,:nTipCon,:aLinOrc,:nValSal,:aTipSex,:nGraIns,:aDesGra,:dDatNas,:aCluFun,:aConDef,      \    
+              :aDesDef,:nNatDes,:nSitAfa,:aDesSit,:aDesNat,:aDesFam,:aNomEmp,:aTipRes,:aRegFil,:nQtdDeb,               \
+              :nQtdCre,:nQtdSal,:aFerMes,:aProMes,:aCarGes,:aCotApr,:nHorMes,:nHorPre,:nNumCpf,:nRacCor,"N",:dDatAci,  \ 
+              "N","N",:nInterj,:nIntraj,:nRegTra, "")";

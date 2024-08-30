@@ -1,0 +1,407 @@
+/*
+    Regra Vinculada ao Evento:
+    326 - Acidente de Trabalho - INSS
+    328 - Auxílio Doença - INSS
+    552 - Auxílio Doença LACTEC
+    612 - Complementação do Auxílio-Doença
+
+Desenvolvida por: Emerson Valério Pechiski, em 12/08/2004.
+        Objetivo: Calcular o Valor complementar Auxílio Doença 
+
+                  A - Data de Afastamento - 05/08/2004 - 27 dias no mês
+                  B - Salário Base - R$ 2.300,00
+                  C - Periculosidade (30%) - R$ 690,00
+                  D - Média de horas Extras (últimos 12 meses) - R$ 80,00
+                  E - INSS (91% do Salário Base - R$ 2.093,00
+                  F - Data de Retorno - 23/10/2004
+ 
+      Evento 552: Julho        - Agosto - Setembro - Outubro
+                  (B-E)/30*27  - (B-E)  - (B-E)    - (B-E)/30*23
+                  186,30       - 207,00 - 207,00   - 158,70
+
+      Evento 612: Julho        - Agosto - Setembro - Outubro
+                  (C+D)/30*27  - (B-E)  - (B-E)    - (B-E)/30*23
+                  693,00       - 770,00 - 770,00   - 590,33
+
+     Alterada em: 24/08/2004
+          Motivo: Se houver valores em Lançamentos Variáveis para os eventos
+                  552 ou 612, considerar o lançamento.
+*/
+
+
+@ --- Definição de Variáveis --- @
+Definir Cursor C038HAD;
+Definir Cursor C026INF;
+Definir Cursor C046VER;
+Definir Cursor C038AFA;
+Definir Numero vNumEmp;
+Definir Numero vCodFil;
+Definir Numero vNumCad;
+Definir Numero vPerPer; 
+Definir Numero vTetMax;
+Definir Numero vVlrIns;
+Definir Numero vValSal;
+Definir Numero vValEvt;
+Definir Numero vDiaAux;
+Definir Numero vDiaAci;
+Definir Numero vMedExt;
+Definir Data   dPerRef;
+Definir Data   dDatAfa;
+Definir Data   dCmpIni;
+Definir Data   dCmpFim;
+
+
+@ --- Inicialização das Variáveis --- @
+vNumEmp = R034FUN.NumEmp;
+vTipCol = R034FUN.TipCol;
+vNumCad = R034FUN.NumCad;
+vPerPer = R038HAD.PerPer;
+dPerRef = PerRef;
+vValSal = AcuCal[9001];
+vDiaAux = DiaSit[7];
+vDiaAci = DiaSit[9];
+vMedExt = 0;
+vVlrPer = 0;
+vVlrIns = 0;
+vValEvt = 0;
+
+
+
+Se (ValMov > 0) {
+  ValEvt = ValMov;
+  Cancel(1);
+}
+
+@ - Se o codigo do evento for 552 / zera - @
+Se (CodEvt = 552){
+  ValEvt = 0;
+}
+
+
+
+
+@ ------------------------------------------------------------------ @
+@ --- INICIO <<< Executa somente para que têm Auxílio Doença <<< --- @
+@ ------------------------------------------------------------------ @
+Se ((vDiaAux > 0) e ((CodEvt = 328) ou (CodEvt = 552) ou (CodEvt = 612) ou (CodEvt = 1300)))
+Inicio 
+
+
+    @ Base de Cálculo no máximo 30 dias @
+    Se (vDiaAux > 30) 
+        DiaAux = 30; 
+     
+     
+     
+     
+        @ Buscar Valores para os outros eventos @
+        {
+        CodEvt = 328;
+        BusEvt = 1;
+        vVlrIns = ValEv2;
+    
+        @ Cálculo do Evento 552 - Auxílio Doença LACTEC @
+        Se (CodEvt = 552) {
+    
+            @ Cursor para Buscar o Adicional de Periculosidade @
+            C038HAD.SQL "SELECT PerPer \
+                        FROM R038HAD \
+                        WHERE NumEmp = :vNumEmp \
+                            AND TipCol = :vTipCol \
+                            AND NumCad = :vNumCad ";
+            C038HAD.AbrirCursor();
+            
+            Se (C038HAD.Achou){
+                vVlrPer = vValSal * (C038HAD.PerPer / 100);
+            }
+        
+            C038HAD.FecharCursor();
+        
+            Se (ValMov > 0) {
+                vValEvt = ValMov;
+            }
+            
+            Senao Se ((ValMov = 0) e (vVlrIns > 0)) {
+                vValEvt = ((vValSal / 30) * vDiaAux) - vVlrIns;   
+            }
+            
+            Senao {
+                vValEvt = 0;
+            }
+        }
+
+        
+        Senao Se ((CodEvt = 612) OU (CodEvt = 1300)) { @ --- Cálculo do Evento 612 - Complementação do Auxílio Doença --- @
+    
+            @ --- Cursor para Buscar o Adicional de Periculosidade --- @
+            C038HAD.SQL "SELECT PerPer \
+                        FROM R038HAD \
+                        WHERE NumEmp = :vNumEmp \
+                            AND TipCol = :vTipCol \
+                            AND NumCad = :vNumCad \
+                            and PerPer > 0";
+            C038HAD.AbrirCursor();
+            Se (C038HAD.Achou){
+                vVlrPer = vValSal * (C038HAD.PerPer / 100);
+            }
+            C038HAD.FecharCursor();
+
+
+            @ --- Cursor para buscar a Data do Afastamento --- @
+            C038AFA.SQL "SELECT DatAfa \
+                        FROM R038AFA \
+                        WHERE NumEmp = :vNumEmp \
+                            AND TipCol = :vTipCol \
+                            AND NumCad = :vNumCad \
+                            AND SitAfa = 3 \
+                    ORDER BY DatAfa DESC ";
+            C038AFA.AbrirCursor();
+            Se (C038AFA.Achou){
+                dDatAfa = C038AFA.DatAfa; 
+            }
+            C038AFA.FecharCursor();
+
+
+            @ --- Rotina para Montar as Competências Inicial e Final --- @
+            DesMontaData (dDatAfa, vDia, vMes, vAno);
+
+            Se (vMes = 1) {
+                vMesIni = vMes;
+                vMesFim = 12;
+                vAnoIni = vAno - 1;
+                vAnoFim = vAno - 1;
+            }
+            Senao {
+                vMesIni = vMes;
+                vMesFim = vMes - 1;
+                vAnoIni = vAno - 1; 
+                vAnoFim = vAno;
+            }
+            MontaData (1, vMesIni, vAnoIni, dCmpIni);
+            MontaData (1, vMesFim, vAnoFim, dCmpFim);
+
+
+            @ --- Cursor para Buscar a Média das Horas Extras (Últimos 12 meses) --- @ 
+            C046VER.SQL "SELECT R046VER.ValEve \
+                        FROM R046VER, R044CAL  \
+                        WHERE R046VER.NumEmp  = :vNumEmp \
+                            AND R046VER.TipCol  = :vTipCol \
+                            AND R046VER.NumCad  = :vNumCad \
+                            AND R046VER.CodEve IN (34, 35, 36, 37, 913) \
+                            AND R044CAL.NumEmp  = R046VER.NumEmp \
+                            AND R044CAL.CodCal  = R046VER.CodCal \
+                            AND R044CAL.TipCal  = 11 \
+                            AND ( R044CAL.PerRef >= :dCmpIni \
+                            AND R044CAL.PerRef <= :dCmpFim ) ";
+            C046VER.AbrirCursor();
+            Enquanto (C046VER.Achou) {
+                vMedExt = vMedExt + C046VER.ValEve;
+                C046VER.Proximo();
+            }
+            C046VER.FecharCursor();
+        
+        
+            Se (vMedExt > 0) {
+                vMedExt = vMedExt / 12;
+            }
+
+            vValEvt = vVlrPer + vMedExt;
+            CodEvt = 28;
+            BusEvt = 1;
+            vVlrLac = ValEv2+VlrPer;
+        
+            Se (ValMov > 0) {
+                vValEvt = ValMov;
+            }
+
+            Senao Se (vValEvt > 0) {
+            vValEvt = (vValEvt / 30) * vDiaAux;
+            }
+        
+            Se (vVlrLac > vValEvt) {
+                vValEvt = 0;        
+            }
+        }
+    }
+
+    ValEvt = vValEvt; @ --- Lançar Valor no Evento --- @
+Fim;
+
+
+
+@ --------------------------------------------------------------- @
+@ --- FIM >>> Executa somente para que têm Auxílio Doença >>> --- @
+@ --------------------------------------------------------------- @
+
+
+
+
+
+@ ------------------------------------------------------------------------ @
+@ --- INICIO <<< Executa somente para que têm Acidente de Trabalho <<< --- @
+@ ------------------------------------------------------------------------ @
+
+Senao Se ((vDiaAci > 0) e ((CodEvt = 326) ou (CodEvt = 552) ou (CodEvt = 612) ou (CodEvt = 1300)))
+Inicio
+    
+    
+    @ --- Base de Cálculo no máximo 30 dias --- @
+    Se (vDiaAci > 30)
+    vDiaAci = 30;
+    
+    
+    @ --- Cálculo do Evento 026 - Acidente de Trabalho --- @
+    Se (CodEvt = 326) {
+    
+    
+        @ --- Cursor para Buscar o Teto da Faixa de INSS Atual --- @
+        C026INF.SQL "SELECT * FROM R026INF \
+                    WHERE PerRef <= :dPerRef \
+                ORDER BY PerRef DESC, \
+                            TetFai DESC ";
+        C026INF.AbrirCursor();
+        Se (C026INF.Achou) {
+            vTetMax = C026INF.TetFai;
+        }
+        C026INF.FecharCursor();
+        
+        @ --- Valor pago pelo INSS --- @
+        Se (vTetMax <= vValSal){
+            vVlrIns = vTetMax * 0.91;
+        }
+        Senao {
+            vVlrIns = vValSal * 0.91;
+        }
+
+
+        @ --- Verifica se há lançamento em Valores Variáveis, senão Calcular --- @
+        Se (ValMov = 0) {
+            vValEvt = (vVlrIns / 30) * vDiaAci;
+        }
+        Senao {
+            vValEvt = (ValMov / 30) * vDiaAci;    
+        }  
+    }
+
+    Senao {  @ --- Buscar Valores para os outros eventos --- @
+    
+        CodEvt = 326;
+        BusEvt = 1;
+        vVlrIns = ValEv2;
+        
+        @ --- Cálculo do Evento 552 - Auxílio Doença LACTEC --- @
+        Se (CodEvt = 552) {
+            
+            Se ((ValMov = 0) e (vVlrIns > 0)) {
+                vValEvt = ((vValSal / 30) * vDiaAci) - vVlrIns;
+            } 
+            Senao Se (ValMov > 0){
+                vValEvt = ValMov;
+            }
+            Senao {
+                vValEvt = 0;    
+            }     
+        }
+
+
+        @ --- Cálculo do Evento 612 - Complementação do Auxílio Doença --- @
+        Senao Se ((CodEvt = 612)ou(CodEvt = 1300) OU (vNumcad <> 1567)) {
+            
+            @ --- Cursor para Buscar o Adicional de Periculosidade --- @
+            C038HAD.SQL "SELECT PerPer \
+                            FROM R038HAD \
+                            WHERE NumEmp = :vNumEmp \
+                            AND TipCol = :vTipCol \
+                            AND NumCad = :vNumCad \
+                            AND STAHIS <= 0 ";
+            C038HAD.AbrirCursor();
+            Se (C038HAD.Achou) {
+                vVlrPer = vValSal * (C038HAD.PerPer / 100);
+            }
+            
+            Senao 
+            C038HAD.FecharCursor();
+
+
+                @ --- Cursor para buscar a Data do Afastamento --- @
+                C038AFA.SQL "SELECT DatAfa \
+                                FROM R038AFA \
+                                WHERE NumEmp = :vNumEmp \
+                                AND TipCol = :vTipCol \
+                                AND NumCad = :vNumCad \
+                                AND SitAfa = 4 \
+                            ORDER BY DatAfa DESC ";
+                C038AFA.AbrirCursor();
+                Se (C038AFA.Achou) {
+                    dDatAfa = C038AFA.DatAfa; 
+                }
+                C038AFA.FecharCursor();
+
+
+                @ --- Rotina para Montar as Competências Inicial e Final --- @
+                DesMontaData (dDatAfa, vDia, vMes, vAno);
+                Se (vMes = 1) {
+                    vMesIni = vMes;
+                    vMesFim = 12;
+                    vAnoIni = vAno - 1;
+                    vAnoFim = vAno - 1;
+                }
+
+                Senao {
+                    vMesIni = vMes;
+                    vMesFim = vMes - 1;
+                    vAnoIni = vAno - 1; 
+                    vAnoFim = vAno;
+                }
+
+                MontaData (1, vMesIni, vAnoIni, dCmpIni);
+                MontaData (1, vMesFim, vAnoFim, dCmpFim);
+            
+                @ --- Cursor para Buscar a Média das Horas Extras (Últimos 12 meses) --- @ 
+                C046VER.SQL "SELECT R046VER.ValEve \
+                                FROM R046VER, \
+                                    R044CAL  \
+                                WHERE R046VER.NumEmp  = :vNumEmp \
+                                AND R046VER.TipCol  = :vTipCol \
+                                AND R046VER.NumCad  = :vNumCad \
+                                AND R046VER.CodEve IN (34, 35, 36, 37, 913) \
+                                AND R044CAL.NumEmp  = R046VER.NumEmp \
+                                AND R044CAL.CodCal  = R046VER.CodCal \
+                                AND R044CAL.TipCal  = 11 \
+                                AND ( R044CAL.PerRef >= :dCmpIni \
+                                AND R044CAL.PerRef <= :dCmpFim ) ";
+                C046VER.AbrirCursor();
+                Enquanto (C046VER.Achou) {
+                    vMedExt = vMedExt + C046VER.ValEve;
+                    C046VER.Proximo();
+                }
+                C046VER.FecharCursor();
+
+                Se (vMedExt > 0) {
+                    vMedExt = vMedExt / 12;
+                }
+                vValEvt = vVlrPer + vMedExt;
+
+                Se (ValMov > 0) {
+                    vValEvt = ValMov;
+                }
+
+                Senao Se (vValEvt > 0) {
+                    vValEvt = ((vVlrPer + vMedExt) / 30) * vDiaAci;
+                }
+            
+                CodEvt = 28;
+                BusEvt = 1;
+                vVlrLac = ValEv2+vVlrPer;      
+                Se (vVlrLac > vValEvt) {
+                    vValEvt = 0;        
+                } 
+        }
+    }
+
+    @ --- Lançar Valor no Evento --- @
+    ValEvt = vValEvt;
+Fim;     
+@ --------------------------------------------------------------------- @
+@ --- FIM >>> Executa somente para que têm Acidente de Trabalho >>> --- @
+@ --------------------------------------------------------------------- @
