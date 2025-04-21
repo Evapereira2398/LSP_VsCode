@@ -1,0 +1,101 @@
+Definir Numero xCodCal;
+Definir Cursor Cur_R036Dep;
+Definir Data dDatNas;
+Definir Data dDatLim;
+Definir Data dDatAdm;
+Definir Data dDatDem;
+Definir Data dDemiss;
+
+xCodCal = 0;
+xDia = 0;
+xMes = 0;
+xAno = 0;
+dDatAdm = R034Fun.DatAdm;
+dDatDem = R042RCM.DatDem; @-- Alterado para buscar a data que está sendo desligado o colaborador --@
+nSitAfa = R034Fun.SitAfa;
+nNumEmp = R034Fun.NumEmp;
+nTipCol = R034Fun.TipCol;
+nNumCad = R034Fun.NumCad;
+xCodCal = CodCal;
+nTipCal = TipCal; @ -- Inserido para identificar o tipo de cálculo --@
+xDep = 0;
+
+
+@ Adicionado Chamado 167190 @
+/* 
+Verifica se o depentende tem menos de 5 meses. A regra deverá prever o início 
+do auxílio creche a partir dos 5 meses e conforme  a situação do colaborador. */
+
+dDatLim = FimCmp - 150; 
+
+Definir Alfa aNomDep;
+@ Busca quem tem assinalado auxilio e tem menos de 5 meses   @
+Cur_R036Dep.SQL"Select DatNas, Coddep, nomdep  \     
+                  From R036Dep                 \
+                 Where NumEmp = :nNumEmp       \
+                   And TipCol = :nTipCol       \
+                   And NumCad = :nNumCad       \
+                   And AuxCre = 'S'            \
+                   And GraPar = 1              \
+                   And DatNas >= :dDatLim";   
+Cur_R036Dep.AbrirCursor();
+Enquanto (Cur_R036Dep.Achou){
+  ncoddep = Cur_R036Dep.coddep;
+  aNomDep = Cur_R036Dep.nomdep;
+  
+  xDep++;
+  Cur_R036Dep.Proximo();
+}
+Cur_R036Dep.FecharCursor();
+
+@ Chamado 225162 - RetSitEmp estava aumentado avos do 13o @
+Se(nTipCal <> 62) {
+  RetSitEmp (nNumEmp, nTipCol, nNumCad, FimCmp);
+}
+
+
+/* Nova contabilização para o valor do evento, de acordo com a quantidade de 
+dependentes encotrados, vai ser multiplicado pelo valor do acumulador */
+
+ValEvt = xDep * AcuCal[9103]; @ Acumulador 9103 - Possui o valor armazenado de R$786 @
+
+
+Se((ValEvt <> 0) e (RefEvt <> 0)) {
+  @ Ajuste autorizado pelo Sidnei - DVRH - 07/10/2013 @
+  Se ((xCodCal = 240) ou (xCodCal = 241)) {
+    ValEvt = 35;
+  }
+} 
+Se (nTipCal = 62) {
+    DesMontaData (dDatDem, xDia,xMes, xAno);
+    ValEvt = (ValEvt / 30) * xDia;
+} 
+
+Se ((dDatAdm >= IniCmp) e (dDatAdm <= FimCmp)) {
+    RetDifDat (1, dDatAdm-1, FimCmp, xDia); 
+    ValEvt = (ValEvt / 30) * xDia;
+} 
+
+Final: 
+
+
+
+@ ---------------------------------------------------------------------------- @
+/* Tratamento removido da regra - Luiz mencionou que mesmo em afastamento 
+de licença, o colaborador(a), deve receber o auxilio  
+Se((SitEmp = 6) e (DepCre = 1))
+Inicio
+    ValEvt = 0;
+    RefEvt = 0;
+    Vapara Final;
+Fim;
+*/
+
+/* Tratativa removida, a conta não batia, por conta da variavel interna do sistema 
+
+@ Total de dependentes @ 
+nTotalDep = DepCre - xDep;
+
+ValEvt = nTotalDep * AcuCal[9103];   
+RefEvt = nTotalDep;
+*/

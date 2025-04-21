@@ -73,7 +73,8 @@ Se (nCatEso = 106) {
     }
   }
   Cur_R034CTR.FecharCursor();
-                     
+    
+  
   @- PRORROGAÇÃO --------------------------------------------------------------@
   Cur_R034CTR.Sql "SELECT * FROM R034CTR \
                     WHERE NumEmp = :nNumEmp \

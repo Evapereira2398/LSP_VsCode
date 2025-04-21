@@ -1,0 +1,699 @@
+@******************************************************************************@
+@ Realizar a integração dos Lançamentos Contábeis via Web Services.            @
+@******************************************************************************@ 
+Definir Cursor Cur_R047Pen;
+Definir Cursor Cur_R047Max;
+Definir Cursor Cur_R014Sin;
+Definir Cursor Cur_R036Dep;
+
+Definir Alfa aEnter;
+Definir Alfa aCodCcu;
+Definir Alfa aDesCif;
+Definir Alfa aCodCif;
+Definir Alfa aCodFor;
+Definir Alfa aHTTP;
+Definir Alfa aURL;
+Definir Alfa aXML;
+Definir Alfa aHTML;
+Definir Alfa aValorbase64;
+Definir Alfa aValLan;
+Definir Alfa aToken;
+Definir Alfa aVncTit;
+Definir Alfa aTipTis;
+Definir Alfa aNumIns;
+Definir Alfa aNumCgc;
+Definir Alfa aDatEmi;
+Definir Alfa aTipTit;
+Definir Alfa aNumTit;
+Definir Alfa aCodLan;
+Definir Alfa aCtaFin;
+Definir Alfa aCodCal;
+Definir Alfa aNumCad;
+Definir Alfa aMsgRet;
+Definir Alfa aMsgSuc;
+Definir Alfa aTipTisAux;
+Definir Alfa aCodCcuAux;
+Definir Alfa aReqId;
+Definir Alfa aTipCol;
+Definir Alfa aTipInt;
+Definir Alfa aCond;
+Definir Alfa aErroTitulo;
+Definir Alfa aMsgErro;
+
+
+
+Definir Numero nNumEmp;
+Definir Numero nTipCol;
+Definir Numero nNumCad;
+Definir Numero nCodFil;
+Definir Numero nSeqPag;
+Definir Numero nTabOrg;
+Definir Numero nTabEve;
+Definir Numero nCodClc;
+Definir Numero nOpcCtb;
+Definir Numero nCodCal;
+Definir Numero nCodLot;
+Definir Numero nSeqLot;
+Definir Numero nConFin;
+Definir Numero nCodFor;
+Definir Numero nValLan;
+Definir Numero nErro;
+
+
+
+Definir Data dVncTit;
+Definir Data dDatEmi;
+Definir Data dDatHoj;
+Definir Data dDhiPen;
+Definir Data dDatIni;
+Definir Data dDatFim;
+
+
+dDatHoj = DatHoj;
+
+CaracterParaAlfa(10, aEnter);
+RetornaAscII (10, aEnter); 
+
+@ Campos da tela que são passados como parametros @
+nNumEmp = R044Cal_NumEmp;
+nNumCad = R044Cal_F_NumCad;
+nTipCol = R044Cal_F_TipCol;
+aCodCif = R044Cal_F_CodCif;
+dDatIni = R044Cal_F_DatIni;
+dDatFim = R044Cal_F_DatFim;
+nErro = 0;
+aCond = "";
+aErroTitulo = "";
+aMsgErro = "";
+
+
+Se((dDatIni = 0) ou (dDatFim = 0))
+  Mensagem(erro,"Favor informar o período de vencimento!"); 
+
+
+Se((nTipCol > 0) e (nNumCad > 0)) {
+  IntparaAlfa(nTipCol,aTipCol);
+  IntparaAlfa(nNumCad,aNumCad);
+  aCond = " AND R047Pen.TipCol = "+aTipCol+" and R047Pen.NumCad = " + aNumCad;
+}   
+
+
+Se(aCodCif <> ""){
+  aCond = aCond + " AND R047PEN.CodCif in ("+ aCodCif +")";
+}
+
+
+dDatUlt = dDatFim;
+UltimoDia (dDatUlt);  
+
+@Logon@
+HttpObjeto(aHTTP);
+HttpAlteraCabecalhoRequisicao(aHTTP, "Accept", "application/json");
+HttpAlteraCabecalhoRequisicao(aHTTP, "Content-Type", "application/json");
+aXML = "{";        
+aXML = aXML + "\"username\":\"integracao_senior\", ";
+aXML = aXML + "\"password\":\"GSUN1cml1BW9dl\", ";
+aXML = aXML + "\"cod_gestao\":93093";
+aXML = aXML + "} ";
+HttpPost(aHTTP, "https://brado.kmm.com.br/api/v1/LOGON/logon",aXML, aHTML);
+@HttpPost(aHTTP, "http://172.17.82.87/api/v1/LOGON/logon",aXML, aHTML);@
+
+aToken = aHTML;
+PosicaoAlfa ("token",aToken, nPosStr);
+
+Se(nPosStr > 0) {     
+  TamanhoAlfa(aToken,nTam);
+  CopiarAlfa (aToken, 10, nTam-10);
+  PosicaoAlfa (",",aToken, nPosStr);
+  CopiarAlfa (aToken, 2, nPosStr-3);
+    
+  IniciaBarraProgresso(100);   
+  AtualizaBarraProgresso("Integração", "Logon efetuado com sucesso!", "SIM", 3);
+}
+
+Senao { 
+  FinalizaBarraProgresso();
+  Mensagem(erro, "Falha ao executar o logon!");
+}
+
+
+@Contas a Pagar@
+HttpObjeto(aHTTP);      
+HttpAlteraCabecalhoRequisicao(aHTTP, "Content-Type", "application/json");
+HttpAlteraCabecalhoRequisicao(aHTTP, "Authorization", aToken); 
+
+AtualizaBarraProgresso("Integração", "Integrando títulos a pagar!", "SIM", 3); 
+
+
+Cur_R047PEn.Sql"Select R030Fil.NomFil, R047PEN.NumEmp, R047PEN.CodFil, R047PEN.CodCif, R047PEN.CodSin,         \
+                       R047Cif.TipTit, R047PEN.VncTit, R047PEN.DatEmi, R047PEN.CtaFin, R047PEN.CodCcu,         \
+                       R047Cif.TipTis, R047Cif.DesCif, R047Efi.USU_NumIns, R030Fil.NumCgc, R047PEN.ValTit      \
+                  From R047Pen, R047Cif, R047Efi, R030Fil                                                      \
+                 Where 0=1 Union All                                                                           \        
+                 Select 'NORMAL', R047PEN.NumEmp, R047PEN.CodFil, R047PEN.CodCif, R047PEN.CodSin,              \
+                       R047Cif.TipTit, R047PEN.VncTit, R047PEN.DatEmi, R047PEN.CtaFin, R047PEN.CodCcu,         \
+                       R047Cif.TipTis, R047Cif.DesCif, R047Efi.USU_NumIns, R030Fil.NumCgc, SUM(R047PEN.ValTit) \
+                  From R047Pen \
+            Inner Join R047Cif on R047Pen.CodCif = R047Cif.CodCif                                              \
+            Inner Join R047Efi on R047Pen.NumEmp = R047Efi.NumEmp                                              \
+                              and R047Pen.CodFil = R047Efi.CodFil                                              \
+                              and R047Pen.CodCif = R047Efi.CodCif                                              \  
+            Inner Join R030Fil on R047Pen.NumEmp = R030Fil.NumEmp                                              \
+                              and R047Pen.CodFil = R030Fil.CodFil                                              \                 
+                 Where R047PEN.NumEmp = :nNumEmp                                                               \
+                   And R047PEN.VncTit Between :dDatIni and :dDatFim                                            \
+                   and R047Cif.TipTit not in ('C02','C04','F03','F04','R10','R11','R12','R16','T05')           \ 
+                       __Inserir(:aCond) \
+              Group By R047PEN.NumEmp, R047PEN.CodFil, R047PEN.CodCif, R047PEN.CodSin,                         \
+                       R047Cif.TipTit, R047PEN.VncTit, R047PEN.DatEmi, R047PEN.CtaFin, R047PEN.CodCcu,         \ 
+                       R047Cif.TipTis, R047Cif.DesCif, R047Efi.USU_NumIns, R030Fil.NumCgc                      \
+              Union All                                                                                        \
+              Select 'SINDICATO', R047PEN.NumEmp, R047PEN.CodFil, R047PEN.CodCif, R047PEN.CodSin,              \
+                       R047Cif.TipTit, R047PEN.VncTit, R047PEN.DatEmi, R047PEN.CtaFin, R047PEN.CodCcu,         \
+                       R047Cif.TipTis, R047Cif.DesCif, R014Sin.NumCgc, R030Fil.NumCgc, SUM(R047PEN.ValTit)     \
+                  From R047Pen                                                                                 \
+            Inner Join R047Cif on R047Pen.CodCif = R047Cif.CodCif                                              \
+            Inner Join R014Sin on R047Pen.CodSin = R014Sin.CodSin                                              \  
+            Inner Join R030Fil on R047Pen.NumEmp = R030Fil.NumEmp                                              \
+                              and R047Pen.CodFil = R030Fil.CodFil                                              \                
+                 Where R047PEN.NumEmp = :nNumEmp                                                               \
+                   And R047PEN.VncTit Between :dDatIni and :dDatFim                                            \
+                   and R047Cif.TipTit in ('C02')                                                               \ 
+                       __Inserir(:aCond)                                                                       \
+              Group By R047PEN.NumEmp, R047PEN.CodFil, R047PEN.CodCif, R047PEN.CodSin,                         \
+                       R047Cif.TipTit, R047PEN.VncTit, R047PEN.DatEmi, R047PEN.CtaFin, R047PEN.CodCcu,         \
+                       R047Cif.TipTis, R047Cif.DesCif, R014Sin.NumCgc, R030Fil.NumCgc                          \
+              Union All \
+                Select 'DEPENDENTE', R047PEN.NumEmp, R047PEN.CodFil, R047PEN.CodCif, R047PEN.CodSin,           \
+                       R047Cif.TipTit, R047PEN.VncTit, R047PEN.DatEmi, R047PEN.CtaFin, R047PEN.CodCcu,         \
+                       R047Cif.TipTis, R047Cif.DesCif, R036Dep.USU_NumIns, R030Fil.NumCgc, SUM(R047PEN.ValTit) \
+                  From R047Pen                                                                                 \
+            Inner Join R047Cif on R047Pen.CodCif = R047Cif.CodCif                                              \
+            Inner Join R030Fil on R047Pen.NumEmp = R030Fil.NumEmp                                              \
+                              and R047Pen.CodFil = R030Fil.CodFil                                              \  
+            Inner Join R036Dep on R047Pen.NumEmp = R036Dep.NumEmp                                              \
+                              and R047Pen.TipCol = R036Dep.TipCol                                              \ 
+                              and R047Pen.NumCad = R036Dep.NumCad                                              \ 
+                              and R047Pen.CodDep = R036Dep.CodDep                                              \                                   
+                 Where R047PEN.NumEmp = :nNumEmp                                                               \
+                   And R047PEN.VncTit Between :dDatIni and :dDatFim                                            \
+                   and R047Cif.TipTit in ('C04','F03','F04','R10','R11','R12','R16','T05')                     \
+                       __Inserir(:aCond)                                                                       \
+              Group By R047PEN.NumEmp, R047PEN.CodFil, R047PEN.CodCif, R047PEN.CodSin,                         \
+                       R047Cif.TipTit, R047PEN.VncTit, R047PEN.DatEmi, R047PEN.CtaFin, R047PEN.CodCcu,         \
+                       R047Cif.TipTis, R047Cif.DesCif, R036Dep.USU_NumIns, R030Fil.NumCgc  ";   
+
+                      
+Cur_R047PEn.AbrirCursor();
+Enquanto(Cur_R047PEn.Achou) {
+  aXML = "";  
+  nNumEmp = Cur_R047PEn.NumEmp;
+  nCodFil = Cur_R047PEn.CodFil;
+  nConFin = Cur_R047PEn.CodCif;
+  nValLan = Cur_R047PEn.ValTit;
+  dVncTit = Cur_R047PEn.VncTit;
+  dDatEmi = Cur_R047PEn.DatEmi;  
+  nNumIns = Cur_R047PEn.USU_NumIns;
+  nCodCif = Cur_R047PEn.CodCif;  
+  aDesCif = Cur_R047PEn.DesCif;
+  nNumCgc = Cur_R047PEn.NumCgc; 
+  aTipTis = Cur_R047PEn.TipTis;
+  nCtaFin = Cur_R047PEn.CtaFin; 
+  aCodCcu = Cur_R047PEn.CodCcu;
+  nCodSin = Cur_R047PEn.CodSin;
+  aTipTit = Cur_R047PEn.TipTit;
+  aTipInt = Cur_R047PEn.NomFil;
+     
+  Cur_R047Max.Sql"Select USU_CodLan From R047His Where 0=1 \
+                   Union \
+                  Select Max(USU_CodLan) \
+                    From R047His \
+                   Where NumEmp = :nNumEmp";  
+  Cur_R047Max.AbrirCursor();
+  Se(Cur_R047Max.Achou) {
+    nCodLan = Cur_R047Max.USU_CodLan;
+    nCodLan = nCodLan + 100000 + 1;               @ Estava somando o código de lançamento com 1 - alterei para 100000 como teste @
+    IntParaAlfa(nCodLan,aCodLan);
+  }
+  Cur_R047Max.FecharCursor();                       
+  
+  NumeroParaAlfa(nValLan,aValLan);
+  TrocaString(aValLan,",", ".", aValLan);  
+  IntParaAlfa(nNumCgc,aNumCgc);
+  IntParaAlfa(nNumIns,aNumIns); 
+  IntParaAlfa(nCtaFin,aCtaFin); 
+  IntParaAlfa(nCodCal,aCodCal);
+  ConverteMascara(1,nNumCgc,aNumCgc,"99999999999999");     
+  ConverteMascara(3,dVncTit,aVncTit,"YYYY-MM-DD");
+  ConverteMascara(3,dDatEmi,aDatEmi,"YYYY-MM-DD");      
+  
+  aNumTit = "RH." + aCodLan;
+      
+  TamanhoAlfa(aNumIns,nTam);
+  Se(nTam > 11){
+    ConverteMascara(1,nNumIns,aNumIns,"99999999999999"); 
+  }
+  Senao {
+    ConverteMascara(1,nNumIns,aNumIns,"99999999999"); 
+  }
+    
+  @TESTE@
+  /*aCodCcuAux = "01.01.01.03";
+  aTipTisAux = "ND";*/  
+         
+  aXML = "{";
+    aXML = aXML + "\"syscode\":\""+aNumTit+"\",";
+    aXML = aXML + "\"origem\":\"SENIOR\",";
+    aXML = aXML + "\"cod_lancamento\":\""+aNumTit+"\",";
+    aXML = aXML + "\"data_emissao\":\""+aDatEmi+"\",";
+    aXML = aXML + "\"numero\":\""+aNumTit+"\",";
+    aXML = aXML + "\"parcela\":1,";
+    aXML = aXML + "\"favorecido\":\""+aNumIns+"\",";
+    aXML = aXML + "\"moeda\":\"790\",";
+    aXML = aXML + "\"valor\":"+aValLan+",";
+    aXML = aXML + "\"data_vencimento\":\""+aVncTit+"\",";
+    aXML = aXML + "\"tipo_documento\":\""+aTipTis+"\",";
+    aXML = aXML + "\"tipo_pagamento\":\"DEPOSITO\",";      
+    aXML = aXML + "\"historico\":\""+aCtaFin+"\",";
+    aXML = aXML + "\"organizacional\":\""+aCodCcu+"\",";    
+      aXML = aXML + "\"organograma\":{";   
+        aXML = aXML + "\"unidade_negocio\":\""+aNumCgc+"\",";
+        aXML = aXML + "\"organizacional\":\""+aCodCcu+"\",";
+        aXML = aXML + "\"rateio\":{";
+        aXML = aXML + "\"percentual\":\"100\","; 
+        aXML = aXML + "\"valor\":"+aValLan+"";
+      aXML = aXML + "}";  
+    aXML = aXML + "},";
+    aXML = aXML + "\"observacao\":\""+aDesCif+"\"";
+  aXML = aXML + "}";
+  
+  HttpDesabilitaErroResposta(aHTTP);
+  HttpPost(aHTTP,"https://brado.kmm.com.br/api/v1/M1867/lanctoContasPagar",aXML,aHTML);
+
+  PosicaoAlfa("mensagem",aHTML, nPosMsg);
+  PosicaoAlfa("requisicao_id",aHTML, nPosReq);
+  PosicaoAlfa("syscode",aHTML, nPosSys);
+  
+  aMsgRet = aHTML;
+  CopiarAlfa(aMsgRet, 14, nPosReq-17);
+
+  aReqId = aHTML;
+  CopiarAlfa(aReqId, nPosReq+15, nPosSys-nPosReq-17);
+  
+  Se((aReqId <> "null") e (aMsgRet = "Inserido com sucesso.")) {
+    
+    Se((nTipCol > 0) e (nNumCad > 0)) {
+      
+      Se(aTipInt = "NORMAL") {
+        IniciarTransacao();
+        ExecSqlEx("INSERT INTO R047His                                                                                         \
+                   SELECT NUMEMP, CODFIL, TIPTIT, TIPTIS, CODFOR, CODCIF, CODTRS, SERNFI, VNCTIT, VALTIT, TIPCOL,              \
+                          NUMCAD, CODCAL, INIPER, INIFER, DATDEM, CODDEP, CODSIN, RATGPS, OBSTIT, :aNumTit, ' ' AS STSCAN,     \
+                          ORIGPS, CODOEM, CTAFIN, TIPAGR, CODRED, CODNTG, CODCCU, DATENT, DATEMI, MODPAG, FILSAP, 0 AS TIPCIF, \
+                          GRUCON, CODUSU, TO_DATE('1900-12-31', 'YYYY-MM-DD') AS DATAUX, :nCodLan \
+                     FROM R047Pen \
+                    Where NumEmp = :nNumEmp \ 
+                      and CodFil = :nCodFil \ 
+                      and CodCif = :nCodCif \
+                      and VncTit = :dVncTit \
+                      and DatEmi = :dDatEmi \
+                      and CtaFin = :nCtaFin \
+                      and CodCcu = :aCodCcu \
+                      and TipTis = :aTipTis \
+                      and TipCol = :nTipCol \
+                      and NumCad = :nNumCad \
+                      and CodSin = :nCodSin \
+                      and TipTit = :aTipTit \
+                      and exists (select 1 from R047Efi \
+                                   Where R047Pen.NumEmp = R047Efi.NumEmp \
+                                     and R047Pen.CodFil = R047Efi.CodFil \
+                                     and R047Pen.CodCif = R047Efi.CodCif \
+                                     and R047Efi.USU_NumIns = :nNumIns)",nErro,aMsgErro); 
+        
+        Se(nErro = 0) {
+           FinalizarTransacao();
+           
+           IniciarTransacao();                       
+           ExecSqlEx("Delete From R047Pen \
+                       Where NumEmp = :nNumEmp \ 
+                         and CodFil = :nCodFil \ 
+                         and CodCif = :nCodCif \
+                         and VncTit = :dVncTit \
+                         and DatEmi = :dDatEmi \
+                         and CtaFin = :nCtaFin \
+                         and CodCcu = :aCodCcu \
+                         and TipTis = :aTipTis \
+                         and TipCol = :nTipCol \
+                         and NumCad = :nNumCad \
+                         and CodSin = :nCodSin \
+                         and TipTit = :aTipTit \
+                         and exists (select 1 from R047Efi \
+                                      Where R047Pen.NumEmp = R047Efi.NumEmp \
+                                        and R047Pen.CodFil = R047Efi.CodFil \
+                                        and R047Pen.CodCif = R047Efi.CodCif \
+                                        and R047Efi.USU_NumIns = :nNumIns)",nErro,aMsgErro);
+            
+            Se(nErro = 0){
+              FinalizarTransacao();
+            }
+            Senao{
+              DesfazerTransacao();
+            }
+        }
+        Senao {
+          DesfazerTransacao();
+        }
+      }    
+      
+      Se(aTipInt = "SINDICATO") {
+        IniciarTransacao();
+        ExecSqlEx("INSERT INTO R047His \
+                   SELECT NUMEMP, CODFIL, TIPTIT, TIPTIS, CODFOR, CODCIF, CODTRS, SERNFI, VNCTIT, VALTIT, TIPCOL, \
+                          NUMCAD, CODCAL, INIPER, INIFER, DATDEM, CODDEP, CODSIN, RATGPS, OBSTIT, :aNumTit, ' ' AS STSCAN, \
+                          ORIGPS, CODOEM, CTAFIN, TIPAGR, CODRED, CODNTG, CODCCU, DATENT, DATEMI, MODPAG, FILSAP, 0 AS TIPCIF, \
+                          GRUCON, CODUSU, TO_DATE('1900-12-31', 'YYYY-MM-DD') AS DATAUX, :nCodLan \
+                     FROM R047Pen \
+                    Where NumEmp = :nNumEmp \ 
+                      and CodFil = :nCodFil \ 
+                      and CodCif = :nCodCif \
+                      and VncTit = :dVncTit \
+                      and DatEmi = :dDatEmi \
+                      and CtaFin = :nCtaFin \
+                      and CodCcu = :aCodCcu \
+                      and TipTis = :aTipTis \
+                      and TipCol = :nTipCol \
+                      and NumCad = :nNumCad \
+                      and CodSin = :nCodSin \
+                      and TipTit = :aTipTit",nErro,aMsgErro); 
+
+        Se(nErro = 0) {
+           FinalizarTransacao();
+           
+           IniciarTransacao();                       
+           ExecSqlEx("Delete From R047Pen \
+                       Where NumEmp = :nNumEmp \ 
+                         and CodFil = :nCodFil \ 
+                         and CodCif = :nCodCif \
+                         and VncTit = :dVncTit \
+                         and DatEmi = :dDatEmi \
+                         and CtaFin = :nCtaFin \
+                         and CodCcu = :aCodCcu \
+                         and TipTis = :aTipTis \
+                         and TipCol = :nTipCol \
+                         and NumCad = :nNumCad \
+                         and CodSin = :nCodSin \
+                         and TipTit = :aTipTit",nErro,aMsgErro);          
+
+            Se(nErro = 0){
+              FinalizarTransacao();
+            }
+            Senao {
+              DesfazerTransacao();
+            }
+        }
+        Senao {
+          DesfazerTransacao();
+        }
+      }    
+      
+      Se(aTipInt = "DEPENDENTE") {
+        IniciarTransacao();      
+        ExecSqlEx("INSERT INTO R047His \
+                   SELECT NUMEMP, CODFIL, TIPTIT, TIPTIS, CODFOR, CODCIF, CODTRS, SERNFI, VNCTIT, VALTIT, TIPCOL, \
+                          NUMCAD, CODCAL, INIPER, INIFER, DATDEM, CODDEP, CODSIN, RATGPS, OBSTIT, :aNumTit, ' ' AS STSCAN, \
+                          ORIGPS, CODOEM, CTAFIN, TIPAGR, CODRED, CODNTG, CODCCU, DATENT, DATEMI, MODPAG, FILSAP, 0 AS TIPCIF, \
+                          GRUCON, CODUSU, TO_DATE('1900-12-31', 'YYYY-MM-DD') AS DATAUX, :nCodLan \
+                     FROM R047Pen \
+                    Where NumEmp = :nNumEmp \ 
+                      and CodFil = :nCodFil \ 
+                      and CodCif = :nCodCif \
+                      and VncTit = :dVncTit \
+                      and DatEmi = :dDatEmi \
+                      and CtaFin = :nCtaFin \
+                      and CodCcu = :aCodCcu \
+                      and TipTis = :aTipTis \
+                      and TipCol = :nTipCol \
+                      and NumCad = :nNumCad \
+                      and CodSin = :nCodSin \
+                      and TipTit = :aTipTit \
+                      and exists (select 1 \
+                                    from R036Dep \
+                                   Where R047Pen.NumEmp = R036Dep.NumEmp \
+                                     and R047Pen.TipCol = R036Dep.TipCol \ 
+                                     and R047Pen.NumCad = R036Dep.NumCad \ 
+                                     and R047Pen.CodDep = R036Dep.CodDep \
+                                     and R036Dep.USU_NumIns = :nNumIns)",nErro,aMsgErro); 
+
+        Se(nErro = 0) {
+           FinalizarTransacao();
+           
+           IniciarTransacao();                       
+           ExecSqlEx("Delete From R047Pen \
+                       Where NumEmp = :nNumEmp \ 
+                         and CodFil = :nCodFil \ 
+                         and CodCif = :nCodCif \
+                         and VncTit = :dVncTit \
+                         and DatEmi = :dDatEmi \
+                         and CtaFin = :nCtaFin \
+                         and CodCcu = :aCodCcu \
+                         and TipTis = :aTipTis \
+                         and TipCol = :nTipCol \
+                         and NumCad = :nNumCad \
+                         and CodSin = :nCodSin \
+                         and TipTit = :aTipTit \
+                         and exists (select 1 \
+                                       from R036Dep \
+                                      Where R047Pen.NumEmp = R036Dep.NumEmp \
+                                        and R047Pen.TipCol = R036Dep.TipCol \ 
+                                        and R047Pen.NumCad = R036Dep.NumCad \ 
+                                        and R047Pen.CodDep = R036Dep.CodDep \
+                                        and R036Dep.USU_NumIns = :nNumIns)",nErro,aMsgErro);                      
+
+            Se(nErro = 0){
+              FinalizarTransacao();
+            }
+            Senao {
+              DesfazerTransacao();
+            }
+        }
+        Senao {
+          DesfazerTransacao();
+        }
+
+      }        
+      
+    }
+
+    Senao {
+      Se(aTipInt = "NORMAL") {
+        IniciarTransacao();      
+        ExecSqlEx("INSERT INTO \
+                  R047His (NUMEMP, CODFIL, TIPTIT, TIPTIS, CODFOR, CODCIF, CODTRS, SERNFI, VNCTIT, TIPCOL, \
+                          NUMCAD, CODCAL, INIPER, INIFER, DATDEM, CODDEP, CODSIN, RATGPS, OBSTIT, NUMTIT, STSCAN, \
+                          ORIGPS, CODOEM, CTAFIN, TIPAGR, CODRED, CODNTG, CODCCU, DATENT, DATEMI, MODPAG, FILSAP, TIPCIF, \
+                          GRUCON, CODUSU, DATAUX, USU_CODLAN, VALTIT) \
+                   SELECT NUMEMP, CODFIL, TIPTIT, TIPTIS, CODFOR, CODCIF, CODTRS, SERNFI, VNCTIT, TIPCOL, \
+                          NUMCAD, CODCAL, INIPER, INIFER, MAX(DATDEM) AS DATDEM, CODDEP, CODSIN, RATGPS, OBSTIT, NUMTIT, STSCAN, \
+                          ORIGPS, CODOEM, CTAFIN, TIPAGR, CODRED, CODNTG, CODCCU, DATENT, DATEMI, MODPAG, FILSAP, TIPCIF, \
+                          GRUCON, CODUSU, DATAUX, USU_CODLAN, SUM(VALTIT) AS VALTIT \
+                     FROM \
+                   (SELECT NUMEMP, CODFIL, TIPTIT, TIPTIS, CODFOR, CODCIF, CODTRS, SERNFI, VNCTIT, TIPCOL, NUMCAD, CODCAL, INIPER, INIFER, \
+                          (SELECT MAX(DATDEM) FROM R047PEN D1 \ 
+                            WHERE D1.NUMEMP=R047PEN.NUMEMP AND D1.CODFIL=R047PEN.CODFIL AND D1.TIPTIT=R047PEN.TIPTIT \ 
+                              AND D1.CODFOR=R047PEN.CODFOR AND D1.TIPTIS=R047PEN.TIPTIS AND D1.CODCIF=R047PEN.CODCIF \
+                              AND D1.VNCTIT=R047PEN.VNCTIT AND D1.TIPCOL=R047PEN.TIPCOL AND D1.NUMCAD=R047PEN.NUMCAD) AS DATDEM, \
+                          CODDEP, CODSIN, RATGPS, OBSTIT, :aNumTit AS NUMTIT, ' ' AS STSCAN, \
+                          ORIGPS, CODOEM, CTAFIN, TIPAGR, CODRED, CODNTG, CODCCU, DATENT, DATEMI, MODPAG, FILSAP, 0 AS TIPCIF, \
+                          GRUCON, CODUSU, TO_DATE('1900-12-31', 'YYYY-MM-DD') AS DATAUX, :nCodLan AS USU_CODLAN, VALTIT \
+                     FROM R047Pen \
+                    Where NumEmp = :nNumEmp \ 
+                      and CodFil = :nCodFil \ 
+                      and CodCif = :nCodCif \
+                      and VncTit = :dVncTit \
+                      and DatEmi = :dDatEmi \
+                      and CtaFin = :nCtaFin \
+                      and CodCcu = :aCodCcu \
+                      and TipTis = :aTipTis \                     
+                      and CodSin = :nCodSin \
+                      and TipTit = :aTipTit \
+                      and exists (select 1 \
+                                    from R047Efi \
+                                   Where R047Pen.NumEmp = R047Efi.NumEmp \
+                                     and R047Pen.CodFil = R047Efi.CodFil \
+                                     and R047Pen.CodCif = R047Efi.CodCif \
+                                     and R047Efi.USU_NumIns = :nNumIns)) \
+                   GROUP BY NUMEMP, CODFIL, TIPTIT, TIPTIS, CODFOR, CODCIF, CODTRS, SERNFI, VNCTIT, TIPCOL, \
+                            NUMCAD, CODCAL, INIPER, INIFER, DATDEM, CODDEP, CODSIN, RATGPS, OBSTIT, NUMTIT, STSCAN, \
+                            ORIGPS, CODOEM, CTAFIN, TIPAGR, CODRED, CODNTG, CODCCU, DATENT, DATEMI, MODPAG, FILSAP, TIPCIF, \
+                            GRUCON, CODUSU, DATAUX, USU_CODLAN",nErro,aMsgErro); 
+        Se(nErro = 0)
+        {
+           FinalizarTransacao();
+           
+           IniciarTransacao();                       
+           ExecSqlEx("Delete From R047Pen \
+                       Where NumEmp = :nNumEmp \ 
+                         and CodFil = :nCodFil \ 
+                         and CodCif = :nCodCif \
+                         and VncTit = :dVncTit \
+                         and DatEmi = :dDatEmi \
+                         and CtaFin = :nCtaFin \
+                         and CodCcu = :aCodCcu \
+                         and TipTis = :aTipTis \                     
+                         and CodSin = :nCodSin \
+                         and TipTit = :aTipTit \
+                         and exists (select 1 \
+                                       from R047Efi \
+                                      Where R047Pen.NumEmp = R047Efi.NumEmp \
+                                        and R047Pen.CodFil = R047Efi.CodFil \
+                                        and R047Pen.CodCif = R047Efi.CodCif \
+                                        and R047Efi.USU_NumIns = :nNumIns)",nErro,aMsgErro);                                             
+           Se(nErro = 0)
+             FinalizarTransacao();
+           Senao
+             DesfazerTransacao();
+        }
+        Senao 
+          DesfazerTransacao();
+          
+      }    
+      
+      Se(aTipInt = "SINDICATO"){
+        IniciarTransacao();      
+        ExecSqlEx("INSERT INTO R047His \
+                   SELECT NUMEMP, CODFIL, TIPTIT, TIPTIS, CODFOR, CODCIF, CODTRS, SERNFI, VNCTIT, VALTIT, TIPCOL, \
+                          NUMCAD, CODCAL, INIPER, INIFER, DATDEM, CODDEP, CODSIN, RATGPS, OBSTIT, :aNumTit, ' ' AS STSCAN, \
+                          ORIGPS, CODOEM, CTAFIN, TIPAGR, CODRED, CODNTG, CODCCU, DATENT, DATEMI, MODPAG, FILSAP, 0 AS TIPCIF, \
+                          GRUCON, CODUSU, TO_DATE('1900-12-31', 'YYYY-MM-DD') AS DATAUX, :nCodLan \
+                     FROM R047Pen \
+                    Where NumEmp = :nNumEmp \ 
+                      and CodFil = :nCodFil \ 
+                      and CodCif = :nCodCif \
+                      and VncTit = :dVncTit \
+                      and DatEmi = :dDatEmi \
+                      and CtaFin = :nCtaFin \
+                      and CodCcu = :aCodCcu \
+                      and TipTis = :aTipTis \                     
+                      and CodSin = :nCodSin \
+                      and TipTit = :aTipTit",nErro,aMsgErro); 
+                                
+        Se(nErro = 0)
+        {
+           FinalizarTransacao();
+           
+           IniciarTransacao();                       
+           ExecSqlEx("Delete From R047Pen \
+                       Where NumEmp = :nNumEmp \ 
+                         and CodFil = :nCodFil \ 
+                         and CodCif = :nCodCif \
+                         and VncTit = :dVncTit \
+                         and DatEmi = :dDatEmi \
+                         and CtaFin = :nCtaFin \
+                         and CodCcu = :aCodCcu \
+                         and TipTis = :aTipTis \                    
+                         and CodSin = :nCodSin \
+                         and TipTit = :aTipTit",nErro,aMsgErro);
+                                   
+            Se(nErro = 0) {
+              FinalizarTransacao();
+            }
+            Senao {
+              DesfazerTransacao();
+            }
+        }
+        Senao { 
+          DesfazerTransacao();
+        }
+          
+      }    
+      
+      Se(aTipInt = "DEPENDENTE"){
+        IniciarTransacao();      
+        ExecSqlEx("INSERT INTO R047His \
+                   SELECT NUMEMP, CODFIL, TIPTIT, TIPTIS, CODFOR, CODCIF, CODTRS, SERNFI, VNCTIT, VALTIT, TIPCOL, \
+                          NUMCAD, CODCAL, INIPER, INIFER, DATDEM, CODDEP, CODSIN, RATGPS, OBSTIT, :aNumTit, ' ' AS STSCAN, \
+                          ORIGPS, CODOEM, CTAFIN, TIPAGR, CODRED, CODNTG, CODCCU, DATENT, DATEMI, MODPAG, FILSAP, 0 AS TIPCIF, \
+                          GRUCON, CODUSU, TO_DATE('1900-12-31', 'YYYY-MM-DD') AS DATAUX, :nCodLan \
+                     FROM R047Pen \
+                    Where NumEmp = :nNumEmp \ 
+                      and CodFil = :nCodFil \ 
+                      and CodCif = :nCodCif \
+                      and VncTit = :dVncTit \
+                      and DatEmi = :dDatEmi \
+                      and CtaFin = :nCtaFin \
+                      and CodCcu = :aCodCcu \
+                      and TipTis = :aTipTis \                       
+                      and CodSin = :nCodSin \
+                      and TipTit = :aTipTit \
+                      and exists (select 1 \
+                                    from R036Dep \
+                                   Where R047Pen.NumEmp = R036Dep.NumEmp \
+                                     and R047Pen.TipCol = R036Dep.TipCol \ 
+                                     and R047Pen.NumCad = R036Dep.NumCad \ 
+                                     and R047Pen.CodDep = R036Dep.CodDep \
+                                     and R036Dep.USU_NumIns = :nNumIns)",nErro,aMsgErro); 
+
+        Se(nErro = 0) {
+           FinalizarTransacao();
+           
+           IniciarTransacao();                       
+           ExecSqlEx("Delete From R047Pen \
+                       Where NumEmp = :nNumEmp \ 
+                         and CodFil = :nCodFil \ 
+                         and CodCif = :nCodCif \
+                         and VncTit = :dVncTit \
+                         and DatEmi = :dDatEmi \
+                         and CtaFin = :nCtaFin \
+                         and CodCcu = :aCodCcu \
+                         and TipTis = :aTipTis \                    
+                         and CodSin = :nCodSin \
+                         and TipTit = :aTipTit \
+                         and exists (select 1 \
+                                       from R036Dep \
+                                      Where R047Pen.NumEmp = R036Dep.NumEmp \
+                                        and R047Pen.TipCol = R036Dep.TipCol \ 
+                                        and R047Pen.NumCad = R036Dep.NumCad \ 
+                                        and R047Pen.CodDep = R036Dep.CodDep \
+                                        and R036Dep.USU_NumIns = :nNumIns)",nErro,aMsgErro);
+
+            Se(nErro = 0){
+              FinalizarTransacao();
+            }
+            Senao {
+              DesfazerTransacao();
+            }
+        }
+        Senao {
+          DesfazerTransacao();
+        }
+          
+      } 
+    }                         
+                             
+    FinalizaBarraProgresso();                     
+  }
+
+  Senao {
+    FinalizaBarraProgresso();
+
+    Se(aErroTitulo = "") {
+      aErroTitulo = aHTML;
+    }
+    Senao {
+      aErroTitulo = aErroTitulo + aEnter + aHTML;
+    } 
+  }
+  Cur_R047PEn.proximo();
+}
+Cur_R047PEn.FecharCursor();
+
+
+@ Em caso de sucesso, retorna a mensagem @
+Mensagem(retorna, aMsgRet);
+
+@ Em caso de erro, retorna a mensagem @
+Se(aErroTitulo <> "") {
+  Mensagem(erro, aErroTitulo);
+} 
+
+FinalizaBarraProgresso();

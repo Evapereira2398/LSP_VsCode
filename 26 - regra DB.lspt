@@ -2,7 +2,8 @@
    Regra para o Cálculo do Valor do Desconto do Colaborador e do Valor 
          Subsidiado da Empresa
     Por: Emerson Valério Pechiski, em: 17/04/2015
- Motivo: Calcular o Valor do Desconto do Colaborador, sendo o valor do plano por
+ 
+    Motivo: Calcular o Valor do Desconto do Colaborador, sendo o valor do plano por
          faixa etária, o desconto do dependente é integral e o desconto do 
          colaborador por faixa salarial, conforme tabelas abaixo:
          - Idade               Valor do Plano
@@ -57,7 +58,6 @@ nValCol = 0;
 
 /*buscar a idade do funcionário*/
 nIdade = CalIdaEmp (nNumEmp, nTipCol, nNumcad, dDatFim);
-/*buscar a idade do funcionário*/
 
 /*--------------------------------------------------------
    19/11/2020

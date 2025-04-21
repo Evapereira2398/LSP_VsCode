@@ -1,0 +1,799 @@
+/*@ --------------------------------------------------------------------------- @
+@ ------------------------ Gravar Atestado Médico --------------------------- @
+@ --------------------------------------------------------------------------- @
+
+Definir interno.com.seniorgetjob.g5.enviaemails.enviar wsGravar;
+
+Definir Cursor Cur_R038AFA;
+Definir Cursor Cur_R108ATE;
+Definir Cursor C_R034CPL;
+
+Definir Alfa aDatAfa;    
+Definir Alfa aTipAte;
+Definir Alfa aHorIni;          
+Definir Alfa aHorFim;
+Definir Alfa aMinIni;
+Definir Alfa aMinFim;
+Definir Alfa aDatLan;
+Definir Alfa aDesHos;
+Definir Alfa aRegPro;
+Definir Alfa aNomAte;
+Definir Alfa aMsgRet;
+Definir Alfa aDatCon;
+Definir Alfa aAfaIde;
+Definir Alfa aCodDoe;
+Definir Alfa aDia;
+Definir Alfa aMes;
+Definir Alfa aAno;
+Definir Alfa aArquivo;
+Definir Alfa aNomArq;
+Definir Alfa aPosPaiAux;
+Definir Alfa aFluxo;
+
+
+Definir Data dDatAfa;
+Definir Data dIniAfa;
+Definir Data dDatLan;
+Definir Data dDatFim;
+Definir Data dDatZer;
+Definir Data wDatAfa;
+Definir Data wDatTer;
+
+nNumEmp = wsGravar.numEmp;
+nTipCol = wsGravar.tipCol;
+nNumCad = wsGravar.numCad;
+aDatAfa = wsGravar.datAfa;
+aTipAte = wsGravar.tipAte;
+nDiaJus = wsGravar.diaJus;
+aHorIni = wsGravar.horIni;
+aHorFim = wsGravar.horFim;
+aMinIni = wsGravar.horIni;
+aMinFim = wsGravar.horFim;
+aDatLan = wsGravar.datLan;
+aDesHos = wsGravar.desHos;
+aRegPro = wsGravar.regPro;
+aNomAte = wsGravar.nomAte;
+aCodDoe = wsGravar.codDoe;
+aFluxo  = wsGravar.fluxo;
+
+
+aMsgRet = "";
+nSitAfa = 14; @ Informar a Situação de Afastamento que o Cliente irá utilizar na rotina @
+
+
+@ --- Conversão Máscara Horas ------- @
+
+CopiarAlfa(aHorIni,1,2);
+CopiarAlfa(aHorFim,1,2);
+CopiarAlfa(aMinIni,4,2);
+CopiarAlfa(aMinFim,4,2);
+
+AlfaParaInt(aHorIni,nHorIni);
+AlfaParaInt(aHorFim,nHorFim);
+AlfaParaInt(aMinIni,nMinIni);
+AlfaParaInt(aMinFim,nMinFim);
+
+nHorIni = (nHorIni * 60) + nMinIni;
+nHorFim = (nHorFim * 60) + nMinFim;
+
+
+@ --- Conversão Máscara Data -------- @
+
+aDia = aDatAfa;
+CopiarAlfa(aDia,9,2);
+
+aMes = aDatAfa;
+CopiarAlfa(aMes,6,2);
+
+aAno = aDatAfa;
+CopiarAlfa(aAno,1,4);
+
+AlfaParaInt(aDia,nDia);
+AlfaParaInt(aMes,nMes);
+AlfaParaInt(aAno,nAno);
+
+MontaData(nDia,nMes,nAno,dDatAfa);  
+
+aDia = aDatLan;
+CopiarAlfa(aDia,9,2);
+
+aMes = aDatLan;
+CopiarAlfa(aMes,6,2);
+
+aAno = aDatLan;
+CopiarAlfa(aAno,1,4);
+
+AlfaParaInt(aDia,nDia);
+AlfaParaInt(aMes,nMes);
+AlfaParaInt(aAno,nAno);
+
+MontaData(nDia,nMes,nAno,dDatLan);
+
+
+
+@ --- Consistências Inserção Afastamento --- @
+Se (aTipAte = "Horas") {
+  nSitAfa = 201;
+  
+  Se (nHorFim < nHorIni) {
+    nQtdHor = (1440 - nHorIni) + nHorFim;
+    dDatFim = dDatAfa + 1;
+  }
+  
+  Senao {
+    nQtdHor = nHorFim - nHorIni;
+    dDatFim = dDatAfa;
+  }; 
+};
+
+Se (aTipAte = "Dias") {
+   nQtdHor = 0;
+   dDatFim = (dDatAfa + nDiaJus) - 1;
+ };
+
+
+
+
+@ --------------------------------------------------------------------------- @
+@ -------------------------- Envia E-Mail Lider ----------------------------- @
+@ --------------------------------------------------------------------------- @ 
+                        
+Definir Alfa aPosTra;
+Definir Alfa aDesPos;
+Definir Alfa aPosPai;
+Definir Alfa aAssEma;
+Definir Alfa sNumCad;
+Definir ALFA xEmaPar; 
+Definir Alfa aEmaCom; 
+
+xCodThp = 2; @ Código da Hierarquia @   
+
+RetornaPostoColaborador(nNumEmp,  nTipCol,  nNumCad, dDatAfa, xEstPos, aPosTra, aDesPos);
+RetornaPostoPai(aPostra, xEstPos, xCodThp, dDatAfa, aPosPai); 
+
+
+
+@1.1.3.4.8.1. - Liderança Operacional Triagem - Recife 1º turno@
+@1.1.3.4.8.2. - Liderança Operacional Triagem - Recife 2º turno@
+@1.1.3.4.8.3. - Liderança Operacional Triagem - Recife 3º turno@
+
+
+Definir Alfa aPrxPosPai; 
+Se((aPosPai = "1.1.3.4.8.1.") ou (aPosPai = "1.1.3.4.8.2.") ou (aPosPai = "1.1.3.4.8.3.")) {
+  RetornaPostoPai(aPosPai, xEstPos, xCodThp, dDatAfa, aPrxPosPai); 
+  
+  Definir Cursor Cur_ColPosAux;
+
+  Cur_ColPosAux.Sql"SELECT R034CPL.EMACOM              \
+                FROM R034FUN, R034CPL                  \
+               WHERE R034FUN.NUMEMP = R034CPL.NUMEMP   \
+                 AND R034FUN.TIPCOL = R034CPL.TIPCOL   \
+                 AND R034FUN.NUMCAD = R034CPL.NUMCAD   \  
+                 AND R034FUN.ESTPOS = :xEstPos         \
+                 AND R034FUN.POSTRA = :aPrxPosPai      \
+                 AND R034FUN.SITAFA <> 7";  
+
+  Cur_ColPosAux.AbrirCursor();
+  Se(Cur_ColPosAux.Achou){
+    aEmaCom = Cur_ColPosAux.EmaCom; 
+    
+    xRetMen = 0;
+   
+    Se((aEmaCom <> "") ou (aEmaCom <> " ")) {
+     
+      Definir Alfa aTxtEma;
+      Definir Alfa aNomFun;
+      Definir Alfa aEnter;
+      Definir Alfa aNomPos;
+      Definir Alfa aDesSit;
+      Definir Alfa aDatAfa;
+      Definir Alfa aDatFim;
+        
+      @ Pula Linha @
+      RetornaAscII(10,aEnter);
+      RetornaAscII(13,aEnter);
+        
+      
+      Definir Cursor Cur_InfCol;
+        
+      @ Retorna nome do colaborador @
+      Cur_InfCol.Sql"SELECT NOMFUN  \
+                       FROM R034FUN  \
+                      WHERE NUMEMP=:NNUMEMP  \
+                           AND TIPCOL=:NTIPCOL  \
+                          AND NUMCAD=:NNUMCAD";
+        Cur_InfCol.AbrirCursor();
+        Se(Cur_InfCol.Achou) {
+          aNomFun = Cur_InfCol.NomFun; 
+        }       
+        Cur_InfCol.FecharCursor();
+        
+        
+        
+        
+        Definir Cursor Cur_NomPos;
+        Cur_NomPos.Sql"SELECT DESRED \
+                         FROM R017POS  \
+                        WHERE ESTPOS=:XESTPOS  \
+                          AND POSTRA=:APOSTRA";
+        Cur_NomPos.AbrirCursor();
+        Se(Cur_NomPos.Achou)
+          aNomPos = Cur_NomPos.DesRed;
+        Cur_NomPos.FecharCursor();
+        
+        IntParaAlfa(xNumCad,sNumCad);
+        
+        Definir Cursor Cur_DesSit;
+        
+        Cur_DesSit.Sql"SELECT DESSIT  \
+                         FROM R010SIT  \
+                        WHERE CODSIT=:NSITAFA";
+        Cur_DesSit.AbrirCursor();
+        Se(Cur_DesSit.Achou)
+         aDesSit = Cur_DesSit.DesSit;
+        Cur_DesSit.FecharCursor();
+         
+        ConverteMascara (3, dDatAfa, aDatAfa, "DD/MM/YYYY");
+        ConverteMascara (3, dDatFim, aDatFim, "DD/MM/YYYY"); 
+        
+        IntParaAlfa(nNumCad,sNumCad);
+        
+    
+   
+     @Implementação chamado 214698 Insere Email Lider superior em cópia @
+   RetornaPostoPai(aPrxPosPai, xEstPos, xCodThp, dDatAfa, aPosPaiAux);
+        
+        
+        
+        @ RETORNA CHEFE POSTO NÃO FUNCIONOU QUANDO ESTÁ RODANDO COM PROCESSO AUTOMÁTICO @
+        Definir Alfa aEmaGer;
+        C_R034CPL.SQL"SELECT R034CPL.EMACOM  \
+                    FROM R034FUN,R034CPL     \
+                   WHERE R034FUN.NUMEMP = R034CPL.NUMEMP  \
+                     AND R034FUN.TIPCOL = R034CPL.TIPCOL   \
+                     AND R034FUN.NUMCAD = R034CPL.NUMCAD   \  
+                     AND R034FUN.ESTPOS = :XESTPOS  \
+                     AND R034FUN.POSTRA = :APOSPAIAUX  \
+                     AND R034FUN.SITAFA<>7";
+        
+        C_R034CPL.AbrirCursor();
+        Se (C_R034CPL.Achou){
+          aEmaGer = C_R034CPL.EmaCom;
+        }
+    
+        C_R034CPL.FecharCursor();
+        
+        
+        Se (aFluxo = "solicitacao"){ 
+          aTxtEma = "Informamos que o colaborador: "+aNomFun+", Prontuário: "+sNumCad+", "+aNomPos+", abriu uma solicitação apresentando um documento de afastamento por "+aDesSit+", com afastamento do dia "+aDatAfa+" ao dia "+aDatFim+".";
+          aAssEma = "Abertura de Solicitação Atestado";
+          @EnviaEmailHtml("senior@dbdiagnosticos.com.br", "evanderson.pereira@forbiz.com.br", "ana.soares@forbiz.com.br", "", aAssEma, aTxtEma, "", 3, 1);@
+          @EnviaEmailHTML ("senior@dbdiagnosticos.com.br", aEmaCom, aEmaGer, "evanderson.pereira@forbiz.com.br;ana.soares@forbiz.com.br", aAssEma, aTxtEma, "", 3, 1);@
+          @EnviaEmailHTML ("senior@dbdiagnosticos.com.br", aEmaCom, aEmaGer, "", aAssEma, aTxtEma, "", 3, 1);@ 
+        } 
+        
+        
+        Se (aFluxo = "reprovado"){ 
+          aTxtEma = "Informamos que o colaborador: "+aNomFun+", Prontuário: "+sNumCad+", "+aNomPos;
+          aTxtEma = aTxtEma +", abriu uma solicitação apresentando um documento de afastamento por "+aDesSit;
+          aTxtEma = aTxtEma +", na data "+aDatAfa+", contudo, o mesmo não será válido para fins de abono no ponto.";
+          aAssEma = "Reprovação Solicitação Atestado";
+          @EnviaEmailHtml("senior@dbdiagnosticos.com.br", "evanderson.pereira@forbiz.com.br", "ana.soares@forbiz.com.br", "", aAssEma, aTxtEma, "", 3, 1);@ 
+          @EnviaEmailHTML ("senior@dbdiagnosticos.com.br", aEmaCom, aEmaGer, "evanderson.pereira@forbiz.com.br;ana.soares@forbiz.com.br", aAssEma, aTxtEma, "", 3, 1);@   
+          EnviaEmailHTML ("senior@dbdiagnosticos.com.br", aEmaCom, aEmaGer, "", aAssEma, aTxtEma, "", 3, 1);       
+        }
+         
+      }        
+  }
+  Cur_ColPosAux.FecharCursor();
+}  
+
+
+Senao {
+  Definir Cursor Cur_ColPos;
+  
+  Cur_ColPos.Sql"SELECT R034CPL.EMACOM                   \
+                  FROM R034FUN, R034CPL                  \
+                 WHERE R034FUN.NUMEMP = R034CPL.NUMEMP   \
+                   AND R034FUN.TIPCOL = R034CPL.TIPCOL   \
+                   AND R034FUN.NUMCAD = R034CPL.NUMCAD   \  
+                   AND R034FUN.ESTPOS = :XESTPOS         \
+                   AND R034FUN.POSTRA = :APOSPAI         \
+                   AND R034FUN.SITAFA <> 7";  
+  
+  Cur_ColPos.AbrirCursor();
+  Se(Cur_ColPos.Achou)
+  Inicio
+   Definir Alfa aEmaCom;
+   Definir Alfa aMenLog;
+   
+   aEmaCom = Cur_ColPos.EmaCom;
+   xRetMen = 0;
+   
+   Se((aEmaCom <> "") ou (aEmaCom <> " "))
+    Inicio
+      Definir Alfa aTxtEma;
+      Definir Alfa aNomFun;
+      Definir Alfa aEnter;
+      
+      Definir Alfa aNomPos;
+      Definir Alfa aDesSit;
+      
+      Definir Alfa aDatAfa;
+      Definir Alfa aDatFim;
+      
+      @ Pula Linha @
+      RetornaAscII(10,aEnter);
+      RetornaAscII(13,aEnter);
+      
+      Definir Cursor Cur_InfCol;
+      
+      @ Retorna nome do colaborador @
+      Cur_InfCol.Sql"SELECT NOMFUN  \
+                       FROM R034FUN  \
+                      WHERE NUMEMP=:NNUMEMP  \
+                        AND TIPCOL=:NTIPCOL  \
+                        AND NUMCAD=:NNUMCAD";
+      Cur_InfCol.AbrirCursor();
+      Se(Cur_InfCol.Achou) {
+        aNomFun = Cur_InfCol.NomFun; 
+      }       
+      Cur_InfCol.FecharCursor();
+      
+  
+      Definir Cursor Cur_NomPos;
+      Cur_NomPos.Sql"SELECT DESRED \
+                       FROM R017POS  \
+                      WHERE ESTPOS=:XESTPOS  \
+                        AND POSTRA=:APOSTRA";
+      Cur_NomPos.AbrirCursor();
+      Se(Cur_NomPos.Achou)
+        aNomPos = Cur_NomPos.DesRed;
+      Cur_NomPos.FecharCursor();
+      
+      IntParaAlfa(xNumCad,sNumCad);
+      
+      Definir Cursor Cur_DesSit;
+      
+      Cur_DesSit.Sql"SELECT DESSIT  \
+                       FROM R010SIT  \
+                      WHERE CODSIT=:NSITAFA";
+      Cur_DesSit.AbrirCursor();
+      Se(Cur_DesSit.Achou)
+       aDesSit = Cur_DesSit.DesSit;
+      Cur_DesSit.FecharCursor();
+       
+      ConverteMascara (3, dDatAfa, aDatAfa, "DD/MM/YYYY");
+      ConverteMascara (3, dDatFim, aDatFim, "DD/MM/YYYY"); 
+      
+      IntParaAlfa(nNumCad,sNumCad);
+      
+      
+      
+      
+        @Implementação chamado 214698 Insere Email Lider superior em cópia @
+        RetornaPostoPai(aPosPai, xEstPos, xCodThp, dDatAfa, aPosPaiAux);
+      
+      
+      
+      @ RETORNA CHEFE POSTO NÃO FUNCIONOU QUANDO ESTÁ RODANDO COM PROCESSO AUTOMÁTICO @
+      Definir Alfa aEmaGer;
+      C_R034CPL.SQL"SELECT R034CPL.EMACOM  \
+                  FROM R034FUN,R034CPL     \
+                 WHERE R034FUN.NUMEMP = R034CPL.NUMEMP  \
+                   AND R034FUN.TIPCOL = R034CPL.TIPCOL   \
+                   AND R034FUN.NUMCAD = R034CPL.NUMCAD   \  
+                   AND R034FUN.ESTPOS = :XESTPOS  \
+                   AND R034FUN.POSTRA = :APOSPAIAUX  \
+                   AND R034FUN.SITAFA<>7";
+      
+      C_R034CPL.AbrirCursor();
+      Se (C_R034CPL.Achou){
+        aEmaGer = C_R034CPL.EmaCom;
+      }
+  
+      C_R034CPL.FecharCursor();
+      
+      
+      Se (aFluxo = "solicitacao"){ 
+        aTxtEma = "Informamos que o colaborador: "+aNomFun+", Prontuário: "+sNumCad+", "+aNomPos+", abriu uma solicitação apresentando um documento de afastamento por "+aDesSit+", com afastamento do dia "+aDatAfa+" ao dia "+aDatFim+".";
+        aAssEma = "Abertura de Solicitação Atestado";
+        @EnviaEmailHtml("senior@dbdiagnosticos.com.br", "evanderson.pereira@forbiz.com.br", "ana.soares@forbiz.com.br", "", aAssEma, aTxtEma, "", 3, 1);@
+        EnviaEmailHTML ("senior@dbdiagnosticos.com.br", aEmaCom, aEmaGer, "", aAssEma, aTxtEma, "", 3, 1); 
+      } 
+      
+      
+      Se (aFluxo = "reprovado"){ 
+        aTxtEma = "Informamos que o colaborador: "+aNomFun+", Prontuário: "+sNumCad+", "+aNomPos;
+        aTxtEma = aTxtEma +", abriu uma solicitação apresentando um documento de afastamento por "+aDesSit;
+        aTxtEma = aTxtEma +", na data "+aDatAfa+", contudo, o mesmo não será válido para fins de abono no ponto.";
+        aAssEma = "Reprovação Solicitação Atestado";
+        @EnviaEmailHtml("senior@dbdiagnosticos.com.br", "evanderson.pereira@forbiz.com.br", "ana.soares@forbiz.com.br", "", aAssEma, aTxtEma, "", 3, 1);@    
+        EnviaEmailHTML ("senior@dbdiagnosticos.com.br", aEmaCom, aEmaGer, "", aAssEma, aTxtEma, "", 3, 1);   
+      } 
+    Fim;   
+  Fim;
+  Cur_ColPos.FecharCursor();   
+}  
+  
+*/
+
+
+@ --------------------------------------------------------------------------- @
+@ --------------------------------------------------------------------------- @
+@ --------------------------------------------------------------------------- @
+@ --------------------------------------------------------------------------- @
+@ --------------------------------------------------------------------------- @
+@ --------------------------------------------------------------------------- @
+
+
+/* 
+Regra reescrita - CH 228140
+Evanderson Pereira
+
+Problema identificado: Quando o posto de trabalho não possuía um líder, o processo 
+ignorava toda a regra, sem realizar as demais tratativas necessárias.
+
+Solução implementada: Foi aprimorada a lógica de busca pelo posto superior e pelo chefe 
+desse posto, garantindo que a regra agora procure até 3 níveis de chefia acima, e para o lider do lider 
+2 níveis acima assegurando que as tratativas necessárias sejam realizadas mesmo na ausência de um líder imediato.
+*/
+
+
+Definir interno.com.seniorgetjob.g5.enviaemails.enviar wsGravar;
+
+Definir Cursor Cur_R038AFA;
+Definir Cursor Cur_R108ATE;
+Definir Cursor C_R034CPL;
+Definir Alfa aDatAfa;    
+Definir Alfa aTipAte;
+Definir Alfa aHorIni;          
+Definir Alfa aHorFim;
+Definir Alfa aMinIni;
+Definir Alfa aMinFim;
+Definir Alfa aDatLan;
+Definir Alfa aDesHos;
+Definir Alfa aRegPro;
+Definir Alfa aNomAte;
+Definir Alfa aMsgRet;
+Definir Alfa aDatCon;
+Definir Alfa aAfaIde;
+Definir Alfa aCodDoe;
+Definir Alfa aDia;
+Definir Alfa aMes;
+Definir Alfa aAno;
+Definir Alfa aArquivo;
+Definir Alfa aNomArq;
+Definir Alfa aPosPaiAux;
+Definir Alfa aFluxo;
+
+Definir Data dDatAfa;
+Definir Data dIniAfa;
+Definir Data dDatLan;
+Definir Data dDatFim;
+Definir Data dDatZer;
+Definir Data wDatAfa;
+Definir Data wDatTer;
+
+nNumEmp = wsGravar.numEmp;
+nTipCol = wsGravar.tipCol;
+nNumCad = wsGravar.numCad;
+aDatAfa = wsGravar.datAfa;
+aTipAte = wsGravar.tipAte;
+nDiaJus = wsGravar.diaJus;
+aHorIni = wsGravar.horIni;
+aHorFim = wsGravar.horFim;
+aMinIni = wsGravar.horIni;
+aMinFim = wsGravar.horFim;
+aDatLan = wsGravar.datLan;
+aDesHos = wsGravar.desHos;
+aRegPro = wsGravar.regPro;
+aNomAte = wsGravar.nomAte;
+aCodDoe = wsGravar.codDoe;
+aFluxo  = wsGravar.fluxo;
+
+aMsgRet = "";
+nSitAfa = 14; @ Informar a Situação de Afastamento que o Cliente irá utilizar na rotina @
+
+
+@ --- Conversão Máscara Horas ------- @
+CopiarAlfa(aHorIni,1,2);
+CopiarAlfa(aHorFim,1,2);
+CopiarAlfa(aMinIni,4,2);
+CopiarAlfa(aMinFim,4,2);
+
+AlfaParaInt(aHorIni,nHorIni);
+AlfaParaInt(aHorFim,nHorFim);
+AlfaParaInt(aMinIni,nMinIni);
+AlfaParaInt(aMinFim,nMinFim);
+
+nHorIni = (nHorIni * 60) + nMinIni;
+nHorFim = (nHorFim * 60) + nMinFim;
+
+@ --- Conversão Máscara Data -------- @
+aDia = aDatAfa;
+aMes = aDatAfa;
+aAno = aDatAfa;
+
+CopiarAlfa(aDia,9,2);
+CopiarAlfa(aMes,6,2);
+CopiarAlfa(aAno,1,4);
+
+AlfaParaInt(aDia,nDia);
+AlfaParaInt(aMes,nMes);
+AlfaParaInt(aAno,nAno);
+
+MontaData(nDia,nMes,nAno,dDatAfa);  
+
+aDia = aDatLan;
+aMes = aDatLan;
+aAno = aDatLan;
+
+CopiarAlfa(aDia,9,2);
+CopiarAlfa(aMes,6,2);
+CopiarAlfa(aAno,1,4);
+
+AlfaParaInt(aDia,nDia);
+AlfaParaInt(aMes,nMes);
+AlfaParaInt(aAno,nAno);
+
+MontaData(nDia,nMes,nAno,dDatLan);
+
+
+@ -- Tratativa para atestado com tipo "Horas" -- @
+Se (aTipAte = "Horas") {
+  nSitAfa = 201;
+  
+  Se(nHorFim < nHorIni) {
+    nQtdHor = (1440 - nHorIni) + nHorFim;
+    dDatFim = dDatAfa + 1;
+  }
+  
+  Senao {
+    nQtdHor = nHorFim - nHorIni;
+    dDatFim = dDatAfa;
+  } 
+}
+
+@ -- Tratativa para atestado com tipo "Dias" -- @
+Se (aTipAte = "Dias") {
+  nQtdHor = 0;
+  dDatFim = (dDatAfa + nDiaJus) - 1;
+}
+
+
+/*
+  ------------------------------------------------------
+  @ Explicação da logica: Busca de Chefe e Líder do Chefe
+  ------------------------------------------------------
+  
+  A lógica implementada nesta regra visa identificar, em até três níveis hierárquicos, o chefe (líder) do colaborador e, 
+  em seguida, realizar uma nova busca para identificar o chefe desse chefe, chamado de  "líder do líder".
+  
+  A busca é realizada da seguinte forma:
+  
+  1. **Busca do Chefe (Líder):**
+     - Inicialmente, a função `RetornaPostoColaborador` obtém o posto de trabalho atual do colaborador.
+     
+     - A partir desse posto, a função `RetornaChefePosto` tenta identificar o chefe imediato (primeiro nível) 
+       associado ao posto de trabalho do colaborador.
+       
+     - Se um chefe for encontrado (`nCadChe <> 0`), os detalhes de contato desse chefe são obtidos e armazenados 
+       para uso da função `BusEmailFunc`.
+
+  2. **Busca em Níveis Sucessivos:**
+     - Caso não seja encontrado um chefe no primeiro nível (`nCadChe = 0`), a regra utiliza a função `RetornaPostoPai` 
+       para subir um nível na hierarquia de postos e, em seguida, faz uma nova tentativa de encontrar um chefe no nível superior 
+       (segundo nível).
+       
+     - Se ainda assim não for encontrado um chefe no segundo nível, o processo se repete para o terceiro nível hierárquico.
+
+  3. **Busca do Líder do Chefe:**
+     - Para cada chefe encontrado, a busca continua subindo na hierarquia, tentando encontrar o líder desse chefe (líder do líder).
+     - Essa busca é realizada por meio da função `RetornaPostoPai`, que sobe na hierarquia de postos, e a função `RetornaChefePosto`, 
+       que tenta localizar o chefe no nível imediatamente superior.
+       
+     - Essa busca do "líder do líder" é feita até dois níveis acima do chefe atual. Ou seja, se for encontrado um chefe no primeiro nível, 
+       o sistema tenta identificar o líder desse chefe (segundo nível) e, se necessário, o líder do líder (terceiro nível).
+  
+  4. **Fluxo de Decisão por Níveis:**
+     - A regra realiza três tentativas de busca de chefe, começando pelo nível mais baixo e subindo na hierarquia até o terceiro nível.
+       
+     - Para cada chefe encontrado, a regra tenta localizar o líder desse chefe em até dois níveis hierárquicos.
+       
+     - Caso nenhum chefe seja encontrado no nível atual, o fluxo sobe um nível na hierarquia e repete o processo.
+
+  Em resumo, a lógica garante que a busca por chefes (e seus líderes) seja feita de maneira escalonada, começando pelo posto mais próximo do 
+  colaborador e subindo progressivamente até três níveis. Além disso, para cada chefe encontrado, a regra tenta identificar o chefe desse chefe, 
+  até dois níveis hierárquicos acima.
+
+  Esta abordagem assegura que o sistema consiga identificar todos os níveis de liderança possíveis para um colaborador, facilitando o contato com os 
+  gestores diretamente superiores, bem como seus respectivos líderes.
+*/
+
+
+Definir Alfa aDesPos;
+Definir Alfa aAssEma;
+Definir Alfa sNumCad;
+Definir Alfa aPosChe;
+Definir Alfa aPosCol;
+Definir Alfa aPosChe1; 
+Definir Alfa aPosChe2;
+Definir Alfa aPosCheAux;  
+Definir Alfa xEmaParChe1;
+Definir Alfa xEmaComChe1;
+Definir Alfa xEmaParChe2;
+Definir Alfa xEmaComChe2;
+Definir Alfa aPosLider1;
+Definir Alfa aPosLider2; 
+ 
+xCodThp = 2;  @ Código da Hierarquia @  
+
+
+@ 1 - Retorna informações sobre o posto de trabalho atual do colaborador @
+RetornaPostoColaborador(nNumEmp, nTipCol, nNumCad, dDatAfa, xEstPos, aPosCol, aDesPos);
+
+@ ----------------------------------------------- @   
+@ Busca o primeiro chefe nos niveis de hierarquia @
+@ ----------------------------------------------- @
+
+@ Chefe primeiro nivel de posto @ 
+RetornaChefePosto(1, xEstPos, 2, dDatAfa, aPosCol, nEmpChe, nTipChe, nCadChe);
+
+Se(nCadChe <> 0) {
+  BusEmailFunc(nEmpChe, nTipChe, nCadChe, xEmaParChe1, xEmaComChe1);  
+  
+  @ Busca o lider do lider no primeiro nivel @
+  RetornaPostoPai(aPosCol, xEstPos, 2, dDatAfa, aPosLider1);
+  RetornaChefePosto(1, xEstPos, 2, dDatAfa, aPosLider1, nEmpLider1, nTipLider1, nCadLider1);
+  
+  Se(nCadLider1 <> 0) {
+    BusEmailFunc(nEmpLider1, nTipLider1, nCadLider1, xEmaParChe2, xEmaComChe2);
+  }
+   
+  Senao Se (nCadLider1 = 0){ 
+    @ Busca o lider do lider no segundo nivel @
+    RetornaPostoPai(aPosLider1, xEstPos, 2, dDatAfa, aPosLider2);
+    RetornaChefePosto(1, xEstPos, 2, dDatAfa, aPosLider2, nEmpLider2, nTipLider2, nCadLider2);
+    
+    Se(nCadLider2 <> 0) {
+      BusEmailFunc(nEmpLider2, nTipLider2, nCadLider2, xEmaParChe2, xEmaComChe2);
+    }
+  }
+}
+
+@ Chefe segundo nivel de posto @ 
+Senao Se(nCadChe = 0) {
+  RetornaPostoPai(aPosCol, xEstPos, 2, dDatAfa, aPosChe1);
+  RetornaChefePosto(1, xEstPos, 2, dDatAfa, aPosChe1, nEmpChe1, nTipChe1, nCadChe1);
+  
+  Se(nCadChe1 <> 0) {
+    BusEmailFunc(nEmpChe1, nTipChe1, nCadChe1, xEmaParChe1, xEmaComChe1);  
+    
+    @ Busca o lider do lider no primeiro nivel @
+    RetornaPostoPai(aPosChe1, xEstPos, 2, dDatAfa, aPosLider1);
+    RetornaChefePosto(1, xEstPos, 2, dDatAfa, aPosLider1, nEmpLider1, nTipLider1, nCadLider1);
+    
+    Se(nCadLider1 <> 0) {
+      BusEmailFunc(nEmpLider1, nTipLider1, nCadLider1, xEmaParChe2, xEmaComChe2);
+    }
+     
+    Senao Se (nCadLider1 = 0) { 
+      @ Busca o lider do lider no segundo nivel @
+      RetornaPostoPai(aPosLider1, xEstPos, 2, dDatAfa, aPosLider2);
+      RetornaChefePosto(1, xEstPos, 2, dDatAfa, aPosLider2, nEmpLider2, nTipLider2, nCadLider2);
+      
+      Se(nCadLider2 <> 0) {
+        BusEmailFunc(nEmpLider2, nTipLider2, nCadLider2, xEmaParChe2, xEmaComChe2);
+      }
+    }
+  }
+  
+  @ Chefe terceiro nivel de posto @
+  Senao Se(nCadChe1 = 0) {
+    RetornaPostoPai(aPosChe1, xEstPos, 2, dDatAfa, aPosChe2);
+    RetornaChefePosto(1, xEstPos, 2, dDatAfa, aPosChe2, nEmpChe2, nTipChe2, nCadChe2);
+    
+    Se(nCadChe2 <> 0) {
+      BusEmailFunc(nEmpChe2, nTipChe2, nCadChe2, xEmaParChe1, xEmaComChe1);  
+      
+      @ Busca o lider do chefe no primeiro nivel @
+      RetornaPostoPai(aPosChe2, xEstPos, 2, dDatAfa, aPosLider1);
+      RetornaChefePosto(1, xEstPos, 2, dDatAfa, aPosLider1, nEmpLider1, nTipLider1, nCadLider1);
+      
+      Se(nCadLider1 <> 0) {
+        BusEmailFunc(nEmpLider1, nTipLider1, nCadLider1, xEmaParChe2, xEmaComChe2);
+      }
+      
+      Senao Se(nCadLider1 = 0){
+        @ Busca o lider do lider no segundo nivel @
+        RetornaPostoPai(aPosLider1, xEstPos, 2, dDatAfa, aPosLider2);
+        RetornaChefePosto(1, xEstPos, 2, dDatAfa, aPosLider2, nEmpLider2, nTipLider2, nCadLider2);
+        
+        Se(nCadLider2 <> 0) {
+          BusEmailFunc(nEmpLider2, nTipLider2, nCadLider2, xEmaParChe2, xEmaComChe2);
+        }
+      }
+    }
+  }
+}
+
+Se((xEmaComChe1 <> "") ou (xEmaComChe1 <> " ")) {
+     
+  Definir Alfa aTxtEma;
+  Definir Alfa aNomFun;
+  Definir Alfa aEnter;
+  Definir Alfa aNomPos;
+  Definir Alfa aDesSit;
+  Definir Alfa aDatAfa;
+  Definir Alfa aDatFim;
+        
+  @ Pula Linha @
+  RetornaAscII(10,aEnter);
+  RetornaAscII(13,aEnter);
+        
+         
+  @ Retorna nome do colaborador @
+  Definir Cursor Cur_InfCol; 
+  Cur_InfCol.Sql"SELECT NOMFUN FROM R034FUN WHERE NUMEMP = :nNumEmp AND TIPCOL = :nTipCol AND NUMCAD = :nNumCad";
+  Cur_InfCol.AbrirCursor();
+  Se(Cur_InfCol.Achou) {
+    aNomFun = Cur_InfCol.NomFun; 
+  }       
+  Cur_InfCol.FecharCursor();
+        
+
+  @ Busca a Descrição Reduzida do posto de trabalho @
+  Definir Cursor Cur_NomPos;
+  Cur_NomPos.Sql"SELECT DESRED FROM R017POS WHERE ESTPOS = :xEstPos AND POSTRA = :aPosCol";
+  Cur_NomPos.AbrirCursor();
+  Se(Cur_NomPos.Achou) {
+    aNomPos = Cur_NomPos.DesRed;
+  }
+  Cur_NomPos.FecharCursor();
+        
+
+  @ Busca a descrição da situação @
+  Definir Cursor Cur_DesSit;
+  Cur_DesSit.Sql"SELECT DESSIT FROM R010SIT WHERE CODSIT = :nSitAfa";
+  Cur_DesSit.AbrirCursor();
+  Se(Cur_DesSit.Achou){
+    aDesSit = Cur_DesSit.DesSit;
+  }
+  Cur_DesSit.FecharCursor();
+  
+  ConverteMascara (3, dDatAfa, aDatAfa, "DD/MM/YYYY");
+  ConverteMascara (3, dDatFim, aDatFim, "DD/MM/YYYY"); 
+
+  IntParaAlfa(nNumCad,sNumCad);
+        
+  @ Em caso de aprovação do atestado @
+  Se (aFluxo = "solicitacao"){ 
+    aTxtEma = "Informamos que o colaborador: "+aNomFun+", Prontuário: "+sNumCad+", "+aNomPos+", abriu uma solicitação apresentando um documento de afastamento por "+aDesSit+", com afastamento do dia "+aDatAfa+" ao dia "+aDatFim+".";
+    aAssEma = "Abertura de Solicitação Atestado";
+    EnviaEmailHTML ("senior@dbdiagnosticos.com.br", xEmaComChe1, xEmaComChe2, "", aAssEma, aTxtEma, "", 3, 1);
+  } 
+  
+  @ Em caso de reprovação do atestestado @
+  Se (aFluxo = "reprovado") { 
+    aTxtEma = "Informamos que o colaborador: "+aNomFun+", Prontuário: "+sNumCad+", " + aNomPos;
+    aTxtEma = aTxtEma +", abriu uma solicitação apresentando um documento de afastamento por "+ aDesSit;
+    aTxtEma = aTxtEma +", na data "+ aDatAfa + ", contudo, o mesmo não será válido para fins de abono no ponto.";
+    aAssEma = "Reprovação Solicitação Atestado";  
+    EnviaEmailHTML ("senior@dbdiagnosticos.com.br", xEmaComChe1, xEmaComChe2, "", aAssEma, aTxtEma, "", 3, 1);       
+  }
+         
+}   
+      
+
+/* Validação do retorno dos e-mail @
+EnviaEmailHtml("senior@dbdiagnosticos.com.br", "evanderson.pereira@forbiz.com.br", "", "", aAssEma, aTxtEma, "", 3, 1); 
+EnviaEmailHTML ("senior@dbdiagnosticos.com.br", aEmaCom, aEmaGer, "evanderson.pereira@forbiz.com.br;ana.soares@forbiz.com.br", aAssEma, aTxtEma, "", 3, 1); 
+*/
+
+
+  
+
+
+
+  

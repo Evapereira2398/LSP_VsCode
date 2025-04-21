@@ -1,0 +1,899 @@
+Definir Cursor C_R034Fun;
+Definir Cursor C_R038Hch;                                                                                                           
+Definir Cursor C_R032Oem;
+Definir Cursor C_R090PNG;
+Definir Cursor C_R038Hct;                              
+Definir Cursor C_Usu_TInt_SG3;
+Definir Alfa vHTTP;                                                    
+Definir Alfa xReturn_Token;
+Definir Alfa xURL;
+Definir Alfa xJson;
+Definir Alfa xRetorno;
+Definir Alfa xReg;
+Definir Alfa xRegAux;
+Definir Alfa xID;
+Definir Alfa xNome;
+Definir Alfa xCPF;
+Definir Alfa xLibAPI;
+Definir Alfa xDatIni;
+Definir Alfa xDatFim;
+Definir Alfa xMensagem;
+Definir Alfa xAux;
+Definir Alfa xCnpj;
+Definir Alfa xApeFun;
+Definir Alfa xLiberado;
+Definir Alfa xNomOem;
+Definir Alfa xNumCpf;
+Definir Data dDatIni;
+Definir Data dDatFim;
+Definir Data dDatZer;
+Definir Data dDatInt;
+Definir Data dDatAfa;
+Definir Data dDatAdm;
+Definir Data dDatFec;
+Definir Data dEndDate;
+
+dDatInt = DatSis;
+nHorInt = HorSis;
+ddatadm = DatSis;
+dDatFec = DatSis;
+nNumEmp = 1;
+nCodFil = 1;
+MontaData(31, 12, 1900, dDatZer);
+nEntrou = 0;
+
+xNumCpf = R003Dfa_NumCpf;
+AlfaParaInt(xNumCpf, nNumCpf);
+Se(nNumCpf = 0) {
+  Mensagem(Erro, "Favor informar CPF válido!");
+}
+
+@ConverteMascara (1, nNumCpf, xCPF, "99999999999");@
+
+ExecSql"Delete Usu_TInt_SG3";
+
+HttpObjeto(vHTTP);
+HttpHabilitaSNI(vHTTP);
+HttpAlteraCabecalhoRequisicao(vHTTP, "Accept", "application/json");
+HttpAlteraCabecalhoRequisicao(vHTTP, "Authorization", xReturn_Token);
+HttpAlteraCabecalhoRequisicao(vHTTP, "Content-Type", "text/plain");
+HttpAlteraCabecalhoRequisicao(vHTTP, "Content-Type", "application/json");
+HttpAlteraCabecalhoRequisicao(vHTTP, "User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.61 Safari/537.36");
+HttpAlteraCabecalhoRequisicao(vHTTP, "Referer", "https://api2.executiva.adm.br/boticario/v1/auth/login");
+HttpDesabilitaErroResposta(vHTTP);
+xJson = "{";    
+xJson = xJson + "\"username\": \"webservice.boticario\",";
+xJson = xJson + "\"password\": \"zSjTNHcuHjy5$#n\"";
+xJson = xJson +"}";
+xURL = "https://api2.executiva.adm.br/boticario/v1/auth/login";
+HttpPost(vHTTP, xURL, xJson, xReturn_Token);
+
+TrocaString(xReturn_Token, "\"", "", xReturn_Token);
+TrocaString(xReturn_Token, "{", "", xReturn_Token);
+TrocaString(xReturn_Token, "}", "", xReturn_Token);
+TrocaString(xReturn_Token, "token:", "", xReturn_Token);
+PosicaoAlfa ("id:" ,xReturn_Token, nPosStr);
+CopiarAlfa(xReturn_Token, 0, nPosStr - 2);
+xReturn_Token = "Bearer " + xReturn_Token;    
+
+HttpObjeto(vHTTP);
+HttpHabilitaSNI(vHTTP);
+HttpAlteraCabecalhoRequisicao(vHTTP, "Accept", "*/*");
+HttpAlteraCabecalhoRequisicao(vHTTP, "Authorization", xReturn_Token);
+HttpAlteraCabecalhoRequisicao(vHTTP, "Content-Type", "application/json");
+HttpDesabilitaErroResposta(vHTTP);
+xUrl = "https://api2.executiva.adm.br/boticario/v2/alocacao/liberada?liberado=S&cpf=" + xNumCpf;
+
+HttpGet(vHTTP, xUrl, xRetorno);
+HttpLeCodigoResposta(vHTTP, nCodigo);
+
+Se (xRetorno = "[]")
+Inicio
+  xUrl = "https://api2.executiva.adm.br/boticario/v2/alocacao/liberada?liberado=N&cpf=" + xNumCpf;
+  HttpGet(vHTTP, xUrl, xRetorno);
+  HttpLeCodigoResposta(vHTTP, nCodigo);
+Fim
+
+nCount = 0;
+PosicaoAlfa ("id", xRetorno, nPosStr);
+Se (nPosStr > 0)
+Inicio  
+  nEntrou = 1;
+  nCount++; 
+  xMensagem = "";
+  nErro = 0;     
+  nAchou = 0;    
+  nNumCad = 0;
+  nNumCadAux = 0;
+  nCodOem = 0;
+  xReg = xRetorno;
+  PosicaoAlfa ("id", xRetorno, nPosStr);
+  PosicaoAlfa ("},", xRetorno, nPosStrAux);  
+  Se(nPosStrAux = 0)
+    PosicaoAlfa ("}", xRetorno, nPosStrAux);  
+  CopiarAlfa(xReg, nPosStr, nPosStrAux - nPosStr);
+  TamanhoAlfa (xRetorno, nTam);
+  CopiarAlfa(xRetorno, nPosStrAux, nTam - nPosStrAux);  
+  PosicaoAlfa ("id", xRetorno, nPosStr);
+  TamanhoAlfa (xRetorno, nTam);
+  CopiarAlfa(xRetorno, nPosStr, nTam - nPosStr);       
+  
+  @Retorna Nome@
+  PosicaoAlfa ("\"colaborador\":", xReg, nPosStrAux1);
+  TamanhoAlfa (xReg, nTam); 
+  xRegAux = xReg;
+  CopiarAlfa(xRegAux, nPosStrAux1 + 1, nTam - nPosStrAux1);
+  PosicaoAlfa (",", xRegAux, nPosStrAux2);
+  PosicaoAlfa (":", xRegAux, nPosStrAux1);
+  CopiarAlfa(xRegAux, nPosStrAux1 + 2, nPosStrAux2 - nPosStrAux1 - 3);
+  xNome = xRegAux;            
+    
+  @Retorna Liberado@
+  PosicaoAlfa ("\"liberado\":", xReg, nPosStrAux1);
+  TamanhoAlfa (xReg, nTam); 
+  xRegAux = xReg;
+  CopiarAlfa(xRegAux, nPosStrAux1 + 1, nTam - nPosStrAux1);
+  PosicaoAlfa (",", xRegAux, nPosStrAux2);
+  PosicaoAlfa (":", xRegAux, nPosStrAux1);
+  CopiarAlfa(xRegAux, nPosStrAux1 + 1, nPosStrAux2 - nPosStrAux1 - 1); 
+  TrocaString(xRegAux, "\"", "", xRegAux);   
+  xLibAPI = xRegAux;
+  Se (xLibAPI = "S")
+    xLibAPI = "S";
+  Senao
+    xLibAPI = "N";   
+    
+  @Retorna CNPJ@
+  PosicaoAlfa ("\"cnpj\"", xReg, nPosStrAux1);
+  TamanhoAlfa (xReg, nTam); 
+  xRegAux = xReg;
+  CopiarAlfa(xRegAux, nPosStrAux1 + 1, nTam - nPosStrAux1);
+  PosicaoAlfa (",", xRegAux, nPosStrAux2);
+  PosicaoAlfa (":", xRegAux, nPosStrAux1);
+  CopiarAlfa(xRegAux, nPosStrAux1 + 2, nPosStrAux2 - nPosStrAux1 - 3);  
+  xCnpj = xRegAux;   
+  
+  @Retorna Nome@
+  PosicaoAlfa ("\"empresa_terceira\":", xReg, nPosStrAux1);
+  TamanhoAlfa (xReg, nTam); 
+  xRegAux = xReg;
+  CopiarAlfa(xRegAux, nPosStrAux1 + 1, nTam - nPosStrAux1);
+  PosicaoAlfa (",", xRegAux, nPosStrAux2);
+  PosicaoAlfa (":", xRegAux, nPosStrAux1);
+  CopiarAlfa(xRegAux, nPosStrAux1 + 2, nPosStrAux2 - nPosStrAux1 - 3);
+  xNomOem = xRegAux;        
+  
+  @Retorna CPF@
+  PosicaoAlfa ("\"cpf\":", xReg, nPosStrAux1);
+  TamanhoAlfa (xReg, nTam); 
+  xRegAux = xReg;
+  CopiarAlfa(xRegAux, nPosStrAux1 + 1, nTam - nPosStrAux1);
+  PosicaoAlfa (",", xRegAux, nPosStrAux2);
+  PosicaoAlfa (":", xRegAux, nPosStrAux1);
+  CopiarAlfa(xRegAux, nPosStrAux1 + 2, nPosStrAux2 - nPosStrAux1 - 3);  
+  xCPF = xRegAux;  
+  
+/*  Se (xCPF = "72664789600") 
+  Inicio*/
+  
+    @Retorna Data Inicial@
+    PosicaoAlfa ("\"data_inicio\":", xReg, nPosStrAux1);
+    TamanhoAlfa (xReg, nTam); 
+    xRegAux = xReg;
+    CopiarAlfa(xRegAux, nPosStrAux1 + 1, nTam - nPosStrAux1);
+    PosicaoAlfa (",", xRegAux, nPosStrAux2);
+    PosicaoAlfa (":", xRegAux, nPosStrAux1);
+    CopiarAlfa(xRegAux, nPosStrAux1 + 2, nPosStrAux2 - nPosStrAux1 - 3);  
+    xDatIni = xRegAux;   
+    
+    @Retorna Data Final@
+    PosicaoAlfa ("\"data_fim\":", xReg, nPosStrAux1);
+    TamanhoAlfa (xReg, nTam); 
+    xRegAux = xReg;
+    CopiarAlfa(xRegAux, nPosStrAux1 + 1, nTam - nPosStrAux1);
+    PosicaoAlfa (",", xRegAux, nPosStrAux2);
+    PosicaoAlfa (":", xRegAux, nPosStrAux1);
+    CopiarAlfa(xRegAux, nPosStrAux1 + 2, nPosStrAux2 - nPosStrAux1 - 3);  
+    xDatFim = xRegAux; 
+    
+    TamanhoAlfa (xDatIni, nTam);
+    Se (nTam > 0)
+    Inicio   
+      xAux = xDatIni;
+      CopiarAlfa(xAux, 0, 4);
+      AlfaParaInt(xAux, nAno);
+          
+      xAux = xDatIni;
+      CopiarAlfa(xAux, 6, 2);
+      AlfaParaInt(xAux, nMes);
+      
+      xAux = xDatIni;
+      CopiarAlfa(xAux, 9, 2);
+      AlfaParaInt(xAux, nDia);
+      
+      MontaData(nDia, nMes, nAno, dDatIni);        
+    Fim
+    Senao {
+
+      MontaData(31, 12, 1900, dDatIni);  
+    }
+    TamanhoAlfa (xDatFim, nTam);
+    PosicaoAlfa ("ul", xDatFim, nPosStrAux1);
+    Se (nPosStrAux1 > 0)  
+      MontaData(31, 12, 2050, dDatFim);
+    Senao Se (nTam > 0)
+    Inicio   
+      xAux = xDatFim;
+      CopiarAlfa(xAux, 0, 4);
+      AlfaParaInt(xAux, nAno);
+          
+      xAux = xDatFim;
+      CopiarAlfa(xAux, 6, 2);
+      AlfaParaInt(xAux, nMes);
+      
+      xAux = xDatFim;
+      CopiarAlfa(xAux, 9, 2);
+      AlfaParaInt(xAux, nDia);
+      
+      MontaData(nDia, nMes, nAno, dDatFim);        
+    Fim
+    Senao
+      MontaData(31, 12, 1900, dDatFim);
+    
+    AlfaParaInt(xCpf, nCpf);
+    AlfaParaInt(xCnpj, nCnpj);
+    
+    C_R034Fun.Sql"Select NumEmp,       \ 
+                        TipCol,        \
+                        NumCad         \
+                   From R034Fun        \
+                  Where NumCpf = :nCpf \
+                    And TipCol = 2     \
+                    And NumEmp = 1     ";
+    C_R034Fun.AbrirCursor();
+    Se (C_R034Fun.Achou)
+    Inicio
+      nAchou = 1;
+      nNumEmp = C_R034Fun.NumEmp;
+      nTipCol = C_R034Fun.TipCol;
+      nNumCad = C_R034Fun.NumCad;          
+    Fim  
+    C_R034Fun.FecharCursor(); 
+    
+   /* Se (nAchou = 0)
+    Inicio
+      C_R034Fun.Sql"Select NumEmp,        \ 
+                          TipCol,         \
+                          NumCad          \                        
+                     From R034Fun         \
+                    Where NomFun = :xNome \
+                      And TipCol = 2      \
+                      And NumEmp = 1     ";
+      C_R034Fun.AbrirCursor();
+      Se (C_R034Fun.Achou)
+      Inicio
+        nAchou = 1;
+        nNumEmp = C_R034Fun.NumEmp;
+        nTipCol = C_R034Fun.TipCol;
+        nNumCad = C_R034Fun.NumCad;               
+      Fim  
+      C_R034Fun.FecharCursor();   
+    Fim        */
+    
+    Se (nAchou = 1)
+    Inicio
+     /* Se (nCPF = 72664789600)
+        n = n;
+      C_Usu_TInt_SG3.Sql"Select Usu_EndDate   \
+                           From Usu_TInt_SG3  \ 
+                          Where Usu_NumEmp = 1        \      
+                            And Usu_TipCol = 2        \
+                            And Usu_NumCad = :nNumCad  ";
+      C_Usu_TInt_SG3.AbrirCursor();
+      Se (C_Usu_TInt_SG3.Achou)
+      Inicio                
+        dEndDate = C_Usu_TInt_SG3.Usu_EndDate; 
+        @Data final da API, maior que a ultima data do sistema@                         
+        Se ((dDatFim > dEndDate ) E (dDatFim > 0))
+        Inicio
+          ExecSqlEx("Update Usu_TInt_SG3 Set Usu_EndDate    = :dDatFim, \
+                                             Usu_Cnpj       = :xCnpj,   \
+                                             Usu_StartDate  = :dDatIni, \
+                                             USU_released   = :xLibAPI  \
+                                       Where Usu_NumEmp = 1             \      
+                                         And Usu_TipCol = 2             \
+                                         And Usu_NumCad = :nNumCad ", nErro, xMensagem);      
+                                              
+        Fim
+      Fim
+      Senao 
+      Inicio     */
+        CopiarAlfa(xNomOem, 0, 60);
+        ExecSqlEx("Insert Into Usu_TInt_SG3 (USU_NumEmp , USU_TipCol, USU_NumCad,  \
+                                             USU_Nome, USU_released, USU_CNPJ,     \
+                                             USU_CPF, USU_StartDat, USU_EndDate,  \
+                                             USU_NomOem)                           \
+                                     Values (1, 2, :nNumCad, :xNome, :xLibApi,     \
+                                             :xCNPJ, :xCPF, :dDatIni, :dDatFim,    \
+                                             :xNomOem )", nErro, xMensagem);           
+                              
+      /*Fim
+      C_Usu_TInt_SG3.FecharCursor();   */
+    Fim
+    Senao
+    Inicio
+      nNumCad = 0;
+      /*C_Usu_TInt_SG3.Sql"Select Usu_EndDate     \
+                           From Usu_TInt_SG3    \ 
+                          Where Usu_CPF = :xCPF \
+                            And Usu_NumCad = 0      ";
+      C_Usu_TInt_SG3.AbrirCursor();
+      Se (C_Usu_TInt_SG3.Achou)
+      Inicio                
+        dEndDate = C_Usu_TInt_SG3.Usu_EndDate;                          
+        Se ((dEndDate < dDatFim) E (dDatFim > 0))
+        Inicio
+          ExecSqlEx("Update Usu_TInt_SG3 Set Usu_EndDate    = :dEndDate, \
+                                             Usu_Cnpj       = :xCnpj,   \
+                                             Usu_StartDate  = :dDatIni, \
+                                             USU_released   = :xLibAPI  \
+                                       Where Usu_NumEmp = 1             \      
+                                         And Usu_TipCol = 2             \
+                                         And Usu_CPF = :xCPF ", nErro, xMensagem);      
+                                              
+        Fim
+      Fim
+      Senao 
+      Inicio    */
+        CopiarAlfa(xNomOem, 0, 60);
+        ExecSqlEx("Insert Into Usu_TInt_SG3 (USU_NumEmp , USU_TipCol, USU_NumCad,  \
+                                             USU_Nome, USU_released, USU_CNPJ,     \
+                                             USU_CPF, USU_StartDat, USU_EndDate,  \
+                                             USU_NomOem)                           \
+                                     Values (1, 2, :nNumCad, :xNome, :xLibApi,     \
+                                             :xCNPJ, :xCPF, :dDatIni, :dDatFim,    \
+                                             :xNomOem )", nErro, xMensagem);           
+                              
+      /*Fim
+      C_Usu_TInt_SG3.FecharCursor();    */
+    Fim
+    Se (xMensagem <> "")
+      n = n;
+@  Fim@ 
+  Se (nCount = 5)     
+    nPosStr = 0;
+Fim
+
+ExecSqlEx("Insert Into Usu_THisSG3 (USU_NumEmp , USU_TipCol, USU_NumCad,   \
+                                     USU_Nome, USU_released, USU_CNPJ,     \
+                                     USU_CPF, USU_StartDat, USU_EndDate,   \
+                                     USU_NomOem, USU_DiaLog, USU_HorLog)   \
+                            Select USU_NumEmp , USU_TipCol, USU_NumCad,    \
+                                     USU_Nome, USU_released, USU_CNPJ,     \
+                                     USU_CPF, USU_StartDat, USU_EndDate,   \
+                                     USU_NomOem, :dDatInt, :nHorInt        \  
+                                     From Usu_TInt_Sg3 ", nErro, xMensagem);     
+
+
+
+Definir Cursor C_Usu_TInt_SG3;
+Definir Cursor C_R034Fun;
+Definir Cursor C_R038Hch;
+Definir Cursor C_R032Oem;                                                 
+Definir Cursor C_R090PNG;                                                                     
+Definir Cursor C_R038Hct;
+Definir Cursor C_R038HctAux;
+Definir Cursor C_R070Blo;
+Definir Alfa xNome;
+Definir Alfa xID;
+Definir Alfa xCPF;
+Definir Alfa xCPFAux;
+Definir Alfa xLibAPI;
+Definir Alfa xCnpj;
+Definir Alfa xApeFun;
+Definir Alfa xNomOem;
+Definir Alfa xCodOemAux;
+Definir Alfa xMensagem;
+Definir Alfa xAux;
+Definir Data dDatIni;
+Definir Data dDatFim;
+Definir Data dDatZer;
+Definir Data dDatInt;
+Definir Data dDatAdm;
+Definir Data dDatAfa;
+
+dDatInt = DatSis;
+nHorInt = HorSis;
+dDatAdm = DatSis;
+nCodFil = 1;
+MontaData(31, 12, 1900, dDatZer);
+
+@ExecSqlEx("Delete Usu_TLog_Sg3 ", nErro, xMensagem);@
+
+/*ExecSqlEx("Update R034Fun Set Usu_Liberado = 'N'   \
+            Where TipCol = 2                       \
+           And NumEmp = 1      ", nErro, xMensagem);   */
+
+C_Usu_TInt_SG3.Sql"Select Usu_NumEmp,    \
+                          Usu_TipCol,    \
+                          Usu_NumCad,    \
+                          Usu_Nome,      \
+                          Usu_Released,  \
+                          Usu_Cnpj,      \
+                          Usu_Cpf,       \
+                          Usu_Startdat,  \
+                          Usu_Enddate,   \
+                          Usu_NomOem     \
+                     From Usu_TInt_SG3   \ 
+                    Order By  Usu_Startdat";
+C_Usu_TInt_SG3.AbrirCursor();
+Enquanto(C_Usu_TInt_SG3.Achou)
+Inicio
+  nNumEmp = 1;
+  nTipCol = 2;
+  nNumCad = C_Usu_TInt_SG3.Usu_NumCad;
+  xNome = C_Usu_TInt_SG3.Usu_Nome;
+  xLibApi = C_Usu_TInt_SG3.Usu_Released;
+  xCNPJ = C_Usu_TInt_SG3.Usu_Cnpj;
+  xCPF = C_Usu_TInt_SG3.Usu_Cpf;
+  dDatIni = C_Usu_TInt_SG3.Usu_Startdat;
+  dDatFim = C_Usu_TInt_SG3.Usu_Enddate;
+  xNomOem = C_Usu_TInt_SG3.Usu_NomOem;   
+  xCPFAux = xCPF; 
+  AlfaParaInt(xCpf, nCpf);
+  AlfaParaInt(xCnpj, nCnpj); 
+  xCodOemAux = xCnpj;                 
+      
+  xMensagem = "";
+  nErro = 0;         
+  nNumCadAux = 0;
+  nCodOem = 0;
+  Se (xLibAPI = "S")
+  Inicio  
+    IniciarTransacao(); @ Abre transação. @ 
+    
+    /*ExecSqlEx("Delete R090Png \
+                     Where TipDoc = 2          \
+                       And NumDoc = :xCpf      \
+                       And CodMot = 2          \
+                       And TipCol = 2          ", nErro, xMensagem);     */
+    
+    C_R032Oem.Sql"Select CodOem From R032Oem \
+                     Where NumCgc = :nCnpj     ";
+    C_R032Oem.AbrirCursor();
+    Se (C_R032Oem.Achou)
+    Inicio
+      nCodOem = C_R032Oem.CodOem;
+    Fim  
+    Senao
+    Inicio
+      CopiarAlfa(xCodOemAux, 0, 8);
+      AlfaParaInt(xCodOemAux, nCodOem);
+      CopiarAlfa(xNomOem, 0, 60);       
+      ExecSqlEx("Insert Into R032Oem (CodOem, NomOem, TipIns, NumCgc) \
+                      Values (:nCodOem, :xNomOem, 1, :nCnpj)", nErro, xMensagem);    
+      /*nCodOem = 0;
+      xMensagem = "Não foi encontrado Outra Empresa";  */          
+    Fim    
+    
+    C_R090PNG.Sql"Select TipDoc From R090Png \
+                   Where NumDoc = :xCpf      ";
+    C_R090PNG.AbrirCursor();
+    Se (C_R090PNG.Achou)
+      xMensagem = "Pessoa não grata.";
+    C_R090PNG.FecharCursor(); 
+    
+    Se (xMensagem = "")
+    Inicio
+      dDatAfa = DatSis - 540;
+      C_R034Fun.Sql"Select NumEmp          \
+                       From R034Fun        \
+                      Where NumCpf = :nCpf \
+                        And TipCol = 1     \
+                        And SitAfa = 7     \
+                        And NumEmp <> 1    \
+                        And DatAfa >= :dDatAfa ";
+      C_R034Fun.AbrirCursor();
+      Se (C_R034Fun.Achou)
+        xMensagem = "Terceiro demitido a menos de 18 meses. ";
+      C_R034Fun.FecharCursor();
+/*      Se (xMensagem = "")
+      Inicio
+        C_R034Fun.Sql"Select NumEmp,        \ 
+                             TipCol,         \
+                             NumCad,         \
+                             Usu_Liberado    \                        
+                        From R034Fun         \
+                       Where NomFun = :xNome \
+                         And TipCol = 1     \
+                         And SitAfa = 7     \
+                       And DatAfa >= :dDatAfa ";
+        C_R034Fun.AbrirCursor();
+        Se (C_R034Fun.Achou)
+          xMensagem = "Terceiro demitido a menos de 18 meses. ";
+        C_R034Fun.FecharCursor(); 
+      Fim    */
+    Fim                
+       
+    Se (xMensagem = "")
+    Inicio              
+      Se (nNumCad > 0)
+      Inicio        
+        ExecSqlEx("Update R034Fun Set Usu_Liberado = :xLibAPI, \
+                                      SitAfa = 1           \  
+                 Where TipCol = 2                          \
+                   And NumEmp = 1                          \
+                   And NumCad = :nNumCad", nErro, xMensagem);
+       Se (xMensagem = "")
+       Inicio              
+         ExecSqlEx("Delete R070Blo \
+                       Where NumEmp = 1          \
+                         And TipCol = 2          \
+                         And NumCad = :nNumCad   \
+                          And CodMot = 5 ", nErro, xMensagem);            
+       Fim              
+/*          ExecSqlEx("Update R038HCh Set DatFim = :dDatFim \ 
+                   Where NumEmp = :nNumEmp             \
+                   And TipCol = 2                      \
+                   And NumCad = :nNumCad               \
+                   And NumEmp = 1                      \
+                   And ((DatFim = :dDatZer) Or (DatFim >= :dDatInt))", nErro, xMensagem);         */             
+              
+      Fim
+      Senao Se (nNumCad = 0)
+      Inicio
+        Se (nCodOem > 0)
+        Inicio
+          Se (nNumCadAux = 0)
+          Inicio
+            C_R034Fun.Sql"Select NumCad           \
+                           From R034Fun           \
+                          Where NumEmp = :nNumEmp \
+                            And TipCol = 2        \
+                            And NumEmp = 1        \
+                          Order By NumCad Desc ";
+            C_R034Fun.AbrirCursor();
+            Se (C_R034Fun.Achou)
+              nNumCadAux = C_R034Fun.NumCad + 1;
+            C_R034Fun.FecharCursor();
+          Fim
+          Senao
+            nNumCadAux++;
+            
+          /*Tira o 0 no inicio */
+          AlfaParaInt(xCPFAux, nNumCadAux);
+          IntParaAlfa(nNumCadAux, xCPFAux);            
+            
+          TamanhoAlfa (xCPFAux, nTam);  
+          Se(nTam = 11)
+            CopiarAlfa(xCPFAux, 0, 9);
+          Senao
+            CopiarAlfa(xCPFAux, 0, 8);         
+            
+          CopiarAlfa(xCPFAux, 0, 9); 
+          AlfaParaInt(xCPFAux, nNumCadAux);
+          xApeFun = xNome;
+          CopiarAlfa(xApeFun, 0, 50);  
+          CopiarAlfa(xNome, 0, 40);
+          ExecSQLEx("INSERT INTO r034fun           \
+                (numemp                            \
+                ,tipcol                            \
+                ,numcad                            \
+                ,nomfun                            \
+                ,apefun                            \
+                ,datadm                            \
+                ,sitafa                            \                           
+                ,codesc                            \
+                ,codfil                            \
+                ,tipcon                            \
+                ,tipsex                            \
+                ,estciv                            \
+                ,codnac                            \
+                ,numcpf                            \
+                ,tipopc                            \
+                ,usu_liberado     )                \
+          VALUES                                   \
+                (1                                 \
+                ,2                                 \
+                ,:nNumCadAux                       \
+                ,:xNome                            \
+                ,:xNome                            \
+                ,:ddatadm                          \
+                ,1                                 \           
+                ,91                                \
+                ,:ncodfil                          \
+                ,1                                 \
+                ,'M'                               \
+                ,9                                 \
+                ,10                                \
+                ,:nCpf                             \
+                ,'S'                               \
+                ,:xLibAPI)  ", nErro, xMensagem); 
+                
+          ExecSQLEx("INSERT INTO r034dac      \
+                                 (numemp      \
+                                 ,tipcol      \
+                                 ,numcad      \
+                                 ,verprm      \
+                                 ,codprm      \
+                                 ,prmfer      \
+                                 ,prmsab      \
+                                 ,prmdom      \
+                                 ,prmvis      \
+                                 ,confai      \
+                                 ,conadp      \
+                                 ,concre      \
+                                 ,conial      \
+                                 ,temalm      \
+                                 ,blofal      \
+                                 ,recvis      \
+                                 ,autagv      \
+                                 ,autasa      \
+                                 ,autext      \
+                                 ,usafro      \
+                                 ,gracon      \
+                                 ,conpac      \
+                                 ,tempac      \
+                                 ,conree      \
+                                 ,tolacp      \
+                                 ,usabio      \
+                                 ,dataso      \
+                                 ,dattse      \
+                                 ,autdbl      \
+                                 ,verafa      \
+                                 ,aprsol      \
+                                 ,monlot      \
+                                 ,conint      \
+                                 ,tolint      \
+                                 ,intbdc      \
+                                 ,datinc      \
+                                 ,horinc      \
+                                 ,stabdc      \
+                                 ,conrea      \
+                                 ,utichv      \
+                                 ,reponl      \
+                                 ,seqreg      \
+                                 ,usarfa)     \
+                           VALUES             \
+                                 (1           \
+                                 ,2           \
+                                 ,:nNumCadAux \ 
+                                 ,'S'         \
+                                 ,3           \
+                                 ,3           \
+                                 ,3           \
+                                 ,3           \
+                                 ,0           \
+                                 ,0           \
+                                 ,'N'         \
+                                 ,0           \
+                                 ,'N'         \
+                                 ,0           \
+                                 ,'N'         \
+                                 ,'S'         \
+                                 ,'S'         \
+                                 ,'S'         \
+                                 ,'S'         \
+                                 ,'N'         \
+                                 ,50          \
+                                 ,'N'         \
+                                 ,0           \
+                                 ,'N'         \
+                                 ,0           \
+                                 ,1           \
+                                 ,:dDatZer    \
+                                 ,:dDatZer    \
+                                 ,'S'         \
+                                 ,'S'         \
+                                 ,'N'         \
+                                 ,'N'         \
+                                 ,'N'         \
+                                 ,0           \
+                                 ,'N'         \
+                                 ,:dDatZer    \
+                                 ,0           \
+                                 ,0           \
+                                 ,'S'         \
+                                 ,'S'         \
+                                 ,'N'         \
+                                 ,0           \
+                                 ,'N') ", nErro, xMensagem);                 
+                          
+          nNumCad = nNumCadAux;                                      
+        Fim                      
+      Fim
+    Fim
+    
+    Se ((xMensagem = "") e (nNumCad > 0) e (nCodOem > 0))
+    Inicio
+      ExecSql"Delete R038Hct                   \
+                     Where NumEmp = 1          \
+                       And TipCol = 2          \
+                       And NumCad = :nNumCad    ";                             
+
+          ExecSqlEx("INSERT INTO r038hct    \
+             (numemp                        \
+             ,tipcol                        \
+             ,numcad                        \
+             ,datalt                        \
+             ,codoem                        \
+             ,numcon                        \
+             ,datfim                        \
+             ,staatu)                       \
+            VALUES                          \
+             (1                             \
+             ,2                             \
+             ,:nnumcad                      \
+             ,:dDatIni                      \
+             ,:ncodoem                      \
+             ,Null                          \
+             ,:dDatFim                      \
+             ,1 )", nErro, xMensagem);   
+    Fim  
+    
+    Se (xMensagem <> "")
+    Inicio
+      ExecSql"INSERT INTO usu_tlog_sg3           \
+             (usu_id_locacao                     \
+             ,usu_datint                         \
+             ,usu_horint                         \
+             ,usu_cpf                            \
+             ,usu_nomfun                         \
+             ,usu_cnpj                           \
+             ,usu_libapi                         \
+             ,usu_datfim                         \
+             ,usu_msglog                         \
+             ,usu_status)                        \
+       VALUES                                    \
+         (:xID,                                  \
+          :dDatInt,                              \
+          :nHorInt,                              \   
+          :nCpf,                                 \
+          :xNome,                                \     
+          :nCnpj,                                \
+          :xLibAPI, \
+          :dDatFim, \
+          :xMensagem, \
+          'S' )";        
+    Fim
+    FinalizarTransacao(); @ Fecha transação. @
+  Fim
+  Senao Se (xLibAPI = "N")
+  Inicio
+    xAux = "N";
+    /*C_R034Fun.Sql"Select Usu_Liberado    \
+                     From R034Fun        \
+                    Where NumCpf = :nCpf \
+                      And TipCol = 2     \
+                      And NumEmp = 1    ";
+    C_R034Fun.AbrirCursor();
+    Se (C_R034Fun.Achou)
+      xAux = C_R034Fun.Usu_Liberado;
+    C_R034Fun.FecharCursor();   */
+    Se(xAux = "N")
+    Inicio  
+      IniciarTransacao();
+      Se (dDatFim = 0)
+        dDatFim = DatSis;
+    
+      Se (nNumCad > 0)
+      Inicio
+        ExecSqlEx("Update R034Fun Set Usu_Liberado = :xLibAPI, \
+                                      SitAfa = 300       \           
+               Where NumEmp = 1                          \
+                 And TipCol = 2                          \
+                 And NumCad = :nNumCad ", nErro, xMensagem);
+                 
+        C_R070Blo.Sql"Select CodMot From R070Blo \
+                       Where NumEmp = 1          \
+                         And TipCol = 2          \
+                         And NumCad = :nNumCad   \
+                          And CodMot = 5         ";
+        C_R070Blo.AbrirCursor();
+        Se (C_R070Blo.NaoAchou)
+        Inicio           
+          ExecSqlEx("INSERT INTO r070blo     \
+                                 (numemp     \
+                                 ,tipcol     \
+                                 ,numcad     \
+                                 ,datblo     \
+                                 ,horblo     \
+                                 ,codmot     \
+                                 ,StaAcc     \
+                                 ,empaut     \
+                                 ,tclaut     \
+                                 ,cadaut     \
+                                 ,codusu     \
+                                 ,numcra     \
+                                 ,datlib     \
+                                 ,horlib     \
+                                 ,obsblo)    \
+                           VALUES            \
+                                 (1          \
+                                 ,2          \
+                                 ,:nnumcad   \
+                                 ,:dDatInt   \
+                                 ,:nHorInt   \
+                                 ,5          \
+                                 ,1          \
+                                 ,0          \
+                                 ,0          \
+                                 ,0          \
+                                 ,14         \
+                                 ,0          \
+                                 ,:dDatZer   \
+                                 ,0          \
+                                 ,'') ", nErro, xMensagem);
+                                 
+                                 
+                                 
+        Fim 
+        C_R070Blo.FecharCursor();
+        
+        
+        @ INCLUI HISTORICO CRACHÁ - EVANDERSON PEREIRA - 27/03/2025 @
+        ExecSqlEx("Update R038HCh Set DatFim = :dDatFec,\
+                                      StaAcc = 2,       \
+                                      StaAtu = 2,       \
+                                      HorFim = :nHorInt \
+                 Where NumEmp = 1                       \
+                 And TipCol = 2                         \
+                 And NumCad = :nNumCad                  \
+                 And DatFim = :dDatZer                  \
+                 AND TIPCRA = 1", nErro, xMensagem);
+          
+          
+         @ INCLUI HISTORICO AFASTAMENTO - EVANDERSON PEREIRA - 27/03/2025 @ 
+         /*ExecSql "Insert INTO R038AFA (NumEmp, TipCol, NumCad, DATAFA, HORAFA, SITAFA) \
+                    Values (1, 2, :nNumCad, :dDatFec, :nHorInt, 300)";*/      
+                 
+                 
+                 
+                       
+      Fim
+      Se (xMensagem <> "")
+      Inicio
+        ExecSql"INSERT INTO usu_tlog_sg3           \
+               (usu_id_locacao                     \
+               ,usu_datint                         \
+               ,usu_horint                         \
+               ,usu_cpf                            \
+               ,usu_nomfun                         \
+               ,usu_cnpj                           \
+               ,usu_libapi                         \
+               ,usu_datfim                         \
+               ,usu_msglog                         \
+               ,usu_status)                        \
+         VALUES                                    \
+           (:xID,                                  \
+            :dDatInt,                              \
+            :nHorInt,                              \   
+            :nCpf,                                 \
+            :xNome,                                \     
+            :nCnpj,                                \
+            :xLibAPI, \
+            :dDatFim, \
+            :xMensagem, \
+            'S' )";        
+      Fim
+      FinalizarTransacao(); @ Fecha transação. @ 
+    Fim          
+  Fim
+  C_Usu_TInt_SG3.Proximo();
+Fim
+C_Usu_TInt_SG3.FecharCursor();                     
+
+Se (xMensagem <> "")
+  Mensagem(Erro, xMensagem);
+Senao
+Inicio
+ Se(nEntrou = 0)
+    Mensagem(Retorna, "Executado com Sucesso!");
+  Senao
+  Inicio
+    Se(xLibAPI = "S")
+      Mensagem(Retorna, "Liberado SG3!");
+    Senao Se(xLibAPI = "N")
+      Mensagem(Retorna, "Bloqueado SG3!");          
+  Fim  
+Fim 

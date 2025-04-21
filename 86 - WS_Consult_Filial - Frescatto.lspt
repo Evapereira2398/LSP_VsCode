@@ -1,0 +1,54 @@
+Definir Alfa vCursor;
+Definir Alfa aAux;
+Definir Alfa aSql;
+Definir Alfa aCodEmp;
+Definir Alfa aCodFil;
+Definir Alfa xNomFil;
+Definir Alfa aNomFil;
+
+xCodEmp = consult_filial.codemp;
+IntParaAlfa (xCodEmp, aCodEmp);
+LimpaEspacos(aCodEmp);
+Se(xCodEmp <> 0){
+  aSql = aSql + " and E070FIL.CodEmp = "+aCodEmp;
+}
+
+xCodFil = consult_filial.codfil;
+IntParaAlfa (xCodFil, aCodFil);
+LimpaEspacos(aCodFil);
+Se(xCodFil <> 0){
+  aSql = aSql + " and E070FIL.CodFil = "+aCodFil;
+}
+
+aNomFil = consult_filial.nomfil;
+LimpaEspacos(aNomFil);
+Se(aNomFil <> ""){
+  ConverteParaMaiusculo (aNomFil);
+  aSql = aSql + " and UPPER (E070FIL.NomFil) like '%"+aNomFil+"%'";
+}
+  
+   
+SQL_Criar(vCursor);
+SQL_UsarAbrangencia(vCursor, 1); @ 1 = Usa abrangência, 0 = Não usa abrangência. @
+
+aSql = "Select CodEmp, CodFil, NomFil FROM E070FIL  Where USU_IntBpm = 'S' "+aSql+"";                 
+        
+SQL_DefinirComando (vCursor, aSql);    
+SQL_AbrirCursor(vCursor);
+nConLin = 0;
+Enquanto(SQL_EOF(vCursor) = 0){
+  SQL_Retornarinteiro(vCursor, "CodFil", nCodFil);
+  SQL_Retornaralfa(vCursor, "NomFil", xNomFil);
+
+  IntParaAlfa(nCodFil, aCodFil);
+
+  consult_filial.grid.CriarLinha();
+  consult_filial.grid.LinhaAtual = nConLin;
+  consult_filial.grid.codfil = nCodFil;
+  consult_filial.grid.nomfil = xNomFil;
+  consult_filial.grid.filial = aCodFil+ " - " +xNomFil;
+  nConLin++;
+  SQL_Proximo(vCursor);   
+}
+SQL_FecharCursor(vCursor);
+SQL_Destruir(vCursor);

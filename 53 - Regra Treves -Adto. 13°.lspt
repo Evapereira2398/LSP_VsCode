@@ -1,0 +1,90 @@
+Definir numero tQtdDia;
+Definir numero aQtdDia;
+Definir numero bQtdDia;
+Definir numero cQtdDia;
+Definir numero dQtdDia;
+Definir numero eQtdDia;
+Definir numero fQtdDia;
+Definir numero xValEvt;
+
+@ Como solicitado pelo cliente a situação de Faltas não deve impactar no cálculo do adiantamento. Priscila Penner - 12/04/2021@
+@Inserido no dia 15/12/2020 no chamado 159458 pelo Marvin @
+
+BuscaDiaSit(R034FUN.NumEmp, R034FUN.TipCol, R034FUN.NumCad, IniCmp, FimCmp, 1, aQtdDia);
+BuscaDiaSit(R034FUN.NumEmp, R034FUN.TipCol, R034FUN.NumCad, IniCmp, FimCmp, 2, bQtdDia);
+BuscaDiaSit(R034FUN.NumEmp, R034FUN.TipCol, R034FUN.NumCad, IniCmp, FimCmp, 3, dQtdDia);
+BuscaDiaSit(R034FUN.NumEmp, R034FUN.TipCol, R034FUN.NumCad, IniCmp, FimCmp, 4, eQtdDia);
+BuscaDiaSit(R034FUN.NumEmp, R034FUN.TipCol, R034FUN.NumCad, IniCmp, FimCmp, 12, cQtdDia);
+BuscaDiaSit(R034FUN.NumEmp, R034FUN.TipCol, R034FUN.NumCad, IniCmp, FimCmp, 15, nQtdDia5);
+BuscaDiaSit(R034FUN.NumEmp, R034FUN.TipCol, R034FUN.NumCad, IniCmp, FimCmp, 355, fQtdDia);
+
+@ Inclusão - Situação 6 - Licença maternidade - CH 230991 - Barbara Moro / Evanderson @ 
+BuscaDiaSit(R034FUN.NumEmp, R034FUN.TipCol, R034FUN.NumCad, IniCmp, FimCmp, 6, nQtdDiaLicMat);
+aQtdDia = aQtdDia + nQtdDiaLicMat + nQtdDia5;
+
+BuscaDiaSit(R034FUN.NumEmp, R034FUN.TipCol, R034FUN.NumCad, IniCmp, FimCmp, 14, aQtdDiaAte);
+aQtdDia = aQtdDia + aQtdDiaAte + nQtdDia5;
+
+
+@ Total das situações @                                                                    
+tQtdDia = bQtdDia + cQtdDia + dQtdDia + eQtdDia + fQtdDia + aQtdDiaAte + nQtdDiaLicMat;
+
+@ Verifica se o colaborador foi admitido no mês, utiliza proporcionalidade a partir do salário @
+Se ((R034FUN.DatAdm > IniCmp) e (R034FUN.DatAdm < FimCmp)){
+  
+  ValEvt = R034FUN.ValSal;
+  
+  nNumEmp = R034FUN.NumEmp;
+  nTipCol = R034FUN.TipCol;
+  nNumCad = R034FUN.NumCad;
+  Definir Cursor C_R038HSA;
+  C_R038HSA.SQL"SELECT TIPSAL, DATALT, SEQALT \
+                  FROM R038HSA                \
+                 WHERE NUMEMP = :nNumEmp      \
+                   AND TIPCOL = :nTipCol      \
+                   AND NUMCAD = :nNumCad      \
+                   ORDER BY DATALT DESC, SEQALT DESC";
+  C_R038HSA.AbrirCursor();
+  Se (C_R038HSA.Achou){
+    Se (C_R038HSA.TipSal = 2) @ Horista @                  
+      ValEvt = ValEvt * 220; 
+  }  
+  C_R038HSA.FecharCursor();
+}  
+
+@ Condição para zerar evento, caso exista mais de 15 dias de afastamento @ 
+Se ((tQtdDia > 15) e (TipCal = 91)) {
+  Se(nQtdDiaLicMat > 0){ @ Se existe licença, vai ser maior que zero @
+    Vapara ContReg;  
+  }
+  Senao {
+    ValEvt = 0;
+  }
+} 
+Senao {
+  ValEvt = ValEvt;
+} 
+
+@ Continuação da regra @
+ContReg: 
+
+Se ((aQtdDia >= 15) e (TipCal = 91)){
+  
+  Se(aQtdDia > 30){ 
+    aQtdDia = 30;
+  }
+  
+  xValEvt = ValEvt;
+  xValEvt = ((xValEvt / 30) * aQtdDia);   @ A pedido do Carlos - chamado 180288. No dia 14/01/2022 retiramos o comentário da regra @
+  ArredondarValor(xValEvt,0);
+  
+  ValEvt = xValEvt;
+  Se ((R034FUN.DatAdm > IniCmp) e (R034FUN.DatAdm < FimCmp)){
+    ValEvt = ValEvt * 0.4;
+  }
+}
+Senao {
+  ValEvt = 0;
+} 
+      
+x=0;

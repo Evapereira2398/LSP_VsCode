@@ -1,0 +1,164 @@
+@Definir Cursor Cur_R040PER;@
+Definir Cursor Cur_Gestor;
+Definir Cursor Cur_R030EMP;
+Definir Alfa Cur_R040PER;
+Definir Alfa aSql;
+Definir Data dDatLim;
+Definir Data dFimPer;
+Definir Data dLimCon;
+Definir Data dDatPro;
+Definir Data dDatSis;
+Definir Alfa aNomFun;
+Definir Alfa aEmpresa;
+Definir Alfa aPosTra;
+Definir Alfa aNumEmp;
+Definir Alfa aQtdSld;
+Definir Alfa aLimCon;
+Definir Alfa aDatPro;
+Definir Alfa aNomGes;
+Definir Alfa aEmaParG;
+Definir Alfa aEmaComG;
+Definir Alfa aCorpo;
+Definir Alfa VEnter;
+Caracterparaalfa(13,VEnter);
+
+dDatSis = DatSis;
+dDatLim = DatSis;
+
+DesmontaData(dDatLim, xdia, xmes, xano);
+
+xdia = 1;
+xmes = xmes + 6; 14
+
+Se (xmes > 12) {
+    xmes = xmes - 12;
+    xano = xano + 1;  
+}
+
+MontaData(xdia, xmes, xano, dDatLim);
+Ultimodia(dDatLim); 
+MontaData (1, 1, 2020, dFimPer);
+
+aSql = "SELECT R034FUN.NUMEMP, R034FUN.ESTPOS, R034FUN.POSTRA, R034FUN.NUMCAD,          \
+               R034FUN.NOMFUN, R040PER.LIMCON, R040PER.IniPer, R040PER.QTDSLD           \
+          FROM R040PER, R034FUN                                                         \
+         WHERE R040PER.NUMEMP = R034FUN.NUMEMP                                          \
+           AND R040PER.TIPCOL = R034FUN.TIPCOL                                          \
+           AND R040PER.NUMCAD = R034FUN.NUMCAD                                          \
+           AND R040PER.FIMPER >= :dFimPer                                               \
+           AND R040PER.LIMCON <= :dDatLim                                               \
+           AND R040PER.SITPER = 0                                                       \
+           AND R040PER.QTDSLD > 0                                                       \
+           AND R034FUN.TIPCOL = 1                                                       \
+           AND R034FUN.SITAFA <> 7                                                      \
+           AND (R034FUN.NOMFUN NOT IN ('Carlos Roberto Massa','Solange Martinez Massa'))\
+           AND (NOT EXISTS (SELECT 1                                                    \
+                              FROM R040PRG                                              \
+                             WHERE R040PRG.NUMEMP = R040PER.NUMEMP                      \
+                               AND R040PRG.TIPCOL = R040PER.TIPCOL                      \
+                               AND R040PRG.NUMCAD = R040PER.NUMCAD                      \
+                               AND R040PRG.INIPER = R040PER.INIPER                      \
+        					   AND R040PRG.PrgDat >= :dDatSis                                     \
+                             HAVING SUM(R040PRG.PRGDFE + R040PRG.PRGDAB) <= R040PER.LIMCON))";
+
+SQL_Criar(Cur_R040PER);
+SQL_UsarAbrangencia(Cur_R040PER,0); 
+SQL_USARSQLSENIOR2(Cur_R040PER,0);
+SQL_DefinirComando(Cur_R040PER, aSql);
+
+SQL_DefinirData(Cur_R040PER,"dFimPer",dFimPer);
+SQL_DefinirData(Cur_R040PER,"dDatLim",dDatLim);
+SQL_DefinirData(Cur_R040PER,"dDatSis",dDatSis);
+SQL_AbrirCursor(Cur_R040PER);
+/*
+Cur_R040PER.SQL "SELECT R034FUN034FUN.NOMFUN, R040PER.QTDSLD,.ESTPOS, R034FUN.POSTRA, \
+                        R \
+                        R040PER.LIMCON, R034FUN.NUMEMP  \
+                   FROM R040PER, R034FUN                \  
+                  WHERE R040PER.NUMEMP = R034FUN.NUMEMP \
+                    AND R040PER.TIPCOL = R034FUN.TIPCOL \
+                    AND R040PER.NUMCAD = R034FUN.NUMCAD \
+                    AND R040PER.FIMPER >= :dFimPer      \
+                    AND R040PER.LIMCON <= :dDatLim      \ 
+                    AND R040PER.SITPER = 0              \
+                    AND R040PER.QTDSLD > 0              \
+                    AND R034FUN.TIPCOL = 1              \
+                    AND R034FUN.SITAFA <> 7             \
+                    AND (R034FUN.NOMFUN NOT IN ('Carlos Roberto Massa','Solange Martinez Massa'))"; 
+Cur_R040PER.AbrirCursor();  
+Enquanto (Cur_R040PER.Achou) */
+
+
+
+Enquanto (SQL_EOF(Cur_R040PER) = 0)
+  {
+      /*
+      aNomFun = Cur_R040PER.NomFun;
+      nNumEmp = Cur_R040PER.NumEmp;
+      xQtdSld = Cur_R040PER.QtdSld;
+      dLimCon = Cur_R040PER.LimCon;
+      dDatPro = Cur_R040PER.LimCon-45;*/
+      
+      SQL_RetornarAlfa(Cur_R040PER, "NomFun", aNomFun);
+      SQL_RetornarAlfa(Cur_R040PER, "PosTra", aPosTra);
+      SQL_RetornarInteiro(Cur_R040PER, "NumEmp", nNumEmp);
+      SQL_RetornarInteiro(Cur_R040PER, "QtdSld", xQtdSld);
+      SQL_RetornarInteiro(Cur_R040PER, "EstPos", xEstPos);
+      SQL_RetornarData(Cur_R040PER, "LimCon", dLimCon);
+                
+      dDatPro = dLimCon - 45;
+      
+      IntParaAlfa (xQtdSld, aQtdSld);
+      ConverteMascara (3, dLimCon, aLimCon, "DD/MM/YYYY");
+      ConverteMascara (3, dDatPro, aDatPro, "DD/MM/YYYY"); 
+      
+      xNumEmp = 0; 
+      xTipCol = 0; 
+      xNumCad = 0; 
+      aEmaParG = ""; 
+      aEmaComG = "";
+      RetornaChefePosto(1, xEstPos, 2, datsis, aPosTra, xNumEmp, xTipCol, xNumCad);
+      
+      Cur_R030EMP.SQL "SELECT NOMEMP FROM R030EMP WHERE NUMEMP = :nNumEmp";
+      Cur_R030EMP.AbrirCursor();
+      Se (Cur_R030EMP.Achou) {
+        IntParaAlfa(nNumEmp, aNumEmp);
+        aEmpresa = aNumEmp+" - "+Cur_R030EMP.NomEmp;      
+        }
+      Cur_R030EMP.FecharCursor();  
+      
+      Cur_Gestor.SQL "SELECT NOMFUN FROM R034FUN \
+                       WHERE NUMEMP = :xNumEmp   \
+                         AND TIPCOL = :xTipCol   \
+                         AND NUMCAD = :xNumCad";
+      Cur_Gestor.AbrirCursor();
+      Se (Cur_Gestor.Achou)
+        aNomGes = Cur_Gestor.NomFun;
+      Cur_Gestor.FecharCursor();  
+      
+      BusEmailFunc (xNumEmp, xTipCol, xNumCad, aEmaParG, aEmaComG);
+      
+      aCorpo = "Olá, "+aNomGes+".";
+      aCorpo = aCorpo+VEnter+VEnter;
+      aCorpo = aCorpo+"<p>O(a) colaborador(a) "+aNomFun+", da empresa "+aEmpresa+", possui "+aQtdSld+" dias de férias pendentes. ";
+      aCorpo = aCorpo+"A data limite para usufruí-las é "+aLimCon+", devendo ser programada até "+aDatPro+".";
+      aCorpo = aCorpo+VEnter+VEnter;
+      aCorpo = aCorpo+"<p><b>IMPORTANTE:</b>";
+      aCorpo = aCorpo+VEnter;
+      aCorpo = aCorpo+"<p>&bull; As programações devem ser realizadas e aprovadas via Painel de Gestão com no mínimo 45 dias de antecedência;</p>";
+      aCorpo = aCorpo+"<p>&bull; As férias não podem iniciar dois dias antes de feriados e DSR (Descanso Semanal Remunerado);</p>";
+      aCorpo = aCorpo+"<p>&bull; Para colaboradores que possuem mais de uma função, as férias precisam iniciar na mesma data (considerar primeiro vencimento) e realizar a programação para todas as funções via Painel de Gestão;</p>";
+      aCorpo = aCorpo+"<p>&bull; O aviso e recibo de férias serão disponibilizados no Painel de Gestão (Gestão de Pessoas /Painel de Gestão/ Férias/ Minhas Férias) e deverão ser assinados pelo colaborador. " ;
+      aCorpo = aCorpo+"Caso o colaborador não receba nenhum e-mail ou os documentos não estejam disponíveis para assinatura no Painel de Gestão, ";
+      aCorpo = aCorpo+"entrar em contato com o Departamento Pessoal imediatamente por meio de chamado no Softdask/ Pessoas/ Novo chamado/Férias.</p>";
+      aCorpo = aCorpo+VEnter;
+      aCorpo = aCorpo+"<b>Este e-mail foi enviado automaticamente.<b>";     
+            
+      /*EnviaEmailhtml ("sistema@grupomassa.com.br", aEmaComG, "departamentopessoal@grupomassa.com.br", "lorena.pedroso@grupomassa.com.br", "IMPORTANTE - VENCIMENTO DE FÉRIAS", aCorpo, "", 3,0);*/ 
+      /*EnviaEmailhtml ("sistema@grupomassa.com.br", "lorena.pedroso@grupomassa.com.br", "lorena.pedroso@grupomassa.com.br", "lorena.pedroso@grupomassa.com.br", "IMPORTANTE - VENCIMENTO DE FÉRIAS", aCorpo, "", 3,0);*/
+      EnviaEmailhtml ("sistema@grupomassa.com.br", "lorena.pedroso@grupomassa.com.br", "evapereiraforbiz@gmail.com", "", "IMPORTANTE - VENCIMENTO DE FÉRIAS", aCorpo, "", 3,0);
+  
+      SQL_Proximo(Cur_R040PER);   
+  }
+SQL_FecharCursor(Cur_R040PER);    
+SQL_Destruir(Cur_R040PER);      

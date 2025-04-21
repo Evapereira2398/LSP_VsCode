@@ -1,0 +1,92 @@
+/* Alteração chamado 215169 - Solcitado para buscar diretoria do posto na R017CAR
+   por empresa, desconsiderando a filial e data mais atual */
+
+Definir Data dDatAdm;
+Definir Alfa aPosTra;
+Definir Cursor C_R017CAR;
+   
+   
+@ --- Executa antes de inserir o registro --- @
+Se (vExecucaoRegra = 0){
+  nNumEmp = R034FUN.NumEmp;
+  nTipCol = R034FUN.TipCol;
+  nNumCad = R034FUN.NumCad;
+  nCodFil = R034FUN.CodFil;
+  dDatAdm = R034FUN.DatAdm;
+  nEstPos = R034FUN.EstPos;
+  aPosTra = R034FUN.PosTra;
+  xCodDir = R034FUN.USU_CodDir;
+
+    
+  @ Atualização - CH 237713 - Evanderson Pereira @
+  @ Podem haver casos onde está sendo incluindo uma nova caracteristica em um posto @
+  @ que possui um colaborador demitido alocado, neste caso não deve ser gerado o insert @
+  @ na tabela de historicos @
+    
+  @ Cursor para verificar os colaboradores alocados no posto @
+  Definir Cursor cBuscaPosto; 
+  cBuscaPosto.SQL"SELECT NUMEMP, TIPCOL, NUMCAD, SITAFA FROM R034FUN WHERE ESTPOS = :nEstPos AND POSTRA = :aPosTra";
+  cBuscaPosto.AbrirCursor()
+  Enquanto(cBuscaPosto.Achou){
+    nNumEmp = cBuscaPosto.NumEmp;
+    nTipCol = cBuscaPosto.TipCol;
+    nNumCad = cBuscaPosto.NumCad;
+    nSitAfa = cBuscaPosto.SitAfa;
+    nCont++;
+
+    cBuscaPosto.Proximo();
+      
+    @ Após rodar o loop passando pelos colaboradores alocados no posto, será conferido a Situação atual do colaborador @
+    nColAfa = 0;
+    Enquanto(nColAfa < nCont) {
+      RetSitEmp(nNumEmp, nTipCol, nNumCad, DatSis); 
+        
+      @ Caso tenha algum colaborador alocado esteja ativo, vai precisar seguir a regra normalmente, @
+      @ senao, vai apenas pular pora o proximo registro @
+      Se(SitEmp <> 7){
+        C_R017CAR.Sql "SELECT USU_CodDir                                      \
+                        FROM R017CAR                                         \ 
+                        WHERE EstPos = :nEstPos                               \
+                          AND PosTra = :aPosTra                               \
+                          AND NumEmp = :nNumEmp                               \
+                          AND CodFil = :nCodFil                               \
+                          AND DatIni = (SELECT MAX(DATINI) FROM R017CAR TAB2  \
+                                        WHERE TAB2.ESTPOS = R017CAR.ESTPOS   \
+                                          AND TAB2.POSTRA = R017CAR.POSTRA   \
+                                          AND TAB2.NUMEMP = R017CAR.NUMEMP   \
+                                          AND DATINI <= :dDatAdm)";
+        C_R017CAR.AbrirCursor();
+        Se(C_R017CAR.Achou) {
+          xCodDir = C_R017CAR.USU_CodDir;  
+          ExecSql "UPDATE R034FUN SET USU_CODDIR = :xCodDir Where NumEmp = :nNumEmp AND TipCol = :nTipCol AND NumCad = :nNumCad"; 
+            
+            
+          @ Inclusão CH - 237714 | 11/04/2025 @
+          @ Evanderson Pereira @
+          Definir Cursor cHISDIR;
+          Definir Data dDatSis;
+          dDatSis = DatSis;
+            
+          @ Vai ser realizado um INSERT na tabela de historico de diretoria ao processar a admissão @
+          cHISDIR.SQL"SELECT USU_NUMEMP            \
+                        FROM USU_THisDir           \
+                      WHERE USU_NUMEMP = :nNumEmp \
+                        AND USU_TIPCOL = :nTipCol \
+                        AND USU_NUMCAD = :nNumCad \
+                        AND USU_DatAlt = :dDatSis \
+                        AND USU_CodDir = :xCodDir";
+          cHISDIR.AbrirCursor();
+          Se(cHISDIR.NaoAchou){                     
+            EXECSQL"INSERT INTO USU_THisDir VALUES(:nNumEmp,:nTipCol,:nNumCad,:dDatSis,:xCodDir,40)";
+          }
+          cHISDIR.FecharCursor();    
+        } 
+        C_R017CAR.FecharCursor();
+      }
+      
+      nColAfa++;
+          
+    } 
+  }
+  cBuscaPosto.FecharCursor();
+}  

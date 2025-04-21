@@ -1,0 +1,186 @@
+AlteraControle("Grade002", "Fonte", "Arial;Regular;8;Preto");
+nNumEmp = R034FUN.NumEmp;
+nTipCol = R034FUN.TipCol; 
+nNumCad = R034FUN.NumCad; 
+
+@ Zera as variaveis @
+nTrabalhou1Sab = 0;
+nTrabalhou2Sab = 0; 
+nTrabalhou3Sab = 0;
+nTrabalhou4Sab = 0;
+nTrabalhou1Dom = 0;
+nTrabalhou2Dom = 0;
+nTrabalhou3Dom = 0;
+nTrabalhou4Dom = 0;
+nTra2SabSeg = 0;
+
+@ 1.1 - Verifica os dias em que o colaborador trabalhou @
+@ Irá buscar as informações na 70ACC @
+
+Definir Data dIniMar; 
+Definir Data dFimMar;
+Definir Data dDatAcc; 
+Definir Alfa aRetGra; 
+Definir Data dDatPro; 
+Definir Alfa aDiaSem; 
+
+dIniMar = EDatRef; 
+dFimMar = dIniMar;
+dDatPro = dIniMar;  
+UltimoDia(dFimMar); 
+
+
+@ VAI BUSCAR O NUMERO DO CRACHA NA TABELA DE HISTORICOS @
+Definir Cursor C38HCH; 
+C38HCH.SQL"SELECT NUMCRA FROM R038HCH WHERE NUMEMP = :nNumEmp And TipCol = :nTipCol And NumCad = :nNumCad And TipCra = 1";
+C38HCH.AbrirCursor()
+Se(C38HCH.Achou){
+  nNumCra = C38HCH.NUMCRA;
+}
+C38HCH.FecharCursor(); 
+
+
+
+@ LOOP @
+nNumCol = 1;
+Enquanto(dDatPro <= dFimMar){
+
+    @ Verifica o dia da semana @
+    ExtensoSemana (dDatPro, aDiaSem);
+    
+    @ Armazena as datas dos sabádos que tem no mês @
+    Se(aDiaSem = "Sábado"){
+      Definir Data dDat1Sab;
+      Definir Data dDat2Sab;
+      Definir Data dDat3Sab;
+      Definir Data dDat4Sab;
+      
+      @ Armazena a data do primeiro sabado do mês @
+      Se(dDat1Sab = 0){
+        dDat1Sab = dDatPro;  
+      }
+      @ Armazena a data do segundo sabado do mês @ 
+      Senao Se((dDat1Sab <> 0) e (dDat2Sab = 0)){
+        dDat2Sab = dDatPro;  
+      }
+      @ Armazena a data do terceiro sabado do mês @
+      Senao Se((dDat1Sab <> 0) e (dDat2Sab <> 0) e (dDat3Sab = 0)){
+        dDat3Sab = dDatPro;
+      }
+      @ Armazena a data do quarto sabado do mês @
+      Senao Se ((dDat1Sab <> 0) e (dDat2Sab <> 0) e (dDat3Sab <> 0) e (dDat4Sab = 0)) {
+        dDat4Sab = dDatPro;
+      } 
+    }
+    
+    @ Armazena as datas dos domingos que tem no mês @
+    Se(aDiaSem = "Domingo"){
+      nDomMes = nDomMes + 1;
+      
+      Definir Data dDat1Dom;
+      Definir Data dDat2Dom;
+      Definir Data dDat3Dom;
+      Definir Data dDat4Dom;
+      
+      @ Armazena a data do primeiro domingo do mês @
+      Se(dDat1Dom = 0){
+        dDat1Dom = dDatPro;  
+      }
+      @ Armazena a data do segundo domingo do mês @
+      Senao Se((dDat1Dom <> 0) e (dDat2Dom = 0)){
+        dDat2Dom = dDatPro;
+      }
+      @ Armazena a data do terceiro domingo do mês @
+      Senao Se((dDat1Dom <> 0) e (dDat2Dom <> 0) e (dDat3Dom = 0)){
+        dDat3Dom = dDatPro;
+      }
+      @ Armazena a data do quarto domingo do mês @
+      Senao Se((dDat1Dom <> 0) e (dDat2Dom <> 0) e (dDat3Dom <> 0) e (dDat4Dom = 0)){
+        dDat4Dom = dDatPro;
+      } 
+    }
+    
+    @ Verifica as marcaçãoes na 70ACC de acordo com o NumCra @
+    Definir Cursor C70ACC; 
+    C70ACC.SQL"SELECT DATACC, HORACC FROM R070ACC WHERE NUMCRA = :nNumCra AND DATACC = :dDatPro";
+    C70ACC.AbrirCursor()
+    Se(C70ACC.Achou){
+      nHorAcc = C70ACC.HorAcc;
+      aRetGra = "P";
+      AdicionaDadosGrade("Grade002",  1, nNumCol, aRetGra);
+      
+      @ Verifica os sabados que foram trabalhados @
+      Se(dDatPro = dDat1Sab){
+        nTrabalhou1Sab = 1; 
+      }
+      Senao Se(dDatPro = dDat2Sab){
+        nTrabalhou2Sab = 1; 
+      }
+      Senao Se(dDatPro = dDat3Sab){
+        nTrabalhou3Sab = 1;
+      }
+      Senao Se(dDatPro = dDat4Sab){
+        nTrabalhou4Sab = 1; 
+      }
+      
+      @ Verifica os domingos que foram trabalhados @
+      Se(dDatPro = dDat1Dom){
+        nTrabalhou1Dom = 1; 
+      }
+      Senao Se(dDatPro = dDat2Dom){
+        nTrabalhou2Dom = 1; 
+      }
+      Senao Se(dDatPro = dDat3Dom){
+        nTrabalhou3Dom = 1;
+      }
+      Senao Se(dDatPro = dDat4Dom){
+        nTrabalhou4Dom = 1; 
+      }
+      
+      
+      @ Valida se o colaborador trabalhou 2 sabados seguidos, caso seja @
+      @ identificado 2 sabados seguidos a linha ficara vermelha @
+      Se((nTrabalhou1Sab = 1) e (nTrabalhou2Sab = 1)){
+        nTra2SabSeg = 1; 
+        AlteraControle("Grade002", "Fonte", "Arial;Negrito;8;Vermelho");
+      }
+      
+      Se((nTrabalhou2Sab = 1) e (nTrabalhou3Sab = 1)){
+        nTra2SabSeg = 1;   
+        AlteraControle("Grade002", "Fonte", "Arial;Negrito;8;Vermelho");
+      }
+      
+      Se((nTrabalhou3Sab = 1) e (nTrabalhou4Sab = 1)){
+        nTra2SabSeg = 1;
+        AlteraControle("Grade002", "Fonte", "Arial;Negrito;8;Vermelho");
+      }
+      
+      @ Valida se o colaborador trabalhou 2 domingos seguidos, caso seja @
+      @ identificado 2 domingos seguidos a linha ficara vermelha @
+      Se((nTrabalhou1Dom = 1) e (nTrabalhou2Dom = 1)){
+        nTra2DomSeg = 1; 
+        AlteraControle("Grade002", "Fonte", "Arial;Negrito;8;Vermelho");
+      }
+      
+      Se((nTrabalhou2Dom = 1) e (nTrabalhou3Dom = 1)){
+        nTra2DomSeg = 1;   
+        AlteraControle("Grade002", "Fonte", "Arial;Negrito;8;Vermelho");
+      }
+      
+      Se((nTrabalhou3Dom = 1) e (nTrabalhou4Dom = 1)){
+        nTra2DomSeg = 1;
+        AlteraControle("Grade002", "Fonte", "Arial;Negrito;8;Vermelho");
+      }
+      
+      nNumCol = nNumCol + 1;   
+    }
+    
+    Senao {
+      aRetGra = "F"; 
+      AdicionaDadosGrade("Grade002",  1, nNumCol, aRetGra);
+      nNumCol = nNumCol + 1;
+    }
+    C70ACC.FecharCursor();
+    
+    dDatPro = dDatPro + 1; 
+}

@@ -127,6 +127,7 @@ Definir Cursor Cur_dep;
 aNomPai = "";
 aNomMae = "";
 
+
 @ - Cusror para vetificar o grau de parentesco na tabela de dependentes - @
 Cur_dep.SQL "SELECT * FROM R036dep     \
              WHERE NumEmp = :nNumEmp   \

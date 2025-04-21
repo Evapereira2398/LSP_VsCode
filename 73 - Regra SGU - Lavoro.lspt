@@ -1,0 +1,554 @@
+/*
+- Verifica tipo de bloqueio na empresa
+- Verifica tipo de bloqueio do colaborador                                                         
+- Verifica se situação é de bloqueio SGU
+- Verifica afastamento e campo validador para correto envio de email
+- Realiza o bloqueio/desbloqueio no SGU
+
+Os e-mails de bloqueio precisam ser separados um de início e um outro e-mail 
+informando o fim de afastamento, esse e-mail será enviado um dia antes do 
+término de afastamento e no Senior o desbloqueio deve ser após a data do fim do 
+afastamento. Exemplo: se o término for dia 10 enviar o e-mail dia 09 e desbloquear 
+o Senior dia 11.
+
+Alterado em 05/02/2025   - 233737
+Existe a necessidade de realizar o bloqueio ou o desbloqueio em casos em que é
+cadastrado afastamento anteriores, onde a regra é executada diariamente.
+4.1 Alteração da regra Bloqueio de SGU, para o tratamento dos dois cenários, sendo:
+Cenário 1: O afastamento inicial é cadastrado no dia atual (onde é realizado o bloqueio)
+e posteriormente é informado a data final, anterior a nova execução para o desbloqueio.
+Cenário 2: O afastamento deverá ser tratado via status, onde deverá verificar
+independentemente a data, a situação do usuário e de acordo com esse status realiza o
+bloqueio ou desbloqueio respeitando as regras já aplicadas na regra, este apenas possui
+a função de garantir a integridade do processo.
+4.2 O envio do e-mail do desbloqueio deverá ser 2 dias úteis antes do término
+
+
+Regra reestruturada - Evanderson Pereira 
+
+*/                        
+Definir Cursor cur;
+Definir Cursor usu;
+                      
+Definir Alfa CUR_R034USU;
+Definir Alfa aCodUsu;
+Definir Alfa aNomFun;
+Definir Alfa aCont;
+Definir Alfa aCodUsu;
+Definir Alfa aMsg;
+Definir Alfa xEnter;
+Definir Alfa xRmtEma;
+Definir Alfa xDstEma;
+Definir Alfa xCcpEma;
+Definir Alfa xAssEma;
+Definir Alfa xTxtEma;
+Definir Alfa aNom;
+Definir Alfa aCad;
+Definir Alfa aEmp;
+Definir Alfa aFil;
+Definir Alfa aNomEmp;
+Definir Alfa aNomFil;
+Definir Alfa aTitCar;
+Definir Alfa aDatAfa;
+Definir Alfa aDatTer;
+Definir Alfa aDesSit;
+Definir Alfa aEmaOcu;
+Definir Alfa aEmaBlo;
+
+Definir Data dSis;
+Definir Data dAfa;
+Definir Data dDataCorte;
+Definir Data dDatTer;
+Definir Data dDatZer; 
+
+dSis = DatSis;                  
+nCont = 0;
+nQtdAteAfa = 0;
+MontaData(01,01, 2025, dDataCorte);
+MontaData(31,12, 1900, dDatZer);
+
+@ Cancela a regra se for um sabado ou domingo @
+Definir Alfa aDiaSemana;
+ExtensoSemana(dSis,aDiaSemana);
+Se((aDiaSemana = "Sábado") ou (aDiaSemana = "Domingo")){
+  Cancel(1);
+}
+                                                            
+      
+@ =============================== @
+@ =========  Bloqueio =========== @                                                             
+@ =============================== @
+
+CUR.SQL"SELECT R034FUN.NumEmp, R034FUN.TipCol, R034FUN.NumCad,                                                              \
+               R034FUN.CodFil, R034FUN.NomFun, R034FUN.CODCAR,                                                              \
+               R038AFA.DatAfa, R038AFA.DatTer, R038AFA.USU_BloSgu AS BloSgu_AFA, R038AFA.USU_EmaBlo, R038AFA.USU_StsEmaSGU, \                                                                                                                        \
+               R034CPL.USU_TipPer, R030EMP.USU_BloSgu AS BloSgu_EMP,                                                        \                                                                                         \
+               R030EMP.NOMEMP, R030FIL.NOMFIL, R024CAR.TITCAR,                                                              \
+               R010SIT.DesSit, R010SIT.USU_BloSgu                                                                           \
+          FROM R038AFA, R034FUN, R034CPL, R030EMP, R030FIL, R024CAR, R010SIT                                                \                      
+         WHERE R038AFA.NumEmp = R034FUN.NumEmp                                                                              \ 
+           AND R038AFA.TipCol = R034FUN.TipCol                                                                              \
+           AND R038AFA.NumCad = R034FUN.NumCad                                                                              \
+           AND R038AFA.NumEmp = R034CPL.NumEmp                                                                              \
+           AND R038AFA.TipCol = R034CPL.TipCol                                                                              \
+           AND R038AFA.NumCad = R034CPL.NumCad                                                                              \
+           AND R038AFA.NumEmp = R030EMP.NumEmp                                                                              \
+           AND R034FUN.CODFIL = R030FIL.CODFIL                                                                              \
+           AND R034FUN.NUMEMP = R030FIL.NUMEMP                                                                              \
+           AND R034FUN.CODCAR = R024CAR.CODCAR                                                                              \
+           AND R034FUN.ESTCAR = R024CAR.ESTCAR                                                                              \
+           AND R038AFA.SitAfa = R010SIT.CodSit                                                                              \
+           AND R010SIT.USU_BloSGU = 'S'                                                                                     \
+           AND (R034CPL.USU_TipPer = R030EMP.USU_BloSgu OR R030EMP.USU_BloSgu = 'A')                                        \
+           AND (R038AFA.DATAFA = :dSis OR R038AFA.DATAFA < :dSis)                                                           \
+           AND (R038AFA.DatTer = :dDatZer OR R038AFA.DatTer > :dSis)                                                             \                                 
+           AND R038AFA.USU_BloSgu = 'PENDENTE'                                                                              \
+           AND R038AFA.USU_StsEmaSGU = 1                                                                                    \
+           AND R038AFA.DatAfa >= :dDataCorte                                                                                \
+         Order by R038AFA.DATAFA";
+                                                                          
+cur.AbrirCursor();
+Enquanto(cur.Achou){
+  nEmp = cur.NumEmp;
+  nTcl = cur.TipCol;
+  nCad = cur.NumCad;
+  dAfa = cur.DatAfa;
+  dTer = cur.DatTer; 
+  aDesSit = cur.DesSit;
+  aEmaBlo = cur.USU_EmaBlo; 
+    
+
+  @ Valida se as datas de afastamento e retorno são retroativas, neste caso vai ir para o proximo registro @
+  Se((dAfa < DatSis) e (dTer < DatSis)){
+    Se(dTer <> dDatZer){
+      VaPara ProReg;  
+    } 
+  }
+
+  @ Bloqueia o colaborador caso a data do afastamento seja menor/igual a do sistema@
+  Se((dAfa = DatSis) ou (dAfa < DatSis)){
+    usu.SQL"SELECT * FROM R034USU WHERE NumEmp = :nEmp AND TipCol = :nTcl AND NumCad = :nCad";
+    usu.AbrirCursor();
+    Enquanto(usu.Achou){
+      nCodUsu = usu.CodUsu;
+      
+      Se(nCodUsu > 0) {
+        nCont++;
+        IntParaAlfa(nCont, aCont);      
+        SegEntLe(nCodUsu, aCodUsu);
+        SegUsuSetaAtivado(aCodUsu, 0);                
+        SegEntGrava(aCodUsu);
+      }
+      usu.Proximo();
+    }
+    usu.FecharCursor(); 
+        
+    @ Realiza o insert na R038AFA @
+    IniciarTransacao();
+    ExecSqlEx("UPDATE R038AFA SET USU_BloSgu = 'BLOQUEADO', USU_StsEmaSGU = 2 \
+                WHERE NumEmp = :nEmp                                          \
+                  AND TipCol = :nTcl                                          \
+                  AND NumCad = :nCad                                          \
+                  AND DatAfa = :dAfa",nErro, aMsg);
+    Se(nErro = 0) {
+ 	    FinalizarTransacao();
+    }
+    Senao {
+      DesfazerTransacao();
+      Cancel(1);
+    }
+        
+    @ --- Salva log em arquivo --- @
+    SetaDataTelaEntrada("EDataOperacao", cur.DatAfa);
+    SetaDataTelaEntrada("EIniAfast", cur.DatAfa);
+    SetaDataTelaEntrada("EFimAfast", cur.DatTer);
+    SetaNumeroTelaEntrada("EAbrEmp", nEmp);
+    SetaNumeroTelaEntrada("EAbrTcl", nTcl);
+    SetaNumeroTelaEntrada("EAbrCad", nCad);
+    SetaAlfaTelaEntrada("ETipoOperacao", "BLOQUEIO");
+    SetaAlfaTelaEntrada("EMotivoOperacao", aDesSit);
+        
+    @ --- Executa o modelo --- @ 
+    ExecutaRelatorio("FPGE999.GER", "N");
+        
+    
+    @ ======================= Envia e-mail para bloqueio ===================== @
+    @ Encaminha o e-mail para bloqueio se o campo R038AFA.USU_EmaBlo estiver vazio @
+    TiraEspacos(aEmaBlo, aEmaBlo);
+    
+    Se(aEmaBlo = ""){
+      RetornaAscII (13,xEnter);
+      aNom = cur.NomFun;
+      IntParaAlfa(nCad, aCad);
+      IntParaAlfa(nEmp, aEmp);
+      IntParaAlfa(cur.CodFil,aFil);
+      aNomEmp = cur.NomEmp;
+      aNomFil = cur.NomFil;
+      aTitCar = cur.TitCar; 
+      ConverteMascara (3, cur.DatAfa, aDatAfa, "DD/MM/YYYY");
+      ConverteMascara (3, cur.DatTer, aDatTer, "DD/MM/YYYY");
+      
+      xRmtEma = "rh.dp@lavoroagro.com";                                       @ Email de origem das mensagens, tem que ser o mesmo da autenticacao da smtp @      
+      xDstEma = "topdesk@lavoroagro.com";                                     @ Destinatario do email @
+      xCcpEma = "eduardo.duda@lavoroagro.com;rodrigo.luz@lavoroagro.com";     @ Copia dos e-mail @
+      aEmaOcu = "evanderson.pereira@getjob.tec.br";                           @ Copia Oculta @
+      xAssEma = "BLOQUEIO DE ACESSO " + aCad + " - " + aNom;                  @ assunto do email @
+      
+      @ Texto do corpo do email @
+      xTxtEma = "Empresa: " + aEmp + " - " + aNomEmp +  
+      "<br>Filial: " + aFil + " - " + aNomFil + 
+      "<br>Colaborador: " + aCad + " - " + aNom +
+      "<br>Cargo: " + R034FUN.CodCar + " - " + aTitCar +  
+      "<br>Início do Afastamento: " + aDatAfa  + 
+      "<br>Retorno do Afastamento:  " + aDatTer +
+      "<br>Motivo do Afastamento: " + aDesSit;   
+      
+      @ Função que envia o email @
+      EnviaEmailHTML(xRmtEma,xDstEma,xCcpEma,aEmaOcu,xAssEma,xTxtEma,"",0,0);
+      
+      @ Após enviar o email, irá realizar o UPDATE no campo R038AFA.USU_EmaBlo @
+      Definir Alfa aEmaDes;
+      Definir Data dEnvEma;
+      Definir Alfa aEnvEma;
+      Definir Alfa aHorEnv; 
+      
+      ConverteMascara(3, dEnvEma, aEnvEma, "DD/MM/YYYY");
+      ConverteMascara(1, nHorEnv, aHorEnv, "HH:MM");
+      
+      dEnvEma = DatSis;
+      nHorEnv = HorSis;
+      aEmaDes = "E-mail enviado: " + aEnvEma + "|" + aHorEnv + xDstEma + "," + xCcpEma; 
+      
+      ExecSql "UPDATE R038AFA SET USU_EmaBlo = :aEmaDes  \
+                  WHERE NumEmp = :nEmp                   \
+                    AND TipCol = :nTcl                   \
+                    AND NumCad = :nCad                   \
+                    AND DatAfa = :dAfa";
+    }               
+  }                                                                                                                            
+    
+  ProReg: 
+  cur.Proximo();
+}
+cur.FecharCursor();
+
+
+
+
+@ ==================================================== @
+@ ==============  Desbloqueia  ======================= @
+@ ==================================================== @
+cur.SQL"SELECT                                                                            \
+            R034FUN.NumEmp,                                                               \
+            R034FUN.TipCol,                                                               \
+            R034FUN.NumCad,                                                               \
+            R034FUN.CodFil,                                                               \
+            R034FUN.NomFun,                                                               \
+            R034FUN.CODCAR,                                                               \
+            R034CPL.USU_TipPer,                                                           \
+            R030EMP.USU_BloSgu AS BloSgu_EMP,                                             \
+            R038AFA.DatAfa,                                                               \
+            R038AFA.USU_StsEmaSGU,                                                        \
+            R038AFA.USU_BloSgu AS BloSgu_AFA,                                             \
+            R038AFA.USU_EmaDes,                                                           \
+            R038AFA.DatTer,                                                               \
+            R030EMP.NOMEMP,                                                               \
+            R030FIL.NOMFIL,                                                               \
+            R024CAR.TITCAR,                                                               \
+            R010SIT.DesSit,                                                               \
+            R010SIT.USU_BloSGU                                                            \
+        FROM                                                                              \
+            R038AFA,                                                                      \
+            R034FUN,                                                                      \
+            R034CPL,                                                                      \
+            R030EMP,                                                                      \
+            R030FIL,                                                                      \
+            R024CAR,                                                                      \
+            R010SIT                                                                       \
+        WHERE                                                                             \
+                R038AFA.NumEmp = R034FUN.NumEmp                                           \
+            AND R038AFA.TipCol = R034FUN.TipCol                                           \
+            AND R038AFA.NumCad = R034FUN.NumCad                                           \
+            AND R038AFA.NumEmp = R034CPL.NumEmp                                           \
+            AND R038AFA.TipCol = R034CPL.TipCol                                           \
+            AND R038AFA.NumCad = R034CPL.NumCad                                           \
+            AND R038AFA.NumEmp = R030EMP.NumEmp                                           \
+            AND R034FUN.CODFIL = R030FIL.CODFIL                                           \
+            AND R034FUN.NUMEMP = R030FIL.NUMEMP                                           \
+            AND R034FUN.CODCAR = R024CAR.CODCAR                                           \
+            AND R034FUN.ESTCAR = R024CAR.ESTCAR                                           \              
+            AND R038AFA.SitAfa = R010SIT.CodSit                                           \
+            AND R010SIT.USU_BloSGU = 'S'                                                  \
+            AND (                                                                         \
+                R034CPL.USU_TipPer = R030EMP.USU_BloSgu                                   \
+                OR R030EMP.USU_BloSgu = 'A'                                               \
+            )                                                                             \
+            AND (                                                                         \
+                (                                                                         \
+                    R038AFA.DatAfa = :dSis AND ((R038AFA.DatTer <> :dDatZer) OR (R038AFA.DatTer = :dSis)) \
+                    AND R038AFA.USU_BloSgu = 'BLOQUEADO' AND R038AFA.USU_StsEmaSGU = 2    \
+                )                                                                         \                                                                      
+                OR                                                                        \
+                (                                                                         \
+                    R038AFA.DatTer = :dSis                                                \
+                    AND R038AFA.USU_BloSgu = 'BLOQUEADO' AND R038AFA.USU_StsEmaSGU = 2    \
+                )                                                                         \
+                OR                                                                        \
+                (                                                                         \
+                    R038AFA.USU_BloSgu = 'BLOQUEADO' AND R038AFA.USU_StsEmaSGU = 2        \
+                )                                                                         \
+            )                                                                             \
+            AND R038AFA.DatTer <> :dDatZer                                                     \
+            AND R038AFA.DatAfa >= :dDataCorte                                             \
+            AND R038AFA.USU_BloSgu <> 'DESLIGADO'";  
+                                                                             
+cur.AbrirCursor();
+Enquanto(cur.Achou){
+  nEmp = cur.NumEmp;
+  nTcl = cur.TipCol;
+  nCad = cur.NumCad;
+  dAfa = cur.DatAfa; 
+  dTer = cur.DatTer;
+  nFil = cur.CodFil;
+  aDesSit = cur.DesSit;
+  aEmaDes = cur.USU_EmaDes;
+  
+  @ Se não existir uma data termino para o afastamento, vai para o proximo registro @          
+  Se(dTer = dDatZer) {
+    Vapara FimReg; 
+  } 
+  
+  
+  @ Para depuração (Todas as DatSis deveram ser alteradas) @
+  /*Definir Data dDatRet; 
+  MontaData(12,03,2025, dDatRet);*/  
+
+ 
+  @ Realiza o desloqueio imediato (Em casos de data termino anteriores a do sistema) @
+  Se(dTer < DatSis){ @ Realiza todo o processo Desbloqueio SGU || UPDATE R038AFA || LOG || E-MAIL @ 
+  
+    @ Busca usuário para o desbloqueio @
+    usu.SQL"SELECT * FROM R034USU WHERE NumEmp = :nEmp AND TipCol = :nTcl AND NumCad = :nCad";
+    usu.AbrirCursor();
+    Enquanto(usu.Achou){
+      nCodUsu = usu.CodUsu;
+              
+      Se(nCodUsu > 0) {
+        nCont++;
+        IntParaAlfa(nCont, aCont);      
+        SegEntLe(nCodUsu, aCodUsu);
+        SegUsuSetaAtivado(aCodUsu, 1);                
+        SegEntGrava(aCodUsu);
+      }
+      usu.Proximo(); 
+    }
+    usu.FecharCursor(); 
+          
+    @ Realiza o insert na R038AFA @  
+    IniciarTransacao();
+    ExecSqlEx("UPDATE R038AFA SET USU_BloSgu = 'ATIVO', USU_StsEmaSGU = 4 \
+                  WHERE NumEmp = :nEmp                                    \
+                    AND TipCol = :nTcl                                    \
+                    AND NumCad = :nCad                                    \
+                    AND DatAfa = :dAfa",nErro, aMsg);
+    Se(nErro = 0) {
+      FinalizarTransacao();
+    }
+    Senao {
+      DesfazerTransacao();
+      Cancel(1);
+    }
+
+    @ -- Salva log em arquivo - DESBLOQUEIO -- @
+    SetaDataTelaEntrada("EDataOperacao", cur.DatAfa);
+    SetaDataTelaEntrada("EIniAfast", cur.DatAfa);
+    SetaDataTelaEntrada("EFimAfast", cur.DatTer);
+    SetaNumeroTelaEntrada("EAbrEmp", nEmp);
+    SetaNumeroTelaEntrada("EAbrTcl", nTcl);
+    SetaNumeroTelaEntrada("EAbrCad", nCad);
+    SetaAlfaTelaEntrada("ETipoOperacao", "LIBERACAO");
+    SetaAlfaTelaEntrada("EMotivoOperacao", aDesSit);
+    
+    @ - Executa o modelo - @ 
+    ExecutaRelatorio("FPGE999.GER", "N");
+    
+    @ -- Realiza o envio do e-mail para o pessoal da TI - DESBLOQUEIO -- @
+    @ Encaminha o e-mail para desbloqueio se o campo R038AFA.USU_EmaDes estiver vazio @
+    Definir Alfa aEmaDes;
+    TiraEspacos(aEmaDes, aEmaDes);
+    Se(aEmaDes = ""){       
+      
+      RetornaAscII (13,xEnter);
+      aNom = cur.NomFun;
+      IntParaAlfa(nCad, aCad);
+      IntParaAlfa(nEmp, aEmp);
+      IntParaAlfa(cur.CodFil,aFil);
+      aNomEmp = cur.NomEmp;
+      aNomFil = cur.NomFil;
+      aTitCar = cur.TitCar;
+      aDesSit = cur.DesSit; 
+      ConverteMascara(3, cur.DatAfa, aDatAfa, "DD/MM/YYYY");
+      ConverteMascara(3, dTer, aDatTer, "DD/MM/YYYY");
+                              
+      xRmtEma = "rh.dp@lavoroagro.com";                                       @ Email de origem das mensagens, tem que ser o mesmo da autenticacao da smtp @      
+      xDstEma = "topdesk@lavoroagro.com";                                     @ Destinatario do email @
+      xCcpEma = "eduardo.duda@lavoroagro.com;rodrigo.luz@lavoroagro.com";     @ Copia dos e-mail @
+      aEmaOcu = "evanderson.pereira@getjob.tec.br";                           @ Copia Oculta @
+      xAssEma = "LIBERAÇÃO DE ACESSO " + aCad + " - " + aNom;                 @ assunto do email @
+      
+      @ Texto do corpo do email @
+      xTxtEma = "Empresa: " + aEmp + " - " + aNomEmp +  
+      "<br>Filial: " + aFil + " - " + aNomFil + 
+      "<br>Colaborador: " + aCad + " - " + aNom + 
+      "<br>Cargo: " + R034FUN.CodCar + " - " + aTitCar +  
+      "<br>Retorno do Afastamento:  " + aDatTer +  
+      "<br>Motivo do Afastamento: " + aDesSit;                                
+      
+      @ Função que envia o email @    
+      EnviaEmailHTML (xRmtEma,xDstEma,xCcpEma,aEmaOcu,xAssEma,xTxtEma,"",0,0);
+      
+      @ Após enviar o email, irá realizar o UPDATE no campo R038AFA.USU_EmaDes @
+      Definir Alfa aEmaDes;
+      Definir Data dEnvEma;
+      Definir Alfa aEnvEma;
+      Definir Alfa aHorEnv; 
+      
+      ConverteMascara(3, dEnvEma, aEnvEma, "DD/MM/YYYY");
+      ConverteMascara(1, nHorEnv, aHorEnv, "HH:MM");
+      
+      dEnvEma = DatSis;
+      nHorEnv = HorSis;
+      aEmaDes = "E-mail enviado: " + aEnvEma + "|" + aHorEnv + xDstEma + "," + xCcpEma; 
+      
+      ExecSql "UPDATE R038AFA SET USU_EmaDes = :aEmaDes  \
+                WHERE NumEmp = :nEmp                     \
+                  AND TipCol = :nTcl                     \ 
+                  AND NumCad = :nCad                     \
+                  AND DatAfa = :dAfa";
+    }     
+  } 
+
+
+
+  @ ================================================= @
+  @ Realiza o desbloqueio com data de termino futura  @
+  @ ================================================= @
+  Se(dTer >= DatSis){     
+  
+    @ Só irá realizar o desbloqueio quando a data termino do afastamento for igual a data do sistema @
+    Se(dTer = DatSis) { @ Realiza o processo: Desbloqueio SGU || UPDATE R038AFA @   
+    
+      @ Busca usuário para o desbloqueio @
+      usu.SQL"SELECT * FROM R034USU WHERE NumEmp = :nEmp AND TipCol = :nTcl AND NumCad = :nCad";
+      usu.AbrirCursor();
+      Enquanto(usu.Achou){
+        nCodUsu = usu.CodUsu;
+              
+        Se(nCodUsu > 0) {
+          nCont++;
+          IntParaAlfa(nCont, aCont);      
+          SegEntLe(nCodUsu, aCodUsu);
+          SegUsuSetaAtivado(aCodUsu, 1);                
+          SegEntGrava(aCodUsu);
+        }
+        usu.Proximo(); 
+      }
+      usu.FecharCursor();
+            
+      @ Realiza o insert na R038AFA @  
+      IniciarTransacao();
+      ExecSqlEx("UPDATE R038AFA SET USU_BloSgu = 'ATIVO', USU_StsEmaSGU = 4   \
+                  WHERE NumEmp = :nEmp                                        \
+                    AND TipCol = :nTcl                                        \
+                    AND NumCad = :nCad                                        \
+                    AND DatAfa = :dAfa",nErro, aMsg);
+      Se(nErro = 0) {
+        FinalizarTransacao();
+      }  
+      Senao {
+        DesfazerTransacao();
+        Cancel(1);
+      }
+    }
+  
+  
+    @ Se a data do termino for maior que a do sistema, significa que é um retorno futuro, vai verificar apenas a necessidade de enviar o email a TI @
+    Senao Se (dTer > DatSis) { @ Realiza o processo: Envio do Email @ 
+      
+      @ Busca a tabela de feriados do colaborador (De acordo com a Filial) @
+      Definir Cursor C30FIL; 
+      C30FIL.SQL"SELECT TabFeD FROM R030FIL WHERE NUMEMP = :nEmp AND CodFil = :nFil";
+      C30FIL.AbrirCursor()
+      Se(C30FIL.Achou){
+        nTabFer = C30FIL.TabFeD;  
+      }
+      C30FIL.FecharCursor()
+                                                
+       
+      @ ==== Realiza o envio do e-mail para o pessoal da TI - DESBLOQUEIO ==== @
+      @ Encaminha o e-mail para bloqueio se o campo R038AFA.USU_EmaDes estiver vazio @
+      Definir Alfa aEmaDes;
+      TiraEspacos(aEmaDes, aEmaDes);
+      Se(aEmaDes = ""){       
+      
+        @ Realiza o envio do e-mail, com UM /DOIS dia de antecedencia do retorno do colaborador para o pessoal da TI @                 
+        RetQtdDiasUtil(DatSis, dTer, nTabFer, nEnvEmaTI);
+        Se((dEnvEmaTI = 2) ou (dEnvEmaTI = 1)){
+                
+          @ Realiza o envio do e-mail para o pessoal da TI @
+          RetornaAscII (13,xEnter);
+          aNom = cur.NomFun;
+          IntParaAlfa(nCad, aCad);
+          IntParaAlfa(nEmp, aEmp);
+          IntParaAlfa(cur.CodFil,aFil);
+          aNomEmp = cur.NomEmp;
+          aNomFil = cur.NomFil;
+          aTitCar = cur.TitCar;
+          aDesSit = cur.DesSit; 
+          ConverteMascara (3, cur.DatAfa, aDatAfa, "DD/MM/YYYY");
+          ConverteMascara (3, dTer, aDatTer, "DD/MM/YYYY");
+                              
+          xRmtEma = "rh.dp@lavoroagro.com";                                     @ Email de origem das mensagens, tem que ser o mesmo da autenticacao da smtp @      
+          xDstEma = "topdesk@lavoroagro.com";                                   @ Destinatario do email @
+          xCcpEma = "eduardo.duda@lavoroagro.com;rodrigo.luz@lavoroagro.com";   @ Copia dos e-mail @
+          aEmaOcu = "evanderson.pereira@getjob.tec.br";                         @ Copia Oculta @
+          xAssEma = "LIBERAÇÃO DE ACESSO " + aCad + " - " + aNom;               @ assunto do email @
+          
+          @ Texto do corpo do email @
+          xTxtEma = "Empresa: " + aEmp + " - " + aNomEmp +  
+          "<br>Filial: " + aFil + " - " + aNomFil + 
+          "<br>Colaborador: " + aCad + " - " + aNom + 
+          "<br>Cargo: " + R034FUN.CodCar + " - " + aTitCar +  
+          "<br>Retorno do Afastamento:  " + aDatTer +  
+          "<br>Motivo do Afastamento: " + aDesSit;                            
+          
+          @ Função que envia o email @
+          EnviaEmailHTML (xRmtEma,xDstEma,xCcpEma,aEmaOcu,xAssEma,xTxtEma,"",0,0); 
+          
+          @ Após enviar o email, irá realizar o UPDATE no campo R038AFA.USU_EmaDes @
+          Definir Alfa aEmaDes;
+          Definir Data dEnvEma;
+          Definir Alfa aEnvEma;
+          Definir Alfa aHorEnv; 
+          
+          ConverteMascara(3, dEnvEma, aEnvEma, "DD/MM/YYYY");
+          ConverteMascara(1, nHorEnv, aHorEnv, "HH:MM");
+          
+          dEnvEma = DatSis;
+          nHorEnv = HorSis;
+          aEmaDes = "E-mail enviado: " + aEnvEma + "|" + aHorEnv + xDstEma + "," + xCcpEma; 
+          
+          ExecSql "UPDATE R038AFA SET USU_EmaDes = :aEmaDes \
+                    WHERE NumEmp = :nEmp                    \
+                      AND TipCol = :nTcl                    \
+                      AND NumCad = :nCad                    \
+                      AND DatAfa = :dAfa";     
+        }
+      }
+    }  
+  }
+  
+  FimReg:
+  cur.Proximo();
+}
+cur.FecharCursor();

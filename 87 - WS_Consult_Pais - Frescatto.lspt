@@ -1,0 +1,47 @@
+Definir Alfa vCursor;
+Definir Alfa aAux;
+Definir Alfa aSql;
+Definir Alfa aNomPai;
+Definir Alfa aCodPai;
+
+
+@ Recebe o Código do Pais @
+nCodPai = consult_pais.codpai;
+IntParaAlfa(nCodPai, aCodPai); 
+LimpaEspacos(aCodPai);
+Se(aCodPai <> ""){
+  aSql = aSql + " AND CODPAI = " + aCodPai;
+}
+
+@ Recebe o Nome do Pais @
+aNomPai = consult_pais.NomPai;
+LimpaEspacos(aNomPai);
+Se(aNomPai <> ""){
+  aSql = aSql + " WHERE UPPER (E006PAI.NOMPAI) like '%"+aNomPai+"%'";
+} 
+ 
+SQL_Criar(vCursor);
+SQL_UsarAbrangencia(vCursor, 1); @ 1 = Usa abrangência, 0 = Não usa abrangência. @
+
+aSql = "SELECT CODPAI, NOMPAI FROM E006PAI  " + aSql + "";
+
+SQL_DefinirComando (vCursor, aSql);    
+SQL_AbrirCursor(vCursor);
+
+nConLin = 0;
+Enquanto((SQL_EOF(vCursor) = 0) e (nConLin < 20)) {
+  SQL_RetornarInteiro(vCursor, "CODPAI", nCodPai);
+  SQL_RetornarAlfa(vCursor, "NOMPAI", aNomPai);
+  IntParaAlfa(nCodPai, aCodPai);
+
+  consult_pais.grid.CriarLinha();
+  consult_pais.grid.LinhaAtual = nConLin;
+  consult_pais.grid.codpai = aCodPai;
+  consult_pais.grid.nompai = aCodPai + " - " + aNomPai; 
+
+  nConLin++;
+  SQL_Proximo(vCursor);
+     
+}
+SQL_FecharCursor(vCursor);
+SQL_Destruir(vCursor);   

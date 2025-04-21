@@ -1,0 +1,467 @@
+@-- Definir web services internos --@
+Definir interno.com.senior.g5.co.ger.cad.clientes.GravarClientes_5 wsGravaCli;
+Definir Alfa aRetEnd;
+Definir Alfa aTipCli;
+Definir Alfa aTipMer;
+Definir Alfa aCgcCpf;
+Definir Alfa aApeCli;
+Definir Alfa aNomCli;
+Definir Alfa aCepCli;
+Definir Alfa aEndCli;
+Definir Alfa aNEndCli;
+Definir Alfa aCplEnd;
+Definir Alfa aBaiCli;
+Definir Alfa aCidCli;                  
+Definir Alfa aSigUfs;
+Definir Alfa aCodPai;
+Definir Alfa aFonCli;
+Definir Alfa aFonCli2;
+Definir Alfa aFonCli3;
+Definir Alfa aCodRai;
+Definir Alfa aInsEnt;
+Definir Alfa aCodTr;
+Definir Alfa aZipCod;
+Definir Alfa aIndNif;
+Definir Alfa aNumIdf;
+Definir Alfa aCodRam;
+Definir Alfa aCliPrx;
+Definir Alfa aCodRoe;
+Definir Alfa aCodSro;
+Definir Alfa aSeqRoe;
+Definir Alfa aIntNet;
+Definir Alfa aIntNet2;
+Definir Alfa aEmaNfe;
+Definir Alfa aCodRep;
+Definir Alfa aCodVen;
+Definir Alfa aCepEnt;
+Definir Alfa aIniEnt;
+Definir Alfa aEmaEnt;
+Definir Alfa aSeqEnt;
+Definir Alfa aNomEnt;
+Definir Alfa aEndEnt;
+Definir Alfa aCplEnt;
+Definir Alfa aPrxEnt;
+Definir Alfa aCidEnt;
+Definir Alfa aEstEnt;
+Definir Alfa aCodPcg;
+Definir Alfa aCodFpg;
+Definir Alfa aDatLim;
+Definir Alfa aVlrLim;
+Definir Alfa aLimApr;
+Definir Alfa aUsuRisser;
+Definir Alfa aUsuCodVen;
+Definir Alfa aUsuCodSub;
+Definir Alfa aAcePar;
+Definir Alfa aRecTjr;
+Definir Alfa aCatCli;
+Definir Alfa aIndPre;
+Definir Alfa aRecJmm;
+Definir Alfa aInsEst;
+Definir Alfa aCodRtr;
+Definir Alfa aTipPes;
+Definir Alfa aNenCli;
+Definir Alfa aCliCon;
+Definir Alfa aConFin;
+Definir Alfa aSeqRoeEnt;
+Definir Alfa aMensagemwsGravaCli;
+Definir Alfa aDia;
+Definir Alfa aMes;
+Definir Alfa aAno;
+Definir Alfa aSeqEnv;
+Definir Alfa aSitReg;
+Definir Alfa aNomCli;
+Definir Alfa aSitCli;
+Definir Alfa aMsgRet;
+Definir Alfa aCodCli;
+Definir Alfa aCodSuf;
+Definir Alfa aDatSuf;
+Definir Alfa aSeqEnt;
+
+Definir Data dDatSuf;
+
+@Definir Alfa aCodRoeEnt;@
+@Definir Alfa aCodSroEnt;@
+
+
+nCodCli = ativar_cadastro_cliente.codcli;
+aAcePar = ativar_cadastro_cliente.acepar; 
+aRecTjr = ativar_cadastro_cliente.recTjr; 
+aCatCli = ativar_cadastro_cliente.catCli; 
+aIndPre = ativar_cadastro_cliente.indPre; 
+aRecJmm = ativar_cadastro_cliente.recJmm; 
+aSeqEnv = ativar_cadastro_cliente.seqEnv; 
+aSitReg = ativar_cadastro_cliente.sitReg; 
+aTipCli = ativar_cadastro_cliente.tipcli;  
+aInsEst = ativar_cadastro_cliente.insest;  
+aCodRtr = ativar_cadastro_cliente.codrtr;  
+aTipMer = ativar_cadastro_cliente.tipmer;  
+aCgcCpf = ativar_cadastro_cliente.cgccpf;  
+aApeCli = ativar_cadastro_cliente.apecli;  
+aNomCli = ativar_cadastro_cliente.nomcli;  
+aCepCli = ativar_cadastro_cliente.cepcli;  
+aEndCli = ativar_cadastro_cliente.endcli;  
+aNenCli = ativar_cadastro_cliente.nencli;  
+aCplEnd = ativar_cadastro_cliente.cplend;  
+aBaiCli = ativar_cadastro_cliente.baicli;  
+aCidCli = ativar_cadastro_cliente.cidcli;  
+aSigUfs = ativar_cadastro_cliente.sigufs;  
+aFonCli = ativar_cadastro_cliente.fonCli;   
+aFonCli2 = ativar_cadastro_cliente.fonCl2;  
+aFonCli3 = ativar_cadastro_cliente.fonCl3;  
+aCodRai = ativar_cadastro_cliente.codrai;   
+aInsEnt = ativar_cadastro_cliente.insent;   
+aZipCod = ativar_cadastro_cliente.zipcod;   
+aIndNif = ativar_cadastro_cliente.indnif;   
+aCodRam = ativar_cadastro_cliente.codram;   
+nCodEmp = ativar_cadastro_cliente.codemp;   
+nCodFil = ativar_cadastro_cliente.codfil;   
+aCliPrx = ativar_cadastro_cliente.cliprx;   
+aCodRoe = ativar_cadastro_cliente.codroe;
+aSeqRoe = ativar_cadastro_cliente.seqroe;   
+aCodSro = ativar_cadastro_cliente.codsro;   
+aEmaNfe = ativar_cadastro_cliente.emanfe; 
+aCodRep = ativar_cadastro_cliente.codrep; 
+aCodVen = ativar_cadastro_cliente.codven; 
+aCepEnt = ativar_cadastro_cliente.cepent; 
+aIniEnt = ativar_cadastro_cliente.inient; 
+aEmaEnt = ativar_cadastro_cliente.emaent; 
+aSeqEnt = ativar_cadastro_cliente.seqent; 
+aSeqRoeEnt = ativar_cadastro_cliente.seqroent;
+aCodFpg = ativar_cadastro_cliente.codfpg;     
+aDatLim = ativar_cadastro_cliente.datlim;     
+nVlrLim = ativar_cadastro_cliente.vlrlim;     
+aLimApr = ativar_cadastro_cliente.limapr;     
+aUsuRisser = ativar_cadastro_cliente.usu_risser; @ Risco Sesara @
+aUsuCodVen = ativar_cadastro_cliente.usu_codven2;
+aUsuCodSub = ativar_cadastro_cliente.usu_codsub2;   
+aCodPai = ativar_cadastro_cliente.codpai;
+
+
+RetiraCaracteresEspeciais(aCgcCpf);
+aNumIdf = aIndNif;  @alterar@
+
+
+@aCodSroEnt = ativar_cadastro_cliente.codsroent;@
+@aCodRoeEnt = ativar_cadastro_cliente.codroent;@
+@aNomEnt = ativar_cadastro_cliente.noment;@
+@aNomEnt = ativar_cadastro_cliente.noment;@  
+@aCplEnt = ativar_cadastro_cliente.cplent;@ 
+@aPrxEnt = ativar_cadastro_cliente.prxent;@ 
+@aCidEnt = ativar_cadastro_cliente.cident;@ 
+@aEstEnt = ativar_cadastro_cliente.estent;@ 
+@aCodPcg = ativar_cadastro_cliente.codpcg;@
+
+
+LimpaEspacos(aApeCli);
+Se(aApeCli = ""){
+  aApeCli = aNomCli;
+}
+
+@ === Sigla do estado do cliente === @
+Se(aSigUfs = "EX - EXTERIOR"){
+  aSigUfs = "EX";
+}
+
+@ == Código do País == @ 
+Se(aCodPai = "1058 - Brasil"){
+  aCodPai = "1058";
+}
+
+@ == Validação dos e-mails (Caso algum esteja vazio) == @
+aIntNet = ativar_cadastro_cliente.intnet;    
+aIntNet2 = ativar_cadastro_cliente.intnet2;
+
+LimpaEspacos(aIntNet);
+LimpaEspacos(aIntNet2);
+
+Se((aIntNet <> "") e (aIntNet2 = "")){
+  aIntNet = aIntNet; 
+}
+Se((aIntNet2 <> "") e (aIntNet = "")){
+  aIntNet = aIntNet2;
+} 
+Se((aIntNet <> "") e (aIntNet2 <> "")){
+  aIntNet = aIntNet+";"+aIntNet2;
+}
+
+@ === Indicativo se o limite de crédito do cliente esta ou não aprovado - Lista: S = Sim, N = Não === @
+PosicaoAlfa(aLimApr,"S", nPos);
+Se(nPos > 0){
+  aLimApr = "S";
+}
+Senao {
+  aLimApr = "N";
+}  
+
+@ == Data da última atualização do limite de crédito do cliente == @
+Se(aDatLim <> ""){
+  aAno = aDatLim;
+  CopiarAlfa(aAno, 1, 4);
+  aMes = aDatLim;
+  CopiarAlfa(aMes, 6, 2);
+  aDia = aDatLim;
+  CopiarAlfa(aDia, 9, 2);
+  aDatLim = aDia + "/" + aMes + "/" + aAno;
+}  
+
+
+@ ==== Risco Serasa ====@ 
+Se(aUsuRisser = "1-Mínimo"){ 
+  aUsuRisser = "1"; 
+}
+Senao Se(aUsuRisser = "2-Muito Baixo"){ 
+  aUsuRisser = "2"; 
+}
+Senao Se(aUsuRisser = "3-Médio"){ 
+  aUsuRisser = "3"; 
+}
+Senao Se(aUsuRisser = "4-Relevante"){ 
+  aUsuRisser = "4"; 
+}
+Senao Se(aUsuRisser = "5-Baixo"){
+  aUsuRisser = "5"; 
+}
+Senao Se(aUsuRisser = "6-Iminente"){ 
+  aUsuRisser = "6"; 
+}
+Senao Se(aUsuRisser = "7-Default"){ 
+  aUsuRisser = "7"; 
+}
+Senao Se(aUsuRisser = "8-Considerável"){ 
+  aUsuRisser = "8"; 
+}
+
+
+@ == Percentual de juros de mora mês para o contas a receber == @
+Se((aRecJmm <> "") e (aRecJmm <> " ")){   
+  AlfaParaDecimal(aRecJmm, nRecJmm);
+}
+
+
+@ ==== Inscrição estadual do cliente ==== @
+Se((aInsEst <> " ") e (aInsEst <> "") ou (aInsEst <> "ISENTO")){
+  aCliCon = "S";
+}  
+Se((aInsEst = "") ou (aInsEst = "ISENTO")){
+  aInsEst = "ISENTO";
+  aCliCon = "N";
+}
+
+
+
+@ == Código do Regime Tributário / 1 = Simples Nacional, 2 = Simples Nacional - excesso de sublimite de receita bruta, 3 = Regime Normal == @
+Se((aCodRtr = "1-Simples Nacional") ou (aCodRtr = "Simples Nacional")){
+  nCodRtr = 1;
+}
+Senao Se((aCodRtr = "2-Simples Nacional - excesso de sublimite de receita bruta") ou (aCodRtr = "Simples Nacional - excesso de sublimite de receita bruta")){
+  nCodRtr = 2;
+}
+Senao Se((aCodRtr = "3-Regime Normal") ou (aCodRtr = "Regime Normal")){
+  nCodRtr = 3;
+}
+Senao Se((aCodRtr = "4-Simples Nacional - Microempreendedor Individual - MEI") ou (aCodRtr = "Simples Nacional - Microempreendedor Individual - MEI")){
+  nCodRtr = 4;
+}
+
+
+@ == Tipo do cliente - Lista : J= Jurídica, F = Física == @
+Se((aTipCli = "Pessoa Jurídica") ou (aTipCli = "J-Pessoa Jurídica")){
+  aTipCli = "J";
+}  
+Se ((aTipCli = "Pessoa Física") ou (aTipCli = "F-Pessoa Física")){
+  aTipCli = "F";
+}
+Se((aTipCli = "F") ou ((aTipCli = "J") e (aInsEst = "ISENTO"))){
+  aConFin = "S";
+}
+Se((aTipCli = "J") e (((aInsEst <> "ISENTO") e (aInsEst <> "")) ou (nCodRtr = 4))){
+  aConFin = "N";
+}
+
+
+@ == Tipo de mercado do cliente / I = Interno (Nacional), E = Externo (Internacional), P = Prospect.) == @
+Se((aTipMer = "I-Interno (Nacional)") ou (aTipMer = "Interno (Nacional)")){
+  aTipMer = "I";
+}
+Se((aTipMer = "E-Externo (Exterior)") ou (aTipMer = "Externo (Exterior)")){
+  aTipMer = "E";
+  aCodRep = "9999";
+}
+  
+
+AlfaParaInt(aCatCli,nCatCli);
+AlfaParaInt(aIndNif,nIndNif);
+AlfaParaInt(aCodRep,nCodrep);
+AlfaParaInt(aCodVen,nCodVen);
+AlfaParaInt(aSeqEnt,nSeqEnt);
+AlfaParaInt(aSeqRoe,nSeqRoe);
+AlfaParaInt(aSeqRoeEnt,nSeqRoeEnt);
+AlfaParaInt(aCodRai,nCodRai);
+AlfaParaInt(aCodFpg,nCodFpg);
+@ ===== Fim Trata Condições ===== @
+
+
+wsGravaCli.dadosGeraisCliente.CriarLinha();
+@wsGravaCli.dadosGeraisCliente.definicoesCliente.CriarLinha();@
+
+
+@ == Tipo de mercado do cliente - Lista: I = Interno (Nacional), E = Externo (Internacional), P = Prospect.) == @
+Se(aTipMer = "I"){ 
+  wsGravaCli.dadosGeraisCliente.seqRoe = nSeqRoe;                             
+} 
+
+@--Campos BPM --@
+@--Obrigatórios--@
+Se(nCodCli <> 0){
+  wsGravaCli.dadosGeraisCliente.codCli = nCodCli;
+}
+  
+
+@ Erro ao processar cliente: Informe o codigo de Suframa @
+aCodSuf = "1";
+dDatSuf = DatSis;
+ConverteMascara(3, dDatSuf, aDatSuf, "DD/MM/YYYY");
+wsGravaCli.dadosGeraisCliente.codSuf = aCodSuf;
+wsGravaCli.dadosGeraisCliente.datSuf = aDatSuf;
+wsGravaCli.dadosGeraisCliente.codram = aCodRam;
+wsGravaCli.dadosGeraisCliente.cliprx = aCliPrx;
+wsGravaCli.dadosGeraisCliente.intnet = aIntNet;
+wsGravaCli.dadosGeraisCliente.emanfe = aEmaNfe;
+
+
+@ Tratativa do Código da Rota ou Localidade @
+Se(aCodRoe <> "0"){
+  wsGravaCli.dadosGeraisCliente.codRoe = aCodRoe;   
+}
+Se(aCodSro <> "0"){ @ Código da Sub Rota @
+  wsGravaCli.dadosGeraisCliente.codSro = aCodSro;
+}
+wsGravaCli.dadosGeraisCliente.seqroe = nSeqRoe;
+
+wsGravaCli.dadosGeraisCliente.nomCli = aNomCli;
+wsGravaCli.dadosGeraisCliente.apeCli = aApeCli;
+wsGravaCli.dadosGeraisCliente.tipCli = aTipCli;
+wsGravaCli.dadosGeraisCliente.tipMer = aTipMer;
+wsGravaCli.dadosGeraisCliente.cliCon = aCliCon;
+wsGravaCli.dadosGeraisCliente.sitCli = "A";
+wsGravaCli.dadosGeraisCliente.insEst = aInsEst;
+wsGravaCli.dadosGeraisCliente.cgcCpf = aCgcCpf;
+wsGravaCli.dadosGeraisCliente.cepCli = aCepCli;
+wsGravaCli.dadosGeraisCliente.endCli = aEndCli;
+wsGravaCli.dadosGeraisCliente.nenCli = aNenCli;
+wsGravaCli.dadosGeraisCliente.cplend = aCplEnd;
+wsGravaCli.dadosGeraisCliente.baicli = aBaiCli;
+wsGravaCli.dadosGeraisCliente.cidcli = aCidCli;
+wsGravaCli.dadosGeraisCliente.sigufs = aSigUfs;
+wsGravaCli.dadosGeraisCliente.codpai = aCodPai;
+wsGravaCli.dadosGeraisCliente.fonCli = aFonCli;
+wsGravaCli.dadosGeraisCliente.fonCl2 = aFonCli2;
+wsGravaCli.dadosGeraisCliente.fonCl3 = aFonCli3;
+wsGravaCli.dadosGeraisCliente.insent = aInsEnt;
+wsGravaCli.dadosGeraisCliente.codrtr = nCodRtr;
+wsGravaCli.dadosGeraisCliente.zipcod = aZipCod;
+wsGravaCli.dadosGeraisCliente.numIdf = aNumIdf;
+  
+  
+
+wsGravaCli.dadosGeraisCliente.definicoesCliente.CamposUsuario.CriarLinha();
+wsGravaCli.dadosGeraisCliente.definicoesCliente.CamposUsuario.Campo = "USU_RISSER";
+wsGravaCli.dadosGeraisCliente.definicoesCliente.CamposUsuario.valor = aUsuRisser;
+wsGravaCli.dadosGeraisCliente.definicoesCliente.CamposUsuario.CriarLinha();
+wsGravaCli.dadosGeraisCliente.definicoesCliente.CamposUsuario.Campo = "USU_CODVEN2";
+wsGravaCli.dadosGeraisCliente.definicoesCliente.CamposUsuario.valor = aUsuCodVen;
+wsGravaCli.dadosGeraisCliente.definicoesCliente.CamposUsuario.CriarLinha();
+wsGravaCli.dadosGeraisCliente.definicoesCliente.CamposUsuario.Campo = "USU_CODSUB";
+wsGravaCli.dadosGeraisCliente.definicoesCliente.CamposUsuario.valor = aUsuCodSub;
+
+wsGravaCli.dadosGeraisCliente.definicoesCliente.codEmp = nCodEmp;
+wsGravaCli.dadosGeraisCliente.definicoesCliente.codFil = nCodFil;
+wsGravaCli.dadosGeraisCliente.definicoesCliente.limapr = aLimApr; @ Limite Aprovado S/N @
+wsGravaCli.dadosGeraisCliente.definicoesCliente.exiLcp = "N";     @ Verificar S ou N Exige ligação de cliente X produto/derivação@
+wsGravaCli.dadosGeraisCliente.definicoesCliente.codfpg = nCodFpg;
+wsGravaCli.dadosGeraisCliente.definicoesCliente.datlim = aDatLim; @ Data Limite do credito @
+wsGravaCli.dadosGeraisCliente.definicoesCliente.vlrlim = nVlrLim; @ Valor do limite crédito @
+
+/*
+wsGravaCli.dadosGeraisCliente.definicoesCliente.codven = nCodVen; @int@
+wsGravaCli.dadosGeraisCliente.definicoesCliente.codrep = nCodRep; @int@
+wsGravaCli.dadosGeraisCliente.definicoesCliente.seqEnt = nSeqEnt; @int@
+wsGravaCli.dadosGeraisCliente.definicoesCliente.conFin = aConFin;   
+*/
+
+
+@ ============== Edereço de Entrega =============== @
+Se(aSitReg = "S"){
+  @wsGravaCli.dadosGeraisCliente.enderecosEntrega.seqenv = "1"; @
+  wsGravaCli.dadosGeraisCliente.enderecosEntrega.sitReg = "I";
+}
+
+
+@ ==== Cadastro CEP ==== @
+wsGravaCli.dadosGeraisCliente.cadastroCEP.cepIni = aCepCli;
+wsGravaCli.dadosGeraisCliente.cadastroCEP.cepFim = aCepCli;
+wsGravaCli.dadosGeraisCliente.cadastroCEP.codrai = nCodRai;
+wsGravaCli.dadosGeraisCliente.cadastroCEP.nomCid = aCidCli;
+
+@ Execução do WS @
+wsGravaCli.ModoExecucao = 1;
+wsGravaCli.Executar();
+
+
+@ ==== Retorno WS ===== @
+nTipRet = wsGravaCli.tipoRetorno; 
+aMensagemwsGravaCli = wsGravaCli.retornosClientes.retorno;
+
+@Valida Retorno WS@
+Se(aMensagemwsGravaCli <> ""){
+  aRetEnd = wsGravaCli.retornosEnderecosEntrega.retorno; 
+  aMensagemwsGravaCli = "Erro Cliente: " + aMensagemwsGravaCli;
+}
+
+Se((aRetEnd <> "") ou (aRetEnd <> "")){
+  aMensagemwsGravaCli = aMensagemwsGravaCli + "| Erro Endereço Entrega: " + aRetEnd;
+  aMsgRet = aMensagemwsGravaCli;
+  Vapara FimWs;
+}
+  
+Se(nTipRet <> 1){
+  aMsgRet = aMensagemwsGravaCli;
+  ativar_cadastro_cliente.erroExecucao = aMensagemwsGravaCli;
+} 
+Senao {
+  aMsgRet = "Cadastro realizado com sucesso!";
+}
+
+FimWs: 
+ativar_cadastro_cliente.retorno = aMsgRet;
+
+
+
+
+/*Definir Alfa aNomCli;
+Definir Alfa aSitCli;
+Definir Alfa aMsgRet;
+Definir Alfa aCodCli;  
+Definir Cursor C85CLI;
+
+nCodCli = ativar_cadastro_cliente.codcli;
+
+C85CLI.SQL"SELECT NOMCLI, SITCLI FROM E085CLI WHERE CODCLI = :nCodCli";
+C85CLI.AbrirCursor()
+Se(C85CLI.Achou){
+  aNomCli = C85CLI.NomCli; @ Nome do cliente @ 
+  aSitCli = C85CLI.SitCli; @ Situação atual  @   
+}
+C85CLI.FecharCursor(); 
+  
+IntParaAlfa(nCodCli, aCodCli);
+  
+Se(aSitCli = "I"){
+  ExecSql"UPDATE E085CLI SET SITCLI = 'A' WHERE CODCLI = :nCodCli";
+  aMsgRet = "Cliente: " + aCodCli + aNomCli + " ativado com sucesso!";
+} 
+Senao {
+  aMsgRet = "Favor verificar, cliente: " + aCodCli + aNomCli + ", já está ativado";  
+}  
+
+ativar_cadastro_cliente.retorno = aMsgRet; */

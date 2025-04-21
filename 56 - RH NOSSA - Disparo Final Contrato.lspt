@@ -1,0 +1,209 @@
+/*
+Envio de relatório de término de contrato prorrogado.
+-------------------------------------------------------
+Desenvolvimento: 14/11/2024 
+Desenvolvedor: Evanderson Pereira 
+
+Descrição:
+Esta regra é executada diariamente por um processo automático. 
+O objetivo é identificar colaboradores cujo contrato prorrogado está 
+sendo encerrado no dia atual.
+
+Funcionamento:
+- Se a regra identificar contratos com término na data de execução, será 
+acionado o Web Service nativo (Relatórios). O Web Service gera e envia um 
+relatório por e-mail para os gestores responsáveis.
+
+Informações adicionais:
+- Os endereços de e-mail para envio do relatório são configurados na 
+tela de Sindicato. (Cadastro do Sinticato 01).
+
+
+==================================================================
+=========================== IMPORTANTE =========================== 
+==================================================================
+
+/*
+A chamada do webservice interno (interno.com.senior.g5.rh.fp.relatorios.relatorios) 
+falhava em processos automáticos devido à necessidade de autenticação (usuário e senha), 
+que não pode ser passada diretamente em regras executadas via processo automatico.
+
+Para contornar o problema, foi criado um novo provedor de serviços chamado 
+"ProvRelFP" (Recursos > Implementação > Editor de WebServices) 
+no módulo Adm de Pessoal.
+ 
+Esse provedor importou todos os WebServices do módulo de Benefícios, incluindo o 
+WebService de relatórios, permitindo que a chamada fosse realizada corretamente.
+
+Detalhes da Implementação:
+- Provedor criado: "ProvRelFP"
+- Usuário de autenticação: epereira.forbiz
+- Senha de autenticação: #F0rb1z@EvaPer
+- WebService utilizado: com.senior.g5.rh.fp.relatorios.relatorios 
+(importado via provedor ProvRelFP)
+
+A chamada do WebService na regra foi atualizada para utilizar o provedor "ProvRelFP", 
+e os parâmetros de autenticação (usuário e senha) foram adicionados à execução. 
+Isso garantiu que o WebService fosse chamado com sucesso, mesmo em processos automáticos.
+
+Observação: Em caso de manutenção futura, verificar se o provedor "ProvRelFP" está ativo e 
+se as credenciais de autenticação ainda são válidas.
+
+==================================================================
+==================================================================
+
+*/
+
+Definir ProvRelFP.com.senior.g5.rh.bs.relatorios.relatorios vEnvRel;
+Definir Cursor C034CTR; 
+Definir Cursor C014SIN;
+Definir Cursor C034FUN;  
+Definir Data dDatTer;
+Definir Data dDatSis; 
+Definir Data dDatPag;
+Definir Data dDatEnv;
+Definir Data dDatEmi;  
+Definir Alfa aEntrada;
+Definir Alfa aDatSis;
+Definir Alfa aDatPag; 
+Definir Alfa aDatEnv;   
+Definir Alfa aDatTer;
+Definir Alfa aDatEmi; 
+Definir Alfa aEmaEnv;
+Definir Alfa aEmaEcc;
+Definir Alfa aNomFun;
+Definir Alfa aNumEmp;
+Definir Alfa aTipCol;
+Definir Alfa aNumCad;
+Definir Alfa aErro; 
+Definir Alfa aMsg;  
+
+@ Cliente solicitou para que os modelos fossem enviados com 5 dias de antecedencia @
+dDatEmi = DatSis + 5;
+dDatEnv = DatSis + 5; 
+dDatPag = dDatEnv + 10; @ Para data de pagamento (Tela de entrada do modelo FPDR106.COL) @
+nSitAfa = 0;
+   
+/*@ Apenas para validação @
+Definir Data dDatTes;
+Definir Alfa aDatTes;
+MontaData(15, 03, 2025, dDatTes);
+dDatTes = dDatTes + 5;
+ConverteMascara(3, dDatTes, aDatTes, "DD/MM/YYYY"); */
+
+@ Cursor para verificar os colaboradores que possuem contrato temporaio - Prorrogado @
+C034CTR.SQL"SELECT * FROM R034CTR \
+             WHERE TIPCTR = 2     \
+               AND DATFIM = :dDatEnv";
+C034CTR.AbrirCursor()
+Enquanto(C034CTR.Achou){
+
+  nSitAfa = 0; 
+  nNumEmp = C034CTR.NumEmp;
+  nTipCol = C034CTR.TipCol; 
+  nNumCad = C034CTR.NumCad; 
+  dDatTer = C034CTR.DatFim;
+  
+  @Verifica se o colaborador já esta afastado, caso positivo a regra vai para o ´prox. registro@
+  Definir Cursor C38AFA; 
+  C38AFA.SQL"SELECT SITAFA FROM R038AFA  \
+              WHERE NUMEMP = :nNumEmp    \
+                AND TIPCOL = :nTipCol    \
+                AND NUMCAD = :nNumCad";
+  C38AFA.AbrirCursor()
+  Se(C38AFA.Achou){
+    nSitAfa = C38AFA.SitAfa;
+    Se(nSitAfa = 7){
+      Vapara ProReg; 
+    }  
+  }
+  C38AFA.FecharCursor();
+  
+  IntParaAlfa(nNumEmp, aNumEmp);
+  IntParaAlfa(nTipCol, aTipCol);
+  IntParaAlfa(nNumCad, aNumCad);
+  
+  @ Busca o nome do colaborador @
+  C034FUN.SQL"SELECT NOMFUN             \
+                FROM R034FUN            \
+               WHERE NUMEMP = :nNumEmp  \
+                 AND TIPCOL = :nTipCol  \
+                 AND NUMCAD = :nNumCad "; 
+  C034FUN.AbrirCursor()
+  Se(C034FUN.Achou){
+    aNomFun = C034FUN.NomFun; 
+  }
+  C034FUN.FecharCursor();
+  
+  @Busca o e-mail definido no campo customizado R014SIN.USU_EmaTer, R014SIN.USU_EmaTercc @ 
+  C014SIN.SQL"SELECT USU_EmaTer, USU_EmaCcTer \
+                FROM R014SIN                  \
+               WHERE CODSIN = 1";
+  C014SIN.AbrirCursor()
+  Se(C014SIN.Achou){
+    aEmaEnv = C014SIN.USU_EmaTer;
+    aEmaEcc = C014SIN.USU_EmaCcTer;
+  }
+  C014SIN.FecharCursor();
+    
+  @ Mensagem que será enviada junto com o e-mail @
+  ConverteMascara(3, dDatTer, aDatTer, "DD/MM/YYYY");
+  aMsg = "Segue em anexo o término de contrato do colababorador(a): " + aNomFun + "," + 
+         " finalizado em: " + aDatTer; 
+  
+  @ Definição do destinatário @
+  vEnvRel.prDest = aEmaEnv; 
+  
+  @ Verifica se existe um e-mail para cópia @
+  Se(aEmaEcc <> ""){
+    vEnvRel.prCC = aEmaEcc; 
+  } 
+  
+  ConverteMascara(3, dDatEmi, aDatEmi, "DD/MM/YYYY");
+  ConverteMascara(3, dDatPag, aDatPag, "DD/MM/YYYY");
+  
+  @ Informações da tela de entrada modelo FPDR106.COL @       
+  aEntrada = "<EDatEmi="+aDatEmi+">\  
+              <EAbrEmp="+aNumEmp+">\
+              <EAbrTcl="+aTipCol+">\
+              <EAbrCad="+aNumCad+">\
+              <EDatPag="+aDatPag+">\
+              <EAbrLoc=>";
+    
+  
+  vEnvRel.usuario         = "epereira.forbiz";
+  vEnvRel.senha           = "#F0rb1z@EvaPer";
+  vEnvRel.prExecFmt       = "tefMail"; 
+  vEnvRel.prRemetente     = "senior@rhnossa.com.br";
+  vEnvRel.prAssunto       = "Término do contrato prorrogado";
+  vEnvRel.prRelatorio     = "FPDR106.COL"; 
+  vEnvRel.prMensagem      = aMsg;
+  vEnvRel.prEntrada       = aEntrada;      
+  vEnvRel.prSaveFormat    = "tsfPDF";
+  vEnvRel.prAnexoBool     = "T";
+  vEnvRel.prEntranceIsXML = "F"; 
+  vEnvRel.ModoExecucao    = 2; @ Como será executado em processo Aut. precisa ser sincrono/assincrono @
+  vEnvRel.Executar(); 
+    
+  aErro = vEnvRel.erroExecucao;
+    
+  Se(aErro <> "") { 
+    
+    @ Em caso de erros com a geração do modelo, vai ser disparado um e-mail  @
+    @ com os dados do erro para o e-mail do responsavel                      @
+    Definir Alfa aMsgErroEma; 
+    aMsgErroEma = "Ocorreu um erro durante o processo de envio do termino de contrato prorrogado! " +
+                  "<br>Colaborador: " + aNomFun + 
+                  "<br>Matricula: " + aNumCad + 
+                  "<br>Empresa: " + aNumEmp +
+                  "<br>Erro: " + aErro + ".";  
+    
+    Definir Alfa aEma1;
+    aEma1 = "evanderson.pereira@getjob.tec.br";  
+    EnviaEMail("senior@rhnossa.com.br",aEma1,"","","Erro processo - Termino do contrato prorrogado",aMsgErroEma,"",0);     
+  }
+          
+  ProReg:
+  C034CTR.Proximo();      
+}
+C034CTR.FecharCursor();

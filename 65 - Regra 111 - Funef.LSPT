@@ -1,0 +1,382 @@
+@ Regra desenvolvida em 16/03/2017                                             @
+@ Para atender a Convenção Coletiva onde empregados com carga horária de 36    @
+@ horas semanais terão as primeiras 8 horas extras na semana pagas com         @
+@ percentual de 50% e as demais 100%. Empregados com carga horário igual a 44  @
+@ horas semanais sempre receberão 100%. A regra somente será executada para as @
+@ escalas com Clase de Escala 01 e 02                                          @
+@ após a executação da regra 111, a regra 112 Cálculo Final gera os eventos    @
+@------------------------------------------------------------------------------@
+
+@------------------------------------------------------------------------------@
+@ Alteração na regra - 07/03/2025                                              @
+@ Evanderson Pereira - CH 234359                                               @
+@ DescAtv: Atualmente a integração de ponto é feita pelas regras 111 e 112 do  @
+@ Controle de Ponto e é totalizado nos eventos 50, 52 e 502, se faz necessário @
+@ separar as horas noturnas integradas em novo evento.                         @
+@------------------------------------------------------------------------------@
+
+Definir Cursor Cur_R066Sit;
+Definir Data xDatPro;
+Definir Data xDatRet;
+
+xNumEmp = R034FUN.NumEmp;
+xTipCol = R034FUN.TipCol;
+xNumCad = R034FUN.NumCad;
+xDatPro = DatPro;                    
+
+xDatRet = 0;
+xHorRet = 0;
+xConEsc = 0;
+xDias   = 0;
+
+@ Apenas as Classes de Escala 01 e 02 serão consideradas para a regra @
+Se ((ClaEsc = 01) ou (ClaEsc = 02))  {
+    
+    @ Essa condição será executada apenas uma vez para buscar  @
+    @ as horas extras realizadas na semana do periodo anterior @
+    Se (xVolSem = 0){   
+        xVolSem = 1;
+        xSem    = 1;
+
+        @ segunda @
+        Se (DiaSem = 1){
+            xDatRet = xDatPro - 0; 
+        }
+        @ terça @
+        Se (DiaSem = 2){ 
+            xDatRet = xDatPro - 1; 
+        } 
+        @ quarta @
+        Se (DiaSem = 3){ 
+            xDatRet = xDatPro - 2; 
+        }
+        @ quinta @
+        Se (DiaSem = 4){ 
+            xDatRet = xDatPro - 3;
+        }
+        @ sexta @ 
+        Se (DiaSem = 5){ 
+            xDatRet = xDatPro - 4; 
+        }   
+        @ sábado @
+        Se (DiaSem = 6){ 
+            xDatRet = xDatPro - 5; 
+        }
+        @ domingo @
+        Se (DiaSem = 0){ 
+            xDatRet = xDatPro - 6; 
+        }
+
+
+        @ Busca Qauntidade de horas das situações 305 e 306 (305 - Horas Extras / 306 - Horas Extras Noturnas) @
+        Cur_R066Sit.Sql "Select CodSit, QtdHor     \
+                           From R066Sit            \
+                          Where NumEmp =  :xNumEmp \
+                            And TipCol =  :xTipCol \
+                            And NumCad =  :xNumCad \
+                            And DatApu >= :xDatRet \
+                            And DatApu <  :xDatPro \
+                            And CodSit in (305, 306) "; 
+        Cur_R066Sit.AbrirCursor();
+        Enquanto (Cur_R066Sit.Achou){
+            Se (Cur_R066Sit.CodSit = 305) {
+                xHorExt = xHorExt + Cur_R066Sit.QtdHor;
+            }
+
+            Se (Cur_R066Sit.CodSit = 306) {
+                xExtNot = xExtNot + Cur_R066Sit.QtdHor;
+            }
+
+            Cur_R066Sit.Proximo();
+        }                   
+        Cur_R066Sit.FecharCursor();
+        
+    }
+  
+
+    @ Sit 301 - Horas Extras 50% / Sit 302 - Horas Extras 50% Noturnas @
+    xHorSit301 = HorSit[301] + xHorSit301; 
+    xHorSit302 = HorSit[302] + xHorSit302; 
+
+
+    @ Altera a semana para o acumulo de horas de todo o mês @ 
+    Se (DiaSem = DiaSeg){                                     
+        xSem = xSem + 1;
+    } 
+
+    
+    @ Sit 305 - Horas Extras @
+    Se (HorSit[305] > 0) {
+
+        @ Primeira Semana @
+        Se (xSem = 1){
+            xHorExtPri = HorSit[305] + xHorExtPri;
+        }
+        
+        @ Segunda Semana  @
+        Se (xSem = 2){
+            xHorExtSeg = HorSit[305] + xHorExtSeg;
+        }
+    
+        @ Terceira Semana @
+        Se (xSem = 3){
+            xHorExtTer = HorSit[305] + xHorExtTer;
+        }
+        
+        @ Quarta Semana @
+        Se (xSem = 4){
+            xHorExtQua = HorSit[305] + xHorExtQua;
+        }
+        
+        @ Quinta Semana @
+        Se (xSem = 5){
+            xHorExtQui = HorSit[305] + xHorExtQui;
+        }
+        
+        @ Sexta Semana @
+        Se (xSem = 6){
+            xHorExtSex = HorSit[305] + xHorExtSex;
+        }
+        
+        @ Setima Semana @
+        Se (xSem = 7){
+            xHorExtSet = HorSit[305] + xHorExtSet;
+        }
+    }
+
+
+    @ Sit 306 - Horas Extras Noturnas @
+    Se (HorSit[306] > 0) {
+
+        @ Primeira Semana @
+        Se (xSem = 1){
+            xExtNotPri = HorSit[306] + xExtNotPri;
+        }
+        
+        @ Segunda Semana  @
+        Se (xSem = 2){
+            xExtNotSeg = HorSit[306] + xExtNotSeg;
+        }
+    
+        @ Terceira Semana @
+        Se (xSem = 3){
+            xExtNotTer = HorSit[306] + xExtNotTer;
+        }
+        
+        @ Quarta Semana @
+        Se (xSem = 4){
+            xExtNotQua = HorSit[306] + xExtNotQua;
+        }
+        
+        @ Quinta Semana @
+        Se (xSem = 5){
+            xExtNotQui = HorSit[306] + xExtNotQui;
+        }
+        
+        @ Sexta Semana @
+        Se (xSem = 6){
+            xExtNotSex = HorSit[306] + xExtNotSex;
+        }
+        
+        @ Setima Semana @
+        Se (xSem = 7){
+            xExtNotSet = HorSit[306] + xExtNotSet;
+        }
+    }
+
+    
+    @ Sit 20 - Faltas Injustificadas   @ 
+    @ Sit 24 - Faltas Injust. Noturnas @ 
+    @ Sit 37 - Suspensão               @         
+    Se ((HorSit[20] + HorSit[24] + HorSit[37]) > 0) {
+        
+         @ Primeira Semana @
+        Se (xSem = 1){
+            xHorSitPriDsr = HorDsr;
+        }
+
+        @ Segunda Semana  @
+        Se (xSem = 2){
+            xHorSitSegDsr = HorDsr;
+        }
+
+        @ Terceira Semana @
+        Se (xSem = 3){
+            xHorSitTerDsr = HorDsr;
+        }
+
+        @ Quarta Semana   @
+        Se (xSem = 4){
+            xHorSitQuaDsr = HorDsr;
+        }
+
+        @ Quinta Semana   @
+        Se (xSem = 5){
+            xHorSitQuiDsr = HorDsr;
+        }
+
+        @ Sexta Semana   @
+        Se (xSem = 6){
+            xHorSitSexDsr = HorDsr;
+        }
+
+        @ Setima Semana   @
+        Se (xSet = 7){
+            xHorSitSetDsr = HorDsr;
+        }
+    }        
+}        
+
+
+x=0;
+
+
+/* 
+
+Regra anterior 
+
+@ Regra desenvolvida em 16/03/2017                                             @
+@ Para atender a Convenção Coletiva onde empregados com carga horária de 36    @
+@ horas semanais terão as primeiras 8 horas extras na semana pagas com         @
+@ percentual de 50% e as demais 100%. Empregados com carga horário igual a 44  @
+@ horas semanais sempre receberão 100%. A regra somente será executada para as @
+@ escalas com Clase de Escala 01 e 02                                          @
+@ após a executação da regra 111, a regra 112 Cálculo Final gera os eventos    @
+@------------------------------------------------------------------------------@
+
+Definir Cursor Cur_R066Sit;
+Definir Data xDatPro;
+Definir Data xDatRet;
+
+xNumEmp = R034FUN.NumEmp;
+xTipCol = R034FUN.TipCol;
+xNumCad = R034FUN.NumCad;
+xDatPro = DatPro;                    
+
+xDatRet = 0;
+xHorRet = 0;
+xConEsc = 0;
+xDias   = 0;
+@ Apenas as Classes de Escala 01 e 02 serão consideradas para a regra @
+Se ((ClaEsc = 01) ou (ClaEsc = 02)) 
+Inicio
+  Se (xVolSem = 0)   @ Essa condição será executada apenas uma vez para buscar  @
+  Inicio             @ as horas extras realizadas na semana do periodo anterior @
+    xVolSem = 1;
+    xSem    = 1;
+    Se (DiaSem = 1) @ segunda @
+      xDatRet = xDatPro - 0; 
+    Se (DiaSem = 2) @ terça @
+      xDatRet = xDatPro - 1; 
+    Se (DiaSem = 3) @ quarta @
+      xDatRet = xDatPro - 2; 
+    Se (DiaSem = 4) @ quinta @
+      xDatRet = xDatPro - 3; 
+    Se (DiaSem = 5) @ sexta @
+      xDatRet = xDatPro - 4; 
+    Se (DiaSem = 6) @ sábado @
+      xDatRet = xDatPro - 5; 
+    Se (DiaSem = 0) @ domingo @
+      xDatRet = xDatPro - 6; 
+      
+    @Se (xDatRet < IniApu) xDatRet = IniApu;@  
+
+    Cur_R066Sit.Sql "Select CodSit,QtdHor      \
+                       From R066Sit            \
+                      Where NumEmp =  :xNumEmp \
+                        And TipCol =  :xTipCol \
+                        And NumCad =  :xNumCad \
+                        And DatApu >= :xDatRet \
+                        And DatApu <  :xDatPro \
+                        And CodSit in (305,306)"; @ Busca as situações 305 e 306 @
+    Cur_R066Sit.AbrirCursor();
+    Enquanto (Cur_R066Sit.Achou)
+    Inicio
+      Se ((Cur_R066Sit.CodSit = 305) ou (Cur_R066Sit.CodSit = 306))
+        xExtAcu = xExtAcu + Cur_R066Sit.QtdHor;
+      Cur_R066Sit.Proximo();
+    Fim                   
+    Cur_R066Sit.FecharCursor();
+  Fim
+  
+  @ Hora extra Dir./Not. @    
+  xHorSit301 = HorSit[301] + HorSit[302] + xHorSit301;
+           
+  Se (DiaSem = DiaSeg)  @ Altera a semana para o acumulo de horas de todo o mês @                                     
+  Inicio
+    xSem = xSem + 1;
+  Fim 
+  
+      
+  Se ((HorSit[305] + HorSit[306])> 0)
+  Inicio
+    Se (xSem = 1)  @ Primeira Semana @
+    Inicio
+      xHorSitPri = (HorSit[305] + HorSit[306]) + xHorSitPri;
+    Fim
+    
+    Se (xSem = 2)  @ Segunda Semana  @
+    Inicio
+      xHorSitSeg = (HorSit[305] + HorSit[306]) + xHorSitSeg;
+    Fim
+    
+    Se (xSem = 3)  @ Terceira Semana @
+    Inicio
+      xHorSitTer = (HorSit[305] + HorSit[306]) + xHorSitTer;
+    Fim
+    
+    Se (xSem = 4)  @ Quarta Semana   @
+    Inicio
+      xHorSitQua = (HorSit[305] + HorSit[306]) + xHorSitQua;
+    Fim
+    
+    Se (xSem = 5)  @ Quinta Semana   @
+    Inicio
+      xHorSitQui = (HorSit[305] + HorSit[306]) + xHorSitQui;
+    Fim
+    
+    Se (xSem = 6)  @ Sexta Semana   @
+    Inicio
+      xHorSitSex = (HorSit[305] + HorSit[306]) + xHorSitSex;
+    Fim
+    
+    Se (xSem = 7)  @ Setima Semana   @
+    Inicio
+      xHorSitSet = (HorSit[305] + HorSit[306]) + xHorSitSet;
+    Fim
+  Fim 
+  
+         
+  Se ((HorSit[20] + HorSit[24] + HorSit[37])> 0)
+  Inicio
+    Se (xSem = 1)  @ Primeira Semana @
+      Inicio
+        xHorSitPriDsr = HorDsr;
+      Fim
+    Se (xSem = 2)  @ Segunda Semana  @
+      Inicio
+        xHorSitSegDsr = HorDsr;
+      Fim
+    Se (xSem = 3)  @ Terceira Semana @
+      Inicio
+        xHorSitTerDsr = HorDsr;
+      Fim
+    Se (xSem = 4)  @ Quarta Semana   @
+      Inicio
+        xHorSitQuaDsr = HorDsr;
+      Fim
+    Se (xSem = 5)  @ Quinta Semana   @
+      Inicio
+        xHorSitQuiDsr = HorDsr;
+      Fim
+    Se (xSem = 6)  @ Sexta Semana   @
+      Inicio
+        xHorSitSexDsr = HorDsr;
+      Fim
+    Se (xSet = 7)  @ Setima Semana   @
+      Inicio
+        xHorSitSetDsr = HorDsr;
+      Fim
+  Fim        
+Fim        
+x=0;*/ 

@@ -1,0 +1,437 @@
+Definir Cursor cR034FUN;
+Definir Cursor cR030FIL;
+Definir Cursor cR018CCU;
+Definir Cursor cR017CAR;
+Definir Cursor cR017CAR_DadosCol;
+Definir Cursor cur_R017CAR;
+Definir Cursor cR034USU;
+Definir Cursor cR999USU;
+Definir Funcao buscarCodUsuUsuario();
+Definir Funcao insereDados();
+Definir Funcao buscarDadosGerais();
+Definir Funcao buscarGestor();
+Definir Funcao buscarGerenteArea();
+Definir Funcao buscarDiretorArea();
+
+
+Definir Alfa aNomFun;
+Definir Alfa aCodCcu;
+Definir Alfa aNomFil;
+Definir Alfa aNomCcu;
+Definir Alfa aPosTra;
+Definir Alfa aPosPai;
+Definir Alfa aNomGes;
+Definir Alfa aPosGes;
+Definir Alfa aNomGerAre;
+Definir Alfa aNomDir;
+Definir Alfa aPosGer;
+Definir Alfa aPosGerAre;
+Definir Alfa aPosDir;
+Definir Alfa aaPosDir;
+Definir Alfa aUsuGesReq;
+Definir Alfa aUsuGerAre;
+Definir Alfa aUsuDirAre;
+Definir Alfa aNomeFluxBpm;
+Definir Alfa aMsgRet;  
+Definir Data dDatAtu;
+
+
+aNomFun = " ";
+aCodCcu = " ";
+aNomFil = " ";
+aNomCcu = " ";
+aPosTra = " ";
+aNomGes = " ";
+aNomGerAre = " ";
+aNomDir = " ";
+aPosGes = " ";
+aPosGer = " ";
+aPosDir = " ";
+aPosPai = " ";
+aUsuGesReq = " ";
+aUsuGerAre = " ";
+aUsuDirAre = " ";
+aMsgRet = " ";
+
+dDatAtu = DatHoj;
+
+@ Variaveis de entrada @
+Definir Alfa aNomeUsuario;
+Definir Alfa msgError;
+Definir Numero nNumEmp;
+Definir Numero nTipCol;
+Definir Numero nNumCad;
+Definir Numero nCodUsu;
+
+aNomeUsuario = buscarDadosSolicitante.nomeUsuario;
+aNomeFluxBpm = buscarDadosSolicitante.nomeProcesso; 
+
+
+@ Valida se o nome do usuário foi passado corretamente ao WS @
+Se (aNomeUsuario = "") {
+  mensagemlog("O campo nome_Usuario é obrigatório");
+}
+
+
+buscarCodUsuUsuario();
+
+@ Retorna Empresa/Tipo/Matricula de acordo com o Código do usuário @
+RetColabPorCodUsu(nCodUsu, nNumEmp, nTipCol, nNumCad);
+
+buscarDadosGerais();
+buscarGestor();
+buscarGerenteArea();
+buscarDiretorArea();
+insereDados();
+
+
+@ Busca o codUsu do usuário @
+funcao buscarCodUsuUsuario(); 
+{
+  Definir Cursor cUsu;
+  cUsu.sql "SELECT CODUSU FROM R999USU WHERE NOMUSU = :aNomeUsuario";
+  cUsu.AbrirCursor();    
+  Se(cUsu.Achou){
+    nCodUsu = cUsu.codUsu;    
+  } 
+  Senao {
+    msgError = "Usuário '" + aNomeUsuario + "' não encontrado no SGU. Entre em contato com o administrador do módulo gestão de pessoas"; 
+    mensagemlog(msgError);
+  }
+  cUsu.FecharCursor();
+}
+
+
+
+@Busca dados do colaborador@
+Funcao buscarDadosGerais();
+{
+  cR034FUN.Sql "SELECT NomFun, CodFil, CodCcu, PosTra, USU_NivHie \
+                  FROM R034FUN                                    \
+                 WHERE NumEmp = :nNumEmp                          \
+                   AND TipCol = :nTipCol                          \
+                   AND NumCad = :nNumCad";
+  cR034FUN.AbrirCursor();
+  Se (cR034FUN.Achou) {
+    aNomFun = cR034FUN.NomFun;
+    nCodFil = cR034FUN.CodFil;
+    aCodCcu = cR034FUN.CodCcu;
+    aPosTra = cR034FUN.PosTra;
+    nNivHie = cR034FUN.USU_NivHie;
+      
+    cR017CAR_DadosCol.Sql "SELECT * FROM R017CAR                     \
+                            WHERE EstPos = 2                         \
+                              AND PosTra = :aPosTra                  \
+                              AND DatIni = (SELECT MAX(DatIni)       \  
+                                              FROM R017CAR           \
+                                             WHERE EstPos = 2        \
+                                               AND PosTra = :aPosTra \ 
+                                               AND DatIni <= :dDatAtu)";
+    cR017CAR_DadosCol.AbrirCursor();
+    Se (cR017CAR_DadosCol.Achou) {
+      nCodHieDadosCol = cR017CAR_DadosCol.CodHie;
+      
+      @ Valida qual a definição dos campos R017CAR.CODHIE e R034FUN.USU_NIVHIE @
+      Se ((nCodHieDadosCol = 4) ou (nCodHieDadosCol = 5) ou (nCodHieDadosCol = 6) ou (nNivHie = 4) ou (nNivHie = 5) ou (nNivHie = 6)) {
+        aNomGes = aNomFun;
+        aPosGes = aPosTra;
+      }
+    }     
+    
+    cR017CAR_DadosCol.FecharCursor();
+  }
+  cR034FUN.FecharCursor();
+
+
+  @ Busca Dados da Filial @
+  cR030FIL.Sql "SELECT NOMFIL FROM R030FIL WHERE NUMEMP = :nNumEmp AND CODFIL = :nCodFil";
+  cR030FIL.AbrirCursor();
+  Se (cR030FIL.Achou) {
+    aNomFil = cR030FIL.NomFil;
+  }
+  cR030FIL.FecharCursor();
+
+  @ Busca Dados do Centro de Custo @
+  cR018CCU.Sql "SELECT NOMCCU FROM R018CCU WHERE NUMEMP = :nNumEmp AND CODCCU = :aCodCcu";
+  cR018CCU.AbrirCursor();
+  Se (cR018CCU.Achou) {
+    aNomCcu = cR018CCU.NomCcu;
+  }
+  cR018CCU.FecharCursor();
+}
+
+
+
+Funcao buscarGestor();
+{
+
+  @ Se o campo R017CAR.CODHIE = 0 @
+  Se (nCodHieDadosCol = 0) {
+    RetornaPostoPai(aPostra, 2, 2, DatHoj, aPosPai);
+    RetornaChefePosto(0, 2, 2, DatHoj, aPosPai, xNumEmp, xTipCol, xNumCad);
+    
+    @ Evanderson Pereira - CH 230421 @
+    @ Verifica se realmente foi encontrado um chefe para o posto pai, senão repete o processo @
+    Definir Alfa aPosPai2;
+    Se(xNumCad = 0) {
+      RetornaPostoPai(aPosPai, 2, 2, DatHoj, aPosPai2);
+      RetornaChefePosto(0, 2, 2, DatHoj, aPosPai2, xNumEmp, xTipCol, xNumCad);  
+    } 
+       
+    cR034FUN.Sql "SELECT * FROM R034FUN WHERE NUMEMP = :xNumEmp AND TIPCOL = :xTipCol AND NUMCAD = :xNumCad";
+    cR034FUN.AbrirCursor();
+    Se (cR034FUN.Achou) {
+      aNomGes = cR034FUN.NomFun;
+      aPosGes = cR034FUN.PosTra;
+    }
+    cR034FUN.FecharCursor();
+  }
+    
+  Senao  {
+    xNumEmp = nNumEmp;
+    xTipCol = nTipCol;
+    xNumCad = nNumCad;
+  }
+    
+  @ Busca Usuário atrelado ao Gestor @
+  cR034USU.Sql "SELECT * FROM R034USU WHERE NUMEMP = :xNumEmp AND TIPCOL = :xTipCol AND NUMCAD = :xNumCad";
+  cR034USU.AbrirCursor();
+  Se (cR034USU.Achou) {
+    nUsuGesReq = cR034USU.CodUsu;
+  }
+  cR034USU.FecharCursor();
+    
+  @ Busca o Nome do Usuário, conforme encontrado acima @
+  cR999USU.Sql "SELECT * FROM R999USU WHERE CODUSU = :nUsuGesReq";
+  cR999USU.AbrirCursor();
+  Se (cR999USU.Achou) {
+    aUsuGesReq = cR999USU.NomUsu;
+  }
+  cR999USU.FecharCursor();
+}
+
+
+
+Funcao buscarGerenteArea();
+{
+  Se ((nCodHieDadosCol <> 4) e (nCodHieDadosCol <> 5) ou (nNivHie <> 4) e (nNivHie <> 5)) {
+    
+    RetornaPostoPai(aPosGes, 2, 2, DatHoj, aPosGer);
+    RetornaChefePosto(0, 2, 2, DatHoj, aPosGer, xNumEmp, xTipCol, xNumCad);
+    
+    @ Evanderson Pereira - CH 230421 @
+    @ Verifica se realmente foi encontrado um chefe para o posto pai, senão repete o processo @
+    Definir Alfa aPosGer2;
+    Se(xNumCad = 0) {
+      RetornaPostoPai(aPosGer, 2, 2, DatHoj, aPosGer2);
+      RetornaChefePosto(0, 2, 2, DatHoj, aPosGer2, xNumEmp, xTipCol, xNumCad);  
+    } 
+    
+
+    cR034FUN.Sql "SELECT * FROM R034FUN WHERE NUMEMP = :xNumEmp AND TIPCOL = :xTipCol AND NUMCAD = :xNumCad";
+    cR034FUN.AbrirCursor();
+    Se (cR034FUN.Achou) {
+      aNomGerAre = cR034FUN.NomFun;
+      aPosGerAre = cR034FUN.PosTra;
+
+      verificacodhie:
+
+      @ Busca o Gerente da Área @ 
+      cR017CAR.Sql "SELECT * FROM R017CAR                         \ 
+                     WHERE EstPos = 2                             \
+                       AND PosTra =   aPosGerAre                  \ 
+                       AND DatIni = (SELECT MAX(DatIni)           \
+                                       FROM R017CAR               \ 
+                                      WHERE EstPos = 2            \ 
+                                        AND PosTra = :aPosGerAre  \
+                                        AND DatIni <= :dDatAtu)";
+      cR017CAR.AbrirCursor();
+      Se (cR017CAR.Achou) {
+        nCodHie = 0;
+        nCodHie = cR017CAR.CodHie;
+        
+        @ Gerente da Área @
+        Se (nCodHie = 5){   
+          aNomGerAre = aNomGerAre;
+        }
+
+        Senao { 
+
+          @ Evanderson Pereira - CH 230421 @
+          @ Sobe mais um nivel na hierarquia de postos até encontrar o gerente da area @
+          Definir Alfa aPosGerAre2; 
+          RetornaPostoPai(aPosGerAre, 2, 2, DatHoj, aPosGerAre2);
+          RetornaChefePosto(0, 2, 2, DatHoj, aPosGerAre2, xNumEmp, xTipCol, xNumCad);
+
+          @ Ultimo recurso para não ficar dentro do loop @
+          nCount++
+          Se(nCount >= 3){
+            Vapara SaiLoop;   
+          }
+
+          Vapara verificacodhie;
+        }
+      }
+      cR017CAR.FecharCursor();
+    }
+  }
+  
+  Senao {
+    SaiLoop:
+    aNomGerAre = aNomGes;
+    aPosGerAre = aPosGes;
+  }
+
+  cR034FUN.FecharCursor();
+
+
+  @ Busca Usuário atrelado ao Gerente da Area @
+  cR034USU.Sql "SELECT * FROM R034USU WHERE NUMEMP = :xNumEmp AND TIPCOL = :xTipCol AND NUMCAD = :xNumCad";
+  cR034USU.AbrirCursor();
+  Se (cR034USU.Achou) {
+    nUsuGerAre = cR034USU.CodUsu;
+  }
+  cR034USU.FecharCursor();
+
+  @ Busca o Nome do Usuário, conforme encontrado acima @
+  cR999USU.Sql "SELECT * FROM R999USU WHERE CodUsu = :nUsuGerAre";
+  cR999USU.AbrirCursor();
+  Se (cR999USU.Achou) {
+    aUsuGerAre = cR999USU.NomUsu;
+  }
+  cR999USU.FecharCursor(); 
+}
+
+
+
+Funcao buscarDiretorArea();
+{
+
+  RetornaPostoPai(aPosGerAre, 2, 2, DatHoj, aPosDir);
+  RetornaChefePosto(0, 2, 2, DatHoj, aPosDir, xNumEmp, xTipCol, xNumCad);
+
+  @ Evanderson Pereira - CH 230421 @
+  @ Verifica se realmente foi encontrado um chefe para o posto pai, senão repete o processo @
+  Definir Alfa aPosDir2;
+  Se(xNumCad = 0) {
+    RetornaPostoPai(aPosDir, 2, 2, DatHoj, aPosDir2);
+    RetornaChefePosto(0, 2, 2, DatHoj, aPosDir2, xNumEmp, xTipCol, xNumCad);  
+  } 
+    
+  nCount = 0;
+  repeteConsultaDir:
+  
+  cR034FUN.Sql "SELECT * FROM R034FUN WHERE NUMEMP = :xNumEmp AND TIPCOL = :xTipCol AND NUMCAD = :xNumCad";
+  cR034FUN.AbrirCursor();
+  Se (cR034FUN.Achou) {  
+    aNomDir = cR034FUN.NomFun;
+    aaPosDir = cR034FUN.PosTra;
+    
+    @ Busca o Diretor da Área @
+    cur_R017CAR.Sql "SELECT * FROM R017CAR                      \ 
+                      WHERE EstPos = 2                          \
+                        AND PosTra = :aaPosDir                  \
+                        AND DatIni = (SELECT Max(DatIni)        \
+                                        FROM R017CAR            \ 
+                                       WHERE EstPos = 2         \
+                                         AND PosTra = :aaPosDir \
+                                         AND DatIni <= :dDatAtu)";
+    cur_R017CAR.AbrirCursor();
+    Se (cur_R017CAR.Achou) {
+      nCodHie = cur_R017CAR.CodHie;
+    
+      @ Diretor da Área @
+      Se (nCodHie = 3) {  
+        aNomDir = aNomDir;
+      }
+
+      Senao {
+
+        @ Evanderson Pereira - CH 230421 @
+        @ Sobe mais um nivel na hierarquia de postos até encontrar o diretor @
+        Definir Alfa aaPosDir2; 
+        RetornaPostoPai(aaPosDir, 2, 2, DatHoj, aaPosDir2);
+        RetornaChefePosto(0, 2, 2, DatHoj, aaPosDir2, xNumEmp, xTipCol, xNumCad);
+        
+        @ Ultimo recurso para não ficar dentro do loop @
+        nCount++
+        Se(nCount >= 3){
+          Vapara SaiLoop;   
+        }
+ 
+        VaPara repeteConsultaDir;
+      }
+    }
+    
+    SaiLoop2:
+    cur_R017CAR.FecharCursor();
+  }
+  cR034FUN.FecharCursor();
+
+
+  @ Busca Usuário atrelado ao Diretor @
+  cR034USU.Sql "SELECT * FROM R034USU WHERE NUMEMP = :xNumEmp AND TIPCOL = :xTipCol AND NUMCAD = :xNumCad";
+  cR034USU.AbrirCursor();
+  Se (cR034USU.Achou) {
+    nUsuDirAre = cR034USU.CodUsu;
+  }
+  cR034USU.FecharCursor();
+
+  @ Busca o Nome do Usuário, conforme encontrado acima @
+  cR999USU.Sql "SELECT * FROM R999USU WHERE CodUsu = :nUsuDirAre";
+  cR999USU.AbrirCursor();
+  Se (cR999USU.Achou) {
+    aUsuDirAre = cR999USU.NomUsu;
+  }
+
+  cR999USU.FecharCursor();
+}
+
+
+@ Evanderson Pereira - CH 230421 @
+/*
+Os campos abaixo não podem ser passados vazios, isso causa impacto em algumas 
+tarefas especificas do Fluxo, neste caso foram adicionas das validações extras 
+antes do retorno do WS 
+*/
+
+
+
+@ aUsuGesReq @
+Se(aUsuGesReq = ""){
+  aMsgRet = "O Fluxo do BPM - " + aNomeFluxBpm + " não conseguiu o retorno do campo 'Gestor Requisitante'";
+  buscarDadosSolicitante.erroexecucao = aMsgRet;      
+} 
+
+@ aUsuGerAre @
+Se(aUsuGerAre = ""){
+  aMsgRet = "O Fluxo do BPM - " + aNomeFluxBpm + " não conseguiu o retorno do campo 'Gerente Área'";
+  buscarDadosSolicitante.erroexecucao = aMsgRet;      
+}
+
+@ aUsuDirAre @
+Se(aUsuDirAre = ""){
+  aMsgRet = "O Fluxo do BPM - " + aNomeFluxBpm + " não conseguiu o retorno do campo 'Diretor Área'";
+  buscarDadosSolicitante.erroexecucao = aMsgRet;      
+}
+
+
+@ Função para retornar as informações ao BPM @
+Funcao insereDados(); 
+{
+
+  buscarDadosSolicitante.numcad = nNumCad;           @ Matricula do colaborador @
+  buscarDadosSolicitante.tipcol = nTipCol;           @ Tipo do colaborador @
+  buscarDadosSolicitante.numemp = nNumEmp;           @ Empresa do colaborador @
+  buscarDadosSolicitante.requisitante = aNomFun;     @ Nome do colaborador @
+  buscarDadosSolicitante.nomFilReq = aNomFil;        @ Nome da Filial @
+  buscarDadosSolicitante.codCcuReq = aCodCcu;        @ Código do centro de custo @
+  buscarDadosSolicitante.desCcuReq = aNomCcu;        @ Nome do centro de custo @
+  buscarDadosSolicitante.nomGesReq = aNomGes;        @ Nome do Gestor @
+  buscarDadosSolicitante.usuGesReq = aUsuGesReq;     @ Código do usuário - Gestor @
+  buscarDadosSolicitante.gerAreReq = aUsuGerAre;     @ Código do usuário - Gerente da Area @
+  buscarDadosSolicitante.dirAreReq = aUsuDirAre;     @ Código do usuário - Diretor da Area @
+  
+}
+
+x = 0;

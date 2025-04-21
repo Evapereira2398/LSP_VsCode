@@ -1,0 +1,34 @@
+/* Chamado - 230952 - O trecho abaixo só será impresso quando o colaborador não 
+tiver Art.62 Definido */
+
+nNumEmp = R034FUN.NumEmp;
+nTipCol = R034FUN.TipCol;
+nNumCad = R034FUN.NumCad;
+dDatAdm = R034FUN.DatAdm;  
+
+Definir Cursor C38APU; 
+C38APU.SQL"SELECT ArtCLT  \
+             FROM R038APU \
+            WHERE NUMEMP = :nNumEmp  \
+              AND TIPCOL = :nTipCol  \ 
+              AND NUMCAD = :nNumCad  \
+              AND INIAPU >= :dDatAdm";
+C38APU.AbrirCursor();
+Se(C38APU.Achou){
+  nArtCLT = C38APU.ArtCLT;      
+}
+C38APU.FecharCursor();
+
+@ Verifica o Art. Definido @
+Se((ArtClt = 0) ou (ArtClt = 1)){
+  vStrMen = "	Parágrafo Único: Na hipótese de o temporário trabalhar além de " + xHorSem + " \
+            horas semanais, mediante acordo de horário fará jus a adicional de   \
+            horas extras que não poderá ser inferior ao previsto no Art. XVI da  \
+            Constituição Federal;                                                ";
+
+  ValStr = vStrMen;
+  Cancel(2); 
+}
+Senao {
+  Cancel(1); 
+}

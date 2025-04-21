@@ -1,0 +1,155 @@
+/*Regra para mostrar mensagem sobre Diretoria ao usuário após inserir Característica*/
+
+Se(VerificaAbaAtiva("Características") = 1){
+    Definir Cursor C_R017CAR;
+    Definir Cursor C_R017POS;
+    Definir Cursor C_R034FUN;
+    Definir Cursor C_USU_THisDir;
+    Definir Alfa aPosTra;
+    Definir Data dDatHoj;
+    Definir Data dDatIni;
+    dDatHoj = DatHoj;
+    nEstPos = R017CAR.EstPos;
+    aPosTra = R017CAR.PosTra;
+    nNumEmp = R017CAR.NumEmp;
+    nCodFil = R017CAR.CodFil;
+
+    C_R017POS.SQL"SELECT POSTRA FROM R017POS WHERE ESTPOS = :nEstPos AND POSTRA = :aPosTra";
+
+    @ Verifica o codigo presente na R034FUN @
+    Definir Cursor C_R034FUN;
+    C_R034FUN.SQL"SELECT NUMEMP, TIPCOL, NUMCAD, USU_CODDIR \
+                    FROM R034FUN              \
+                    WHERE ESTPOS = :nEstPos   \
+                    AND POSTRA = :aPosTra     \
+                    AND NUMEMP = :nNumEmp     \
+                    AND CODFIL = :nCodFil     \
+                    AND SITAFA <> 7";
+    C_R034FUN.AbrirCursor();                       
+    Se(C_R034FUN.Achou){
+      nTipCol = C_R034FUN.TipCol;
+      nNumCad = C_R034FUN.NumCad;
+      nCodDir34fun = C_R034FUN.USU_CODDIR; 
+    }  @ 0 @
+    C_R034FUN.FecharCursor(); 
+    
+    @ Codigo diretoria da R17CAR @
+    nCodDir = R017CAR.USU_CodDir;
+    
+    
+    Se(nCodDir34fun <> nCodDir){
+      EXECSQL"UPDATE R034FUN SET USU_CodDir = :nCodDir \
+                WHERE NUMEMP = :nNumEMp   \
+                AND TIPCOL = :nTipCol     \
+                AND NUMCAD = :nNumCad";
+    } 
+    
+    Se (nCodDir = 0) {
+      Mensagem(Retorna, "É necessário inserir a Diretoria na característica do Posto!"); 
+    } 
+    Senao {
+      @Verifica se esta é a característica mais atual para a empresa alterada@
+      nEstPos = R017CAR.EstPos;
+      aPosTra = R017CAR.PosTra;
+      dDatIni = R017CAR.DatIni;
+      nNumEmp = R017CAR.NumEmp;
+      nCodFil = R017CAR.CodFil;
+      nCodDir = R017CAR.USU_CodDir;
+    
+      C_R017CAR.SQL"SELECT USU_CODDIR        \
+                      FROM R017CAR           \
+                      WHERE ESTPOS = :nEstPos \
+                      AND POSTRA = :aPosTra \
+                      AND NUMEMP = :nNumEmp \
+                      AND CODFIL = :nCodFil \
+                      AND DATINI = (SELECT MAX(DATINI)          \
+                                      FROM R017CAR TAB2         \
+                                      WHERE ESTPOS = :nEstPos    \
+                                          AND POSTRA = :aPosTra    \
+                                          AND NUMEMP = :nNumEmp    \
+                                          AND CODFIL = :nCodFil    \
+                                          AND DATINI <= :dDatHoj)  \
+                      AND DATINI = :dDatIni";@serve para buscar a diretoria somente se esta é a característica mais atual@            
+      C_R017CAR.AbrirCursor();
+      Se(C_R017CAR.Achou){
+        Se (C_R017CAR.USU_CodDir <> nCodDir){@atualiza todos os usuário do posto naquela empresa independente de filial, alinhado com EDUARDO DUDA@
+          C_R034FUN.SQL"SELECT NUMEMP,               \
+                            TIPCOL,               \
+                            NUMCAD                \
+                        FROM R034FUN               \
+                        WHERE ESTPOS = :nEstPos     \
+                        AND POSTRA = :aPosTra     \
+                        AND NUMEMP = :nNumEmp     \
+                        AND CODFIL = :nCodFil     \
+                        AND SITAFA <> 7";
+          C_R034FUN.AbrirCursor();                       
+          Enquanto(C_R034FUN.Achou){
+            nNumEmp = C_R034FUN.NumEmp;
+            nTipCol = C_R034FUN.TipCol;
+            nNumCad = C_R034FUN.NumCad;
+            
+            EXECSQL"UPDATE R034FUN               \
+                    SET USU_CodDir = :nCodDir \
+                    WHERE NUMEMP = :nNumEMp     \
+                    AND TIPCOL = :nTipCol     \
+                    AND NUMCAD = :nNumCad";
+            
+            C_USU_THisDir.SQL"SELECT USU_NUMEMP                \
+                                FROM USU_THisDir           \
+                            WHERE USU_NUMEMP = :nNumEmp \
+                                AND USU_TIPCOL = :nTipCol \
+                                AND USU_NUMCAD = :nNumCad \
+                                AND USU_DatAlt = :dDatHoj \
+                                AND USU_CodDir = :nCodDir";
+            C_USU_THisDir.AbrirCursor();
+            Se(C_USU_THisDir.NaoAchou)                     
+              EXECSQL"INSERT INTO USU_THisDir VALUES(:nNumEmp,:nTipCol,:nNumCad,:dDatHoj,:nCodDir,40)";
+            C_USU_THisDir.FecharCursor();  
+            C_R034FUN.Proximo();                         
+          } 
+        C_R034FUN.FecharCursor(); 
+      } 
+    }   
+    Senao {
+        C_R034FUN.SQL"SELECT NUMEMP,               \
+                            TIPCOL,               \
+                            NUMCAD                \
+                        FROM R034FUN               \
+                        WHERE ESTPOS = :nEstPos     \
+                        AND POSTRA = :aPosTra     \
+                        AND NUMEMP = :nNumEmp     \
+                        AND CODFIL = :nCodFil     \
+                        AND SITAFA <> 7";
+        C_R034FUN.AbrirCursor();                       
+        Enquanto(C_R034FUN.Achou){
+            nNumEmp = C_R034FUN.NumEmp;
+            nTipCol = C_R034FUN.TipCol;
+            nNumCad = C_R034FUN.NumCad;
+            
+            EXECSQL"UPDATE R034FUN               \
+                    SET USU_CodDir = :nCodDir \
+                    WHERE NUMEMP = :nNumEMp     \
+                    AND TIPCOL = :nTipCol     \
+                    AND NUMCAD = :nNumCad";
+            
+            C_USU_THisDir.SQL"SELECT USU_NUMEMP                \
+                                FROM USU_THisDir           \
+                            WHERE USU_NUMEMP = :nNumEmp \
+                                AND USU_TIPCOL = :nTipCol \
+                                AND USU_NUMCAD = :nNumCad \
+                                AND USU_DatAlt = :dDatHoj \
+                                AND USU_CodDir = :nCodDir";
+            C_USU_THisDir.AbrirCursor();
+            Se(C_USU_THisDir.NaoAchou)                     
+              EXECSQL"INSERT INTO USU_THisDir VALUES(:nNumEmp,:nTipCol,:nNumCad,:dDatHoj,:nCodDir,40)";
+            C_USU_THisDir.FecharCursor(); 
+            
+            C_R034FUN.Proximo();                         
+        } 
+        C_R034FUN.FecharCursor();                
+    }
+    C_R017CAR.FecharCursor();  
+    }
+}
+
+x=0; 

@@ -1,0 +1,290 @@
+@ Regra vinculada ao processo 450 - Após gerar vale colaborador @
+Definir Cursor C_R044TVL;
+Definir Cursor C_R162GER;
+Definir Cursor C_R162ASS;
+Definir Data dDatAdm;
+Definir Data dDatVal;
+Definir Data dIniCmp;
+Definir Data dFimCmp;
+Definir Data dDatFim;
+Definir Data dDatZer;
+
+dIniCmp = IniCmp;
+dFimCmp = FimCmp;
+dDatAdm = R034FUN.DatAdm;
+nNumEmp = R162GER.NumEmp;
+nTipCol = R162GER.TipCol;
+nNumCad = R162GER.NumCad;
+nCodVal = R162GER.CodVal;
+dDatVal = R162GER.DatVal;
+nTabEve = R162GER.TabEve;
+nValGer = 0;
+
+/*@ Incluído o cursor para verificar a data fim do vale - Chamado 205867 @
+C_R162ASS.SQL "Select USU_DatFim From R162ASS \
+                where NumEmp = :nNumEmp \
+                  and TipCol = :nTipCol \
+                  and NumCad = :nNumCad \
+                  and TabEve = :nTabEve \
+                  and CodVal = :nCodVal ";
+C_R162ASS.AbrirCursor();
+Se (C_R162ASS.Achou)
+   dDatFim = C_R162ASS.USU_DatFim;
+C_R162ASS.FecharCursor();
+
+
+Se (dDatFim = 0) {
+  MontaData (31,12,1900,dDatZer);
+}*/
+
+/* 
+Regra alterada para geração do vale 123 SWIPE
+Data do desenvolvimento: 13/11/2024 
+Dev: Evanderson Pereira 
+CH - 230581 
+
+Obs.: Valores poderam ser alterados, foram definidos dois campos na customizados 
+na R030FIL, onde são definidos os valores fixos e proporcionais para cada filial
+de forma incividual. 
+                  
+*/
+
+Se(nCodVal = 123) {
+  
+  @ Busca a Filial do colaborador @
+  Definir Cursor cBuscaFilCol;
+  cBuscaFilCol.SQL"SELECT CODFIL   \ 
+                     FROM R034FUN  \
+                    WHERE NUMEMP = :nNumEmp \
+                      AND TIPCOL = :nTipCol \ 
+                      AND NUMCAD = :nNumCad";
+  cBuscaFilCol.AbrirCursor()
+  Se(cBuscaFilCol.Achou){
+    nCodFil = cBuscaFilCol.CodFil; 
+  }
+  cBuscaFilCol.FecharCursor();
+  
+  @ Busca os valores dos vales definidos na R030FIL @
+  Definir Cursor cBuscaVlrVal;
+  cBuscaVlrVal.SQL"SELECT USU_VlrFix, USU_VlrPro \ 
+                     FROM R030FIL                \
+                    WHERE NUMEMP = :nNumEmp      \
+                      AND CODFIL = :nCodFil";
+  cBuscaVlrVal.AbrirCursor()
+  Se(cBuscaVlrVal.Achou){
+    nValorValeFixo = cBuscaVlrVal.USU_VlrFix;
+    nValorValeProp = cBuscaVlrVal.USU_VlrPro;
+  }
+  cBuscaVlrVal.FecharCursor();
+  
+  
+  @ Verifica se o vale vai ser cheio ou proporcional @
+  
+  @ Vale Cheio @
+  Se(dDatAdm < dIniCmp) {
+  
+  
+    Definir Alfa aStaVal;
+    Definir Alfa aOriVal; 
+    Definir Alfa aMsgRet;  
+    nVlrVal = nValorValeFixo;
+    dDatVal = R162GER.DatVal; 
+    nQtdVal = 1;
+    aStaVal = "E";
+    aOriVal = "G";
+    
+    @ Deleta os vales gerados para inserir na sequencia @
+    ExecSql"DELETE R162GER            \
+             WHERE NUMEMP = :nNumEmp  \
+               AND TIPCOL = :nTipCol  \
+               AND NUMCAD = :nNumCad  \
+               AND TABEVE = :nTabEve  \
+               AND CODVAL = :nCodVal  \
+               AND DATVAL >= :dDatAdm            \
+               AND DATVAL <= :dFimCmp            \
+               AND DATVAL <> (SELECT MAX(DATVAL)                   \
+                                FROM R162GER TAB2                  \
+                               WHERE TAB2.NUMEMP = R162GER.NUMEMP  \
+                                 AND TAB2.TIPCOL = R162GER.TIPCOL  \
+                                 AND TAB2.NUMCAD = R162GER.NUMCAD  \
+                                 AND TAB2.TABEVE = R162GER.TABEVE  \
+                                 AND TAB2.CODVAL = R162GER.CODVAL  \
+                                 AND DATVAL >= :dDatAdm            \
+                                 AND DATVAL <= :dFimCmp            \
+                                 AND QTDVAL > 0)";
+    
+    
+    @ Realiza o INSERT na R162GER @
+    ExecSQLEx ("Insert Into R162GER (NumEmp, TipCol, NumCad,         \
+                                     DatVal, TabEve, CodVal,         \
+                                     QtdVal, VlrVal, StaVal, OriVal) \
+                             Values (:nNumEmp, :nTipCol, :nNumCad ,  \
+                                     :dDatVal, :nTabEve, :nCodVal,   \
+                                     :nQtdVal, :nVlrVal, :aStaVal, :aOriVal)", nErro, aMsgRet);
+  }
+  
+  @ Vale Proporcional @
+  Se(dDatAdm > dIniCmp){
+    
+      /*Puxar o feriado da escala
+      xCodFer */
+    
+    @ Calcula a quantidade de dias úteis entre a data de admissão e o fim do período @
+    RetQtdDiasUtil(dDatAdm, dDatFim, 1, nQtdDiasTra);
+    nVlrVal = cBuscaVlrVal.USU_VlrPro; 
+    nVlrVal = nVlrVal * nQtdDiasTra; 
+    
+    @ Deleta os vales gerados para inserir na sequencia @
+    ExecSql"DELETE R162GER            \
+             WHERE NUMEMP = :nNumEmp  \
+               AND TIPCOL = :nTipCol  \
+               AND NUMCAD = :nNumCad  \
+               AND TABEVE = :nTabEve  \
+               AND CODVAL = :nCodVal  \
+               AND DATVAL >= :dDatAdm            \
+               AND DATVAL <= :dFimCmp            \
+               AND DATVAL <> (SELECT MAX(DATVAL)                   \
+                                FROM R162GER TAB2                  \
+                               WHERE TAB2.NUMEMP = R162GER.NUMEMP  \
+                                 AND TAB2.TIPCOL = R162GER.TIPCOL  \
+                                 AND TAB2.NUMCAD = R162GER.NUMCAD  \
+                                 AND TAB2.TABEVE = R162GER.TABEVE  \
+                                 AND TAB2.CODVAL = R162GER.CODVAL  \
+                                 AND DATVAL >= :dDatAdm            \
+                                 AND DATVAL <= :dFimCmp            \
+                                 AND QTDVAL > 0)";
+                                 
+    @ Como o vale é proporcinal, vai ser incluido um por vez @
+    Enquanto(dDatAdm < dDatFim){
+      RetornaHorario(nNumEmp, nTipCol, nNumCad, dDatAdm, "S", nCodHor);
+      Se(nCodHor < 9996){
+        
+        Definir Alfa aDiaSem; 
+        RetornaDiaSemana(dDatAdm, aDiaSem);
+        Se((aDiaSem = "Sabádo") ou (aDiaSem = "Domingo")){
+          Vapara ProxDia;
+        }
+          
+        Senao {
+          dDatVal = dDatAdm;
+          nQtdVal = 1;
+          aStaVal = "E";
+          aOriVal = "G";
+             
+          @ Realiza o INSERT na R162GER @
+          ExecSQLEx ("Insert Into R162GER (NumEmp, TipCol, NumCad,           \
+                                           DatVal, TabEve, CodVal,           \
+                                           QtdVal, VlrVal, StaVal, OriVal)   \
+                                   Values (:nNumEmp, :nTipCol, :nNumCad ,    \
+                                           :dDatVal, :nTabEve, :nCodVal,     \
+                                           :nQtdVal, :nVlrVal, :aStaVal, :aOriVal)", nErro, aMsgRet);
+        }                                  
+      }
+      ProxDia: 
+      dDatAdm++;                                                           
+    } 
+  }   
+}
+@ --------------------------- Fim regra, vale 123 ---------------------------- @    
+
+Se ((dDatFim <> dDatZer) e (dDatFim <= dFimCmp)) {
+  ExecSql "Update R162GER Set QtdVal = 0, VlrVal = 0 \
+            where NumEmp = :nNumEmp \
+              and TipCol = :nTipCol \
+              and NumCad = :nNumCad \
+              and TabEve = :nTabEve \
+              and CodVal = :nCodVal" ; 
+}
+
+Senao {
+  @Verifica se o vale Assinalado é fixo > qtd = 1@
+  C_R162ASS.SQL"SELECT QTDVAL             \
+                  FROM R162ASS            \
+                 WHERE NUMEMP = :nNumEmp  \
+                   AND TIPCOL = :nTipCol  \
+                   AND NUMCAD = :nNumCad  \
+                   AND TABEVE = :nTabEve  \
+                   AND CODVAL = :nCodVal";   
+  C_R162ASS.AbrirCursor();
+  Se (C_R162ASS.Achou){
+    nQtdVal = C_R162ASS.QTDVAL;
+  } 
+  C_R162ASS.FecharCursor();
+     
+  Se(nQtdVal <> 1){ 
+    /*@Valor do Vale Diário e Fixo@ 
+    C_R044TVL.SQL"SELECT VLRVAL, USU_VALFIX  \
+                    FROM R044TVL             \
+                   WHERE TABEVE = :nTabEve   \
+                     AND CODVAL = :nCodVal";
+    
+    C_R044TVL.AbrirCursor();
+    Se (C_R044TVL.Achou){
+      nVlrFix = C_R044TVL.USU_VALFIX;
+      nValDia = C_R044TVL.VLRVAL;
+    } 
+    C_R044TVL.FecharCursor();  */
+     
+    C_R162GER.SQL"SELECT QTDVAL, VLRVAL     \
+                    FROM R162GER            \
+                   WHERE NUMEMP = :nNumEmp  \
+                     AND TIPCOL = :nTipCol  \
+                     AND NUMCAD = :nNumCad  \
+                     AND CODVAL = :nCodVal  \
+                     AND DATVAL >= :dDatAdm \
+                     AND DATVAL <= :dFimCmp \
+                     AND QTDVAL > 0 ";
+    
+    C_R162GER.AbrirCursor();
+    Enquanto (C_R162GER.Achou){
+      nValGer = nValGer + (C_R162GER.VLRVAL * C_R162GER.QTDVAL);
+      C_R162GER.Proximo();
+    } 
+    C_R162GER.FecharCursor();
+      
+    @ Verifica se valor gerado é maior que o vale fixo @
+    Se(nValGer > nVlrFix){
+      nUltDia = nValDia + nVlrFix - nValGer;
+        
+      @ Exclui dias anteriores e adiciona o valor fixo do vale ao último dia @
+      ExecSql"DELETE R162GER            \
+               WHERE NUMEMP = :nNumEmp  \
+                 AND TIPCOL = :nTipCol  \
+                 AND NUMCAD = :nNumCad  \
+                 AND TABEVE = :nTabEve  \
+                 AND CODVAL = :nCodVal  \
+                 AND DATVAL >= :dDatAdm            \
+                 AND DATVAL <= :dFimCmp            \
+                 AND DATVAL <> (SELECT MAX(DATVAL)                   \
+                                  FROM R162GER TAB2                  \
+                                 WHERE TAB2.NUMEMP = R162GER.NUMEMP  \
+                                   AND TAB2.TIPCOL = R162GER.TIPCOL  \
+                                   AND TAB2.NUMCAD = R162GER.NUMCAD  \
+                                   AND TAB2.TABEVE = R162GER.TABEVE  \
+                                   AND TAB2.CODVAL = R162GER.CODVAL  \
+                                   AND DATVAL >= :dDatAdm            \
+                                   AND DATVAL <= :dFimCmp            \
+                                   AND QTDVAL > 0)"; 
+        
+      ExecSql"UPDATE R162GER SET VLRVAL = :nVlrFix  \
+               WHERE NUMEMP = :nNumEmp  \
+                 AND TIPCOL = :nTipCol  \
+                 AND NUMCAD = :nNumCad  \
+                 AND TABEVE = :nTabEve  \
+                 AND CODVAL = :nCodVal  \
+                 AND DATVAL = (SELECT MAX(DATVAL)                   \
+                                 FROM R162GER TAB2                  \
+                                WHERE TAB2.NUMEMP = R162GER.NUMEMP  \
+                                  AND TAB2.TIPCOL = R162GER.TIPCOL  \
+                                  AND TAB2.NUMCAD = R162GER.NUMCAD  \
+                                  AND TAB2.TABEVE = R162GER.TABEVE  \
+                                  AND TAB2.CODVAL = R162GER.CODVAL  \
+                                  AND DATVAL >= :dDatAdm            \
+                                  AND DATVAL <= :dFimCmp            \
+                                  AND QTDVAL > 0)";
+        
+    }
+  }
+}
+
+x = 0;

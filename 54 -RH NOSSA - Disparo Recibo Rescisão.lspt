@@ -1,0 +1,215 @@
+/*
+Envio do recibo de rescisão.
+-------------------------------------------------------
+Desenvolvimento: 14/11/2024 
+Desenvolvedor: Evanderson Pereira 
+
+Descrição:
+Esta regra é executada diariamente por um processo automático. 
+O objetivo é identificar colaboradores que foram desligados na data atual. 
+
+Funcionamento:
+- Se a regra identificar desligamentos na data de execução, será acionado o 
+Web Service nativo (Relatórios). O Web Service gera e envia o recibo de férias 
+por e-mail para os gestores responsáveis.
+
+Informações adicionais:
+- Os endereços de e-mail para envio do relatório são configurados na 
+tela de Sindicato.
+
+*/
+
+Definir interno.com.senior.g5.rh.fp.relatorios.relatorios vEnvRel;
+Definir Cursor C034FUN;
+Definir Cursor C014SIN;
+Definir Cursor C038AFA;
+Definir Cursor C042RCM; 
+Definir Cursor C042GER;  
+Definir Data dDatSis;
+Definir Data dDatPag;
+Definir Data dDatDem; 
+Definir Data dFimCtt;
+Definir Data dIniCmp;
+Definir Data dFimCmp;
+Definir Alfa aIniCmp;
+Definir Alfa aFimCmp;  
+Definir Alfa aDatSis; 
+Definir Alfa aEmaEnv;
+Definir Alfa aEmaEcc;
+Definir Alfa aTelEnt; 
+Definir Alfa aNomFun;
+Definir Alfa aNumEmp;
+Definir Alfa aNumCad;
+Definir Alfa aErro; 
+Definir Alfa aMsg;
+Definir Alfa aTipRes;
+Definir ALfa aMsgAvi;
+Definir Alfa aTipRcs;  
+
+Definir Alfa aTipCol;  
+
+dDatSis = DatSis;
+dIniCmp = IniCmp;
+dFimCmp = FimCmp; 
+ConverteMascara(3, dIniCmp, aIniCmp, "DD/MM/YYYY"); 
+ConverteMascara(3, dFimCmp, aFimCmp, "DD/MM/YYYY");
+
+@ Apenas para teste @
+Definir Data dDatTes2; 
+MontaData(22, 11, 2024, dDatTes2); 
+ 
+@ Cursor para verificar os desligamentos realizados no dia @
+C038AFA.SQL"SELECT * FROM R038AFA WHERE DATAFA = :dDatSis AND SITAFA = 7";
+C038AFA.AbrirCursor()
+Enquanto(C038AFA.Achou){
+  nNumEmp = C038AFA.NumEmp;
+  nTipCol = C038AFA.TipCol; 
+  nNumCad = C038AFA.NumCad; 
+  dDatAfa = C038AFA.DatAfa;
+  
+  IntParaAlfa(nNumEmp, aNumEmp);
+  IntParaAlfa(nTipCol, aTipCol);
+  IntParaAlfa(nNumCad, aNumCad);
+  
+  @ Busca o nome do colaborador @
+  C034FUN.SQL"SELECT NOMFUN FROM R034FUN WHERE NUMEMP = :nNumEmp AND TIPCOL = :nTipCol AND NUMCAD = :nNumCad"; 
+  C034FUN.AbrirCursor()
+  Se(C034FUN.Achou){
+    aNomFun = C034FUN.NomFun; 
+  }
+  C034FUN.FecharCursor();
+
+  @ Busca o e-mail definido no campo customizado R014SIN.USU_EmaTer, R014SIN.USU_EmaTercc @ 
+  C014SIN.SQL"SELECT USU_EmaRes, USU_EmaCcRes FROM R014SIN WHERE CODSIN = 1";
+  C014SIN.AbrirCursor()
+  Se(C014SIN.Achou){
+    aEmaEnv = C014SIN.USU_EmaRes;
+    aEmaEcc = C014SIN.USU_EmaCcRes;
+  }
+  C014SIN.FecharCursor();
+  
+  @ Busca Dados adicionais da Rescisão do colaborador @
+  C042RCM.SQL"SELECT * FROM R042RCM WHERE NUMEMP = :nNumEmp AND TIPCOL = :nTipCol AND NUMCAD = :nNumCad";
+  C042RCM.AbrirCursor()
+  Se(C042RCM.Achou){
+    dDatDem = C042RCM.DatDem;
+    nCauDem = C042RCM.CauDem;
+    nCodRmd = C042RCM.CodRmd;
+    dDatPag = C042RCM.DatPag;
+    dFimCtt = C042RCM.FimCtt;
+    nTipRcs = C042RCM.USU_TipRcs;
+    
+    @ Verifica o Tipo de rescisão @
+    @ 1 - Normal @
+    Se(nTipRcs = 1){
+      aTipRcs = "N";  
+    }
+    
+    @ 2 - Complementar @
+    Se(nTipRcs = 2){
+      aTipRcs = "C";  
+    }
+  }
+  C042RCM.FecharCursor();
+    
+  @ Mensagem que será enviada junto com o e-mail @
+  ConverteMascara(3, dDatSis, aDatSis, "DD/MM/YYYY");
+  aMsg = "Segue em anexo o recibo de rescisão do colababorador(a): " + aNomFun + "," + 
+         " emitido em: " + aDatSis; 
+    
+  @ Definição do destinatário @
+  vEnvRel.prDest = aEmaEnv; 
+  
+  @ Verifica se existe um e-mail para cópia @
+  Se(aEmaEcc <> ""){
+    vEnvRel.prCC = aEmaEcc; 
+  } 
+  
+  @ ------------------------------------------------- @
+  @ Informações da tela de entrada modelo FP00015.RCS @ 
+  @ ------------------------------------------------- @
+  @ Número de Vias                                                N   @
+  @ Data de Inicio                                                D   @
+  @ Data de Término                                               D   @
+  @ Tipo de Rescisão (N, C, T)                                    A   @
+  @ Demonstrativo de médias (S/N)                                 A   @
+  @ Imprimir CNPJ                                                 A   @
+  @ Nome a exibir                                                 A   @
+  @ Base de remuneração                                           A   @
+  @ Base de remuneração tarefeiros                                A   @
+  @ Base de remuneração Professores                               A   @
+  @ Gerar verbas rescisórias                                      A   @
+  @ Código Afastamento                                            A   @
+  @ Layout do modelo                                              A   @
+  @ Contagem Numeração SubItens                                   A   @
+  @ Dias Saldo de salário                                         A   @
+  @ Descrição % Horas Extras noturnas                             A   @
+  @ Exibir Desconto Caract. 49H                                   A   @
+  @ Quebra de página                                              A   @
+  @ Exibir valores separados dos campos (63, 65, 66, 69, 70 e 71) A   @
+  @ Nome do preposto                                              A   @
+  @ Utiliza linha em branco                                       A   @
+  @ Utiliza linha total                                           A   @
+  @ Empresa (+)                                                   A   @
+  @ Tipo de colaborador (+)                                       A   @
+  @ Matricula (+)                                                 A   @
+  @ Filial (+)                                                    A   @
+  @ Local (+)                                                     A   @
+  @ Causa Rescisão (+)                                            A   @
+  @ Natureza evento (+)                                           A   @
+  @ Lote (+)                                                      A   @   
+  
+                                                                      
+  aTelEnt = " <ENumVia = 01>           \
+              <EDatIRs = "+aIniCmp+">  \    
+              <EDatFRs = "+aFimCmp+">  \        
+              <EtipRec = "+aTipRcs+">  \    
+              <EEmiDem = S>            \    
+              <ImpRec = S>             \    
+              <ENomExi = C>            \     
+              <EBasRem = S>            \    
+              <EBasTar = S>            \    
+              <EBasPrf = S>            \    
+              <EBusCam = C>            \    
+              <ECmp027 = S>            \    
+              <ELayout = F>            \    
+              <EIniCon = S>            \    
+              <EDiaSld = R>            \     
+              <EExtNot = 1>            \    
+              <EDes49H = 2>            \    
+              <EImpCab = S>            \    
+              <EValSep = S>            \    
+              <ENomPre = >             \    
+              <ELinBra = S>            \    
+              <ELinTot = S>            \     
+              <EAbrEmp = "+aNumEmp+">  \    
+              <EAbrTcl = "+aTipCol+">  \    
+              <EAbrCad = "+aNumCad+">  \    
+              <EAbrFil = >             \    
+              <EAbrLoc = >             \    
+              <EAbrCau = >             \    
+              <EAbrNat = >             \    
+              <EAbrLot = >";    
+              
+              
+  vEnvRel.prExecFmt       = "tefMail"; 
+  vEnvRel.prRemetente     = "senior@rhnossa.com.br";
+  vEnvRel.prAssunto       = "Recibo de Rescisão";
+  vEnvRel.prRelatorio     = "FP00015.RCS"; 
+  vEnvRel.prMensagem      = aMsg;
+  vEnvRel.prEntrada       = aTelEnt;     
+  vEnvRel.prSaveFormat    = "tsfPDF";
+  vEnvRel.prAnexoBool     = "T";
+  vEnvRel.prEntranceIsXML = "F"; 
+  vEnvRel.ModoExecucao    = 1;
+  vEnvRel.Executar(); 
+  
+  aErro = vEnvRel.erroExecucao;
+  
+  Se(aErro <> "") { 
+    Mensagem(retorna, aerro);       
+  }        
+  
+  C038AFA.Proximo();      
+}
+C038AFA.FecharCursor();  

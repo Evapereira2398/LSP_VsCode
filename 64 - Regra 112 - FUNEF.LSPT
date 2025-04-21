@@ -1,0 +1,972 @@
+@ Regra desenvolvida em 16/03/2017                                             @
+@ Para atender a Convenção Coletiva onde empregados com carga horária de 36    @
+@ horas semanais terão as primeiras 8 horas extras na semana pagas com         @
+@ percentual de 50% e as demais 100%. Empregados com carga horário igual a 44  @
+@ horas semanais sempre receberão 100%. A regra somente será executada para as @
+@ escalas com Clase de Escala 01 e 02.                                         @
+@ A regra 112 Cálculo Final gera os eventos com base nas informações que foram @
+@ executadas anteriormente pela regra 111 Geração                              @
+@------------------------------------------------------------------------------@
+@- Realizado ajuste em 28/06/2021, por Forbiz (Jefferson Reisdorfer)          -@
+@- Empregados com carga horária igual a 44 horas semanais receberão:          -@
+@- As primeiras 6 horas extras na semana pagas com percentual de 50%          -@
+@- E as demais com percentual de 100%                                         -@
+@- 44 horas semanais = Classe 2                                               -@
+@------------------------------------------------------------------------------@
+@ Alteração na regra - 07/03/2025                                              @
+@ Evanderson Pereira - CH 234359                                               @
+@ DescAtv: Atualmente a integração de ponto é feita pelas regras 111 e 112 do  @
+@ Controle de Ponto e é totalizado nos eventos 50, 52 e 502, se faz necessário @
+@ separar as horas noturnas integradas em novo evento.                         @
+@------------------------------------------------------------------------------@
+
+
+Se ((ClaEsc = 01) ou (ClaEsc = 02)) {
+    
+    xHorDif = 0; 
+
+    @ 44 Horas Semanais em minutos @
+    Se (HorSem >= 2640) {
+
+      @ Acima de 6 horas por semana de hora extra, vai para 100% @
+      xHorDif = 3000 - HorSem;         
+    
+      @ Verifica as marcações da Primeira Semana - Duurna@
+      Se(xHorSitPri > 0) {  
+        Se ((xHorDif > xExtAcu) e (xHorSitPri > 0) e (xExtAcu > 0) e (xHorSitPri > (xHorDif - xExtAcu))) {
+          xPriEvt52 = xHorSitPri - (xHorDif - xExtAcu);
+          xPriEvt50 = xHorSitPri - xPriEvt52;  
+        }
+          
+        @ Considera as Horas extras do período anterior @
+        Senao Se (xExtAcu >= xHorDif) {
+          xPriEvt50 = 0;    
+          xPriEvt52 = xHorSitPri;
+        }
+
+        Senao Se ((xExtAcu > 0) e (xExtAcu < xHorDif)) {
+          Se (xHorSitPri <= xHorDif) {
+            xTotSem = xExtAcu + xHorSitPri;
+            
+            Se (xTotSem > xHorDif) {
+              xPriEvt50 = xHorDif - xExtAcu;
+              xPriEvt52 = xTotSem - xHordif;
+            } 
+            Senao {
+              xPriEvt50 = xHorSitPri;
+              xPriEvt52 = 0;
+            }; 
+          }  
+              
+          Senao Se (xHorSitPri > xHorDif){
+            xPriEvt50 = 0;
+            xPriEvt52 = xHorSitPri;
+          }  
+        }
+      
+        Se (xExtAcu = 0) {
+          Se (xHorSitPri <= xHorDif) {
+            xPriEvt50 = xHorSitPri;
+            xPriEvt52 = 0;
+          }
+
+          Senao Se (xHorSitPri > xHorDif) {
+            xPriEvt50 = xHorDif;
+            xPriEvt52 = xHorSitPri - xHorDif;
+          }       
+        }
+      }
+
+      @ Verifica as marcações da Primeira Semana - Noturna @
+      Se(xHorSitPri > 0) {  
+        Se ((xHorDif > xExtAcu) e (xHorSitPri > 0) e (xExtAcu > 0) e (xHorSitPri > (xHorDif - xExtAcu))) {
+          xPriEvt52 = xHorSitPri - (xHorDif - xExtAcu);
+          xPriEvt50 = xHorSitPri - xPriEvt52;  
+        }
+          
+        @ Considera as Horas extras do período anterior @
+        Senao Se (xExtAcu >= xHorDif) {
+          xPriEvt50 = 0;    
+          xPriEvt52 = xHorSitPri;
+        }
+
+        Senao Se ((xExtAcu > 0) e (xExtAcu < xHorDif)) {
+          Se (xHorSitPri <= xHorDif) {
+            xTotSem = xExtAcu + xHorSitPri;
+                
+            Se (xTotSem > xHorDif) {
+              xPriEvt50 = xHorDif - xExtAcu;
+              xPriEvt52 = xTotSem - xHordif;
+            } 
+            Senao {
+              xPriEvt50 = xHorSitPri;
+              xPriEvt52 = 0;
+            }
+          }  
+            
+          Senao Se (xHorSitPri > xHorDif){
+            xPriEvt50 = 0;
+            xPriEvt52 = xHorSitPri;
+          }  
+        }
+      
+        Se (xExtAcu = 0) {
+          Se (xHorSitPri <= xHorDif) {
+            xPriEvt50 = xHorSitPri;
+            xPriEvt52 = 0;
+          }
+
+          Senao Se (xHorSitPri > xHorDif) {
+            xPriEvt50 = xHorDif;
+            xPriEvt52 = xHorSitPri - xHorDif;
+          }       
+        }
+      }
+        
+
+      @ ======================================= @
+      @ Verifica as marcações da Segunda Semana @
+      @ ======================================= @
+
+      @ ------Horas extras diurnas -------- @
+      @ Se tiver hora extra na primeira semana @
+      Se (xHorExtSeg > 0) {
+
+        @ Se a quantidade de horas extras for menor que 360min (6hrs)@
+        Se (xHorExtSeg <= 360) {
+          xSegEvt50 = xHorExtSeg; @ Evento 50 - Horas Extras 50% - Diurna, vai receber a qtd de hrs extras encontrada na primeira semana@
+          xSegEvt52 = 0; @ Evento 52 - Horas Extras 100% - Diurno fica zerado  @
+        }
+
+        @ Se a qtd de hrs extras não for menor que 360min (6hrs) @
+        Senao {
+          xSegEvt50 = 360; @ Evento 50 - Horas Extras 50% - Diurna, vai 360min fixo (6hrs)a@
+          xSegEvt52 = xHorExtSeg - xSegEvt50; @ Evento 52 - Horas Extras 100% - Diurno vai rexcber a quantidade de horas encontrdas menos os 360min (6hrs) @
+        }
+      }
+
+      @ ------Horas extras Noturna -------- @
+      @ Se tiver hora extra noturna na primeira semana @
+      Se (xExtNotSeg > 0) {
+
+        @ Se a quantidade de horas extras not for menor que 360min (6hrs)@
+        Se (xExtNotSeg <= 360) {
+          xSegEvtxx = xExtNotSeg; @ Evento xx - Horas Extras 50% - Noturna, vai receber a qtd de hrs extras not encontrada na primeira semana @
+          xSegEvtxx = 0; @ Evento xx - Horas Extras not 100% - fica zerado  @
+        }
+
+        @ Se a qtd de hrs extras not não for menor que 360min (6hrs) @
+        Senao {
+          xSegEvtxx = 360; @ Evento xx - Horas Extras 50% - Noturna, vai 360min fixo (6hrs) @ 
+          xSegEvtxx = xExtNotSeg - xSegEvtxx; @ Evento xx - Horas Extras 100% - not vai rexcber a quantidade de horas encontrdas menos os 360min (6hrs) @ 
+        }
+      }
+
+      @ ======================================== @
+      @ Verifica as marcações da Terceira Semana @
+      @ ======================================== @
+
+      @ ------Horas extras diurnas -------- @
+      Se (xHorExtTer > 0) {
+        Se (xHorExtTer <= 360){
+          xTerEvt50 = xHorExtTer;
+          xTerEvt52 = 0;
+        }
+        Senao {
+          xTerEvt50 = 360;
+          xTerEvt52 = xHorExtTer - xTerEvt50;
+        }
+      }
+
+      @ ------Horas extras Noturna -------- @
+      Se (xExtNotTer > 0) {
+        Se (xExtNotTer <= 360){
+          xTerEvtxx = xExtNotTer;
+          xTerEvtxx = 0;
+        }
+        Senao {
+          xTerEvtxx = 360;
+          xTerEvtxx = xExtNotTer - xTerEvt50;
+        }
+      }
+        
+      @ ====================================== @
+      @ Verifica as marcações da Quarta Semana @
+      @ ====================================== @
+      
+      @ ------Horas extras diurnas -------- @
+      Se (xHorExtQua > 0) {
+        Se (xHorExtQua <= 360){
+          xQuaEvt50 = xHorExtQua;
+          xQuaEvt52 = 0;
+        }
+        Senao {
+          xQuaEvt50 = 360;
+          xQuaEvt52 = xHorExtQua - xQuaEvt50;
+        }
+      } 
+      
+      @ ------Horas extras Noturna -------- @
+      Se (xExtNotQua > 0) {
+        Se (xExtNotQua <= 360){
+          xQuaEvtxx = xExtNotQua;
+          xQuaEvtxx = 0;
+        }
+        Senao {
+          xQuaEvtxx = 360;
+          xQuaEvtxx = xExtNotQua - xQuaEvt50;
+        }
+      }
+        
+      @ ====================================== @
+      @ Verifica as marcações da Quinta Semana @
+      @ ====================================== @
+      
+      @ ------Horas extras diurnas -------- @
+      Se (xHorExtQui > 0) {
+        Se (xHorExtQui <= 360){
+          xQuiEvt50 = xHorExtQui;
+          xQuiEvt52 = 0;
+        }
+        Senao {
+          xQuiEvt50 = 360;
+          xQuiEvt52 = xHorExtQui - xQuiEvt50;
+        }
+      }
+
+      @ ------Horas extras Noturna -------- @
+      Se (xExtNotQui > 0) {
+        Se (xExtNotQui <= 360){
+          xQuiEvtxx = xExtNotQui;
+          xQuiEvtxx = 0;
+        }
+        Senao {
+          xQuiEvtxx = 360;
+          xQuiEvtxx = xExtNotQui - xQuiEvt50;
+        }
+      }
+              
+
+      @ ===================================== @
+      @ Verifica as marcações da sexta Semana @
+      @ ===================================== @
+      
+      @ ------Horas extras diurnas -------- @
+      Se (xHorExtSex > 0) {
+        Se (xHorExtSex <= 360){
+          xSexEvt50 = xHorExtSex;
+          xSexEvt52 = 0;
+        }
+        Senao {
+          xSexEvt50 = 360;
+          xSexEvt52 = xHorExtSex - xSexEvt50;
+        }
+      }
+      
+      @ ------Horas extras Noturna -------- @
+      Se (xExtNotSex > 0) {
+        Se (xExtNotSex <= 360){
+          xSexEvtxx = xExtNotSex;
+          xSexEvtxx = 0;
+        }
+        Senao {
+          xSexEvtxx = 360;
+          xSexEvtxx = xExtNotSex - xSexEvt50;
+        }
+      }
+
+      @ ====================================== @
+      @ Verifica as marcações da setima Semana @
+      @ ====================================== @
+      
+      @ ------Horas extras diurnas -------- @
+      Se (xHorExtSet > 0) {
+        Se (xHorExtSet <= 360) {
+          SetEvt50 = xHorExtSet;
+          xSetEvt52 = 0;
+        }
+        Senao {
+          xSetEvt50 = 360;
+          xSetEvt52 = xHorExtSet - xSetEvt50;
+        }
+      }
+
+      @ ------Horas extras Noturna -------- @
+      Se (xExtNotSet > 0) {
+        Se (xExtNotSet <= 360) {
+          SetEvtxx = xExtNotSet;
+          xSetEvtxx = 0;
+        }
+        Senao {
+          xSetEvtxx = 360;
+          xSetEvtxx = xExtNotSet - xSetEvt50;
+        }
+      }
+    }
+    
+
+    @ Escalas com horas semanais menores que 44 horas @
+    Senao Se (HorSem < 2640) {
+      
+      xHorDif = 2640 - HorSem;              
+        
+      @ Verifica as marcações da Primeira Semana - Durna@
+      Se (xHorSitPri > 0){
+        Se ((xHorDif > xExtAcu) E (xHorSitPri > 0) E (xExtAcu > 0) E (xHorSitPri > (xHorDif - xExtAcu))) {
+          xPriEvt52 = xHorSitPri - (xHorDif - xExtAcu);
+          xPriEvt50 = xHorSitPri - xPriEvt52;  
+        }
+
+        @ Considera as Horas extras do período anterior @
+        Senao Se (xExtAcu >= xHorDif){
+          xPriEvt50 = 0;    
+          xPriEvt52 = xHorSitPri;
+        }
+            
+        Senao Se ((xExtAcu > 0) e (xExtAcu < xHorDif)) {
+          Se (xHorSitPri <= xHorDif) {                
+            xTotSem = xExtAcu + xHorSitPri;
+        
+            Se (xTotSem > xHorDif){
+              xPriEvt50 = xHorDif - xExtAcu;
+              xPriEvt52 = xTotSem - xHordif;
+            } 
+            Senao {
+              xPriEvt50 = xHorSitPri;
+              xPriEvt52 = 0;
+            }
+          }  
+
+          Se (xHorSitPri > xHorDif){
+            xPriEvt50 = 0;
+            xPriEvt52 = xHorSitPri;
+          }  
+        }
+
+        Senao Se (xExtAcu = 0) {
+          Se (xHorSitPri <= xHorDif) {
+            xPriEvt50 = xHorSitPri;
+            xPriEvt52 = 0;
+          }
+          Senao Se (xHorSitPri > xHorDif) {
+            xPriEvt50 = xHorDif;
+            xPriEvt52 = xHorSitPri - xHorDif;
+          }       
+        }
+      }
+
+
+      @ Verifica as marcações da Primeira Semana - Noturna @
+      Se (xHorSitPri > 0){
+        Se ((xHorDif > xExtAcu) E (xHorSitPri > 0) E (xExtAcu > 0) E (xHorSitPri > (xHorDif - xExtAcu))) {
+          xPriEvt52 = xHorSitPri - (xHorDif - xExtAcu);
+          xPriEvt50 = xHorSitPri - xPriEvt52;  
+        }
+
+        @ Considera as Horas extras do período anterior @
+        Senao Se (xExtAcu >= xHorDif){
+          xPriEvt50 = 0;    
+          xPriEvt52 = xHorSitPri;
+        }
+        
+        Senao Se ((xExtAcu > 0) e (xExtAcu < xHorDif)) {
+          Se (xHorSitPri <= xHorDif) {                
+            xTotSem = xExtAcu + xHorSitPri;
+          
+            Se (xTotSem > xHorDif){
+              xPriEvt50 = xHorDif - xExtAcu;
+              xPriEvt52 = xTotSem - xHordif;
+            } 
+            Senao {
+              xPriEvt50 = xHorSitPri;
+              xPriEvt52 = 0;
+            }
+          }  
+
+          Se (xHorSitPri > xHorDif){
+            xPriEvt50 = 0;
+            xPriEvt52 = xHorSitPri;
+          }  
+        }
+
+        Senao Se (xExtAcu = 0) {
+          Se (xHorSitPri <= xHorDif) {
+            xPriEvt50 = xHorSitPri;
+            xPriEvt52 = 0;
+          }
+          Senao Se (xHorSitPri > xHorDif) {
+            xPriEvt50 = xHorDif;
+            xPriEvt52 = xHorSitPri - xHorDif;
+          }       
+        }
+      }
+
+      @ ======================================= @
+      @ Verifica as marcações da Segunda Semana @
+      @ ======================================= @
+
+      @ Diruna @
+      Se (xHorExtSeg > 0){
+        Se (xHorExtSeg <= xHorDif) {
+          xSegEvt50 = xHorExtSeg;
+          xSegEvt52 = 0;
+        }
+          
+        Senao Se (xHorExtSeg > xHorDif) {
+          xSegEvt50 = xHorDif;
+          xSegEvt52 = xHorExtSeg - xHorDif;
+        }       
+      }
+
+      @ Noturna @
+      Se (xExtNotSeg > 0){
+        Se (xExtNotSeg <= xHorDif) {
+          xSegEvtxx = xExtNotSeg;
+          xSegEvtxx = 0;
+        }
+        
+        Senao Se (xExtNotSeg > xHorDif) {
+          xSegEvtxx = xHorDif;
+          xSegEvtxx = xExtNotSeg - xHorDif;
+        }       
+      }
+
+      @ ======================================== @
+      @ Verifica as marcações da Terceira Semana @
+      @ ======================================== @
+
+      @ Diruna @
+      Se (xHorExtTer > 0) {
+        Se (xHorExtTer <= xHorDif) {
+          xTerEvt50 = xHorExtTer;
+          xTerEvt52 = 0;
+        }
+        
+        Senao Se (xHorExtTer > xHorDif) {
+          xTerEvt50 = xHorDif;
+          xTerEvt52 = xHorExtTer - xHorDif;
+        }       
+      }
+
+      @ Noturna @
+      Se (xExtNotTer > 0) {
+        Se (xExtNotTer <= xHorDif) {
+          xTerEvtxx = xExtNotTer;
+          xTerEvtxx = 0;
+        }
+      
+        Senao Se (xExtNotTer > xHorDif) {
+          xTerEvtxx = xHorDif;
+          xTerEvtxx = xExtNotTer - xHorDif;
+        }       
+      }
+
+      @ ====================================== @
+      @ Verifica as marcações da Quarta Semana @
+      @ ====================================== @
+
+      @ Diruna @
+      Se (xHorExtQua > 0) {
+        Se (xHorExtQua <= xHorDif) {
+          xQuaEvt50 = xHorExtQua;
+          xQuaEvt52 = 0;
+        }
+        Senao Se (xHorExtQua > xHorDif) {
+          xQuaEvt50 = xHorDif;
+          xQuaEvt52 = xHorExtQua - xHorDif;
+        }       
+      }
+
+      @ Noturna @
+      Se (xExtNotQua > 0) {
+        Se (xExtNotQua <= xHorDif) {
+          xQuaEvtxx = xExtNotQua;
+          xQuaEvtxx = 0;
+        }
+        Senao Se (xExtNotQua > xHorDif) {
+          xQuaEvtxx = xHorDif;
+          xQuaEvtxx = xExtNotQua - xHorDif;
+        }       
+      }
+
+      @ ====================================== @
+      @ Verifica as marcações da Quinta Semana @
+      @ ====================================== @
+
+      @ Diruna @
+      Se (xHorExtQui > 0) {
+        Se (xHorExtQui <= xHorDif) {
+          xQuiEvt50 = xHorExtQui;
+          xQuiEvt52 = 0;
+        }
+        Senao Se (xHorExtQui > xHorDif) {
+          xQuiEvt50 = xHorDif;
+          xQuiEvt52 = xHorExtQui - xHorDif;
+        } 
+      }
+
+      @ Noturna @
+      Se (xExtNotQui > 0) {
+        Se (xExtNotQui <= xHorDif) {
+          xQuiEvtxx = xExtNotQui;
+          xQuiEvtxx = 0;
+        }
+        Senao Se (xExtNotQui > xHorDif) {
+          xQuiEvtxx = xHorDif;
+          xQuiEvtxx = xExtNotQui - xHorDif;
+        } 
+      }
+        
+      @ ===================================== @
+      @ Verifica as marcações da sexta Semana @
+      @ ===================================== @
+
+      @ Diruna @
+      Se (xHorExtSex > 0) {
+        Se (xHorExtSex <= xHorDif) {
+          xSexEvt50 = xHorExtSex;
+          xSexEvt52 = 0;
+        }
+        Senao Se (xHorExtSex > xHorDif) {
+          xSexEvt50 = xHorDif;
+          xSexEvt52 = xHorExtSex - xHorDif;
+        }  
+      }  
+      
+      @ Noturna @
+      Se (xExtNotSex > 0) {
+        Se (xExtNotSex <= xHorDif) {
+          xSexEvtxx = xExtNotSex;
+          xSexEvtxx = 0;
+        }
+        Senao Se (xExtNotSex > xHorDif) {
+          xSexEvtxx = xHorDif;
+          xSexEvtxx = xExtNotSex - xHorDif;
+        }  
+      }
+        
+      @ ====================================== @
+      @ Verifica as marcações da setima Semana @
+      @ ====================================== @
+
+      @ Diruna @
+      Se (xHorExtSet > 0) {
+        Se (xHorExtSet <= xHorDif) {
+          xSetEvt50 = xHorExtSet;
+          xSetEvt52 = 0;
+        }
+        Senao Se (xHorExtSet > xHorDif){
+          xSetEvt50 = xHorDif;
+          xSetEvt52 = xHorExtSet - xHorDif;
+        }              
+      }
+
+      @ Noturna @
+      Se (xExtNotSet > 0) {
+        Se (xExtNotSet <= xHorDif) {
+          xSetEvtxx = xExtNotSet;
+          xSetEvtxx = 0;
+        }
+        Senao Se (xExtNotSet > xHorDif){
+          xSetEvtxx = xHorDif;
+          xSetEvtxx = xExtNotSet - xHorDif;
+        }              
+      }
+    }  
+
+    @ Soma todos os eventos de todas as semanas @  
+    @ Evento 50 - Horas Extras 50%   @
+    @ Evento 52 - Horas Extras 100%  @
+    @ Evento 520 - Horas Faltas DSR  @
+
+    @ Eventos novos @
+    @ Evento xx - Hora Extra Noturna 50%  @
+    @ Evento xx - Hora Extra Noturna 100% @    
+    CodEvt[50] = xPriEvt50 + xSegEvt50 + xTerEvt50 + xQuaEvt50 + xQuiEvt50 + xSexEvt50 + xSetEvt50 + xHorSit301; 
+    CodEvt[52] = CodEvt[52] + xPriEvt52 + xSegEvt52 + xTerEvt52 + xQuaEvt52 + xQuiEvt52 + xSexEvt52 + XSetEvt52; 
+    CodEvt[xx] =     
+    CodEvt[xx] = 
+
+    CodEvt[520]=  xHorSitPriDsr + xHorSitSegDsr + xHorSitTerDsr + xHorSitQuaDsr + xHorSitQuiDsr +  xHorSitSexDsr +  xHorSitSetDsr;
+
+    xHorSitPriDsr = 0;
+    xHorSitSegDsr = 0;
+    xHorSitTerDsr = 0;
+    xHorSitQuaDsr = 0;
+    xHorSitQuiDsr = 0;
+    xHorSitSexDsr = 0;
+    xHorSitSetDsr = 0;  
+    xHorSitPri = 0;
+    xHorSitSeg = 0;
+    xHorSitTer = 0;
+    xHorSitQua = 0;
+    xHorSitQui = 0;
+    xHorSitSex = 0;
+    xHorSitSet = 0;
+    xHorSit301 = 0;   
+    xExtAcu    = 0;
+    xSem       = 0;
+    xVolSem    = 0;
+    xPriEvt50  = 0; 
+    xSegEvt50  = 0; 
+    xTerEvt50  = 0; 
+    xQuaEvt50  = 0; 
+    xQuiEvt50  = 0; 
+    xSexEvt50  = 0;
+    xSetEvt50  = 0;
+    xPriEvt52  = 0; 
+    xSegEvt52  = 0; 
+    xTerEvt52  = 0; 
+    xQuaEvt52  = 0; 
+    xQuiEvt52  = 0;
+    xSexEvt52  = 0;
+    XSetEvt52  = 0;
+                             
+}
+
+
+
+/*
+
+
+REGRA ANTERIOR 
+
+@ Regra desenvolvida em 16/03/2017                                             @
+@ Para atender a Convenção Coletiva onde empregados com carga horária de 36    @
+@ horas semanais terão as primeiras 8 horas extras na semana pagas com         @
+@ percentual de 50% e as demais 100%. Empregados com carga horário igual a 44  @
+@ horas semanais sempre receberão 100%. A regra somente será executada para as @
+@ escalas com Clase de Escala 01 e 02.                                         @
+@ A regra 112 Cálculo Final gera os eventos com base nas informações que foram @
+@ executadas anteriormente pela regra 111 Geração                              @
+
+Se ((ClaEsc = 01) ou (ClaEsc = 02))
+Inicio
+  xHorDif = 0; 
+  Se (HorSem >= 2640) @ 44 Horas Semanais em minutos @
+  Inicio
+    /*retirado em 28/06/2021, por Forbiz (Jefferson Reisdorfer), conforme objetivo acima    
+         Inicio          @ Escala com 44 Horas Semanais sempre terão Horas Extras 100% @
+           xPriEvt52  = xHorSitPri + xHorSitSeg + xHorSitTer + xHorSitQua + xHorSitQui + xHorSitSex + xHorSitSet;
+         Fim
+      */
+      
+    /*xHorDif = 3000 - HorSem;         
+    @- acima de 6 horas por semana de hora extra, vai para 100% -@    
+                                                                                
+    Se (xHorSitPri > 0)    @ Verifica as marcações da Primeira Semana @
+    Inicio
+      Se ((xHorDif > xExtAcu) E (xHorSitPri > 0)  E (xExtAcu > 0) E (xHorSitPri > (xHorDif - xExtAcu)))
+      Inicio
+        xPriEvt52 = xHorSitPri - (xHorDif - xExtAcu);
+        xPriEvt50 = xHorSitPri - xPriEvt52;  
+      Fim
+      
+      Senao Se (xExtAcu >= xHorDif)  @ Considera as Horas extras do período anterior @
+      Inicio
+        xPriEvt50 = 0;    
+        xPriEvt52 = xHorSitPri;
+      Fim
+      Senao Se ((xExtAcu > 0) e (xExtAcu < xHorDif))
+      Inicio
+        Se (xHorSitPri <= xHorDif)
+        Inicio
+          /*xHorSitAnt = xHorDif - xExtAcu;  
+          xPriEvt50 = xHorSitAnt;                Comentado por: Everton Ribeiro  Chamado: 70404   Tarefa: 208
+          xPriEvt52 = xHorSitPri - xHorSitAnt; */ 
+          /*xTotSem = xExtAcu + xHorSitPri;
+          Se (xTotSem > xHorDif)
+          Inicio
+            xPriEvt50 = xHorDif - xExtAcu;
+            xPriEvt52 = xTotSem - xHordif;
+          Fim 
+          Senao
+          Inicio
+            xPriEvt50 = xHorSitPri;
+            xPriEvt52 = 0;
+          Fim; 
+        Fim  
+        Senao Se (xHorSitPri > xHorDif)
+        Inicio
+          xPriEvt50 = 0;
+          xPriEvt52 = xHorSitPri;
+        Fim  
+      Fim
+      Se (xExtAcu = 0)
+      Inicio
+        Se (xHorSitPri <= xHorDif)
+        Inicio
+          xPriEvt50 = xHorSitPri;
+          xPriEvt52 = 0;
+        Fim
+        Senao
+        Se (xHorSitPri > xHorDif)
+        Inicio
+          xPriEvt50 = xHorDif;
+          xPriEvt52 = xHorSitPri - xHorDif;
+        Fim       
+      Fim
+    Fim
+      
+    Se (xHorSitSeg > 0)  @ Verifica as marcações da Segunda Semana @
+    Inicio
+      Se (xHorSitSeg <= 360)
+      Inicio
+        xSegEvt50 = xHorSitSeg;
+        xSegEvt52 = 0;
+      Fim
+      Senao 
+      Inicio
+        xSegEvt50 = 360;
+        xSegEvt52 = xHorSitSeg - xSegEvt50;
+      Fim
+    Fim
+    
+    Se (xHorSitTer > 0)  @ Verifica as marcações da Terceira Semana @
+    Inicio
+      Se (xHorSitTer <= 360)
+      Inicio
+        xTerEvt50 = xHorSitTer;
+        xTerEvt52 = 0;
+      Fim
+      Senao 
+      Inicio
+        xTerEvt50 = 360;
+        xTerEvt52 = xHorSitTer - xTerEvt50;
+      Fim
+    Fim
+    
+    Se (xHorSitQua > 0)  @ Verifica as marcações da Quarta Semana @
+    Inicio
+      Se (xHorSitQua <= 360)
+      Inicio
+        xQuaEvt50 = xHorSitQua;
+        xQuaEvt52 = 0;
+      Fim
+      Senao 
+      Inicio
+        xQuaEvt50 = 360;
+        xQuaEvt52 = xHorSitQua - xQuaEvt50;
+      Fim
+    Fim   
+    
+    Se (xHorSitQui > 0)  @ Verifica as marcações da Quinta Semana @
+    Inicio
+      Se (xHorSitQui <= 360)
+      Inicio
+        xQuiEvt50 = xHorSitQui;
+        xQuiEvt52 = 0;
+      Fim
+      Senao 
+      Inicio
+        xQuiEvt50 = 360;
+        xQuiEvt52 = xHorSitQui - xQuiEvt50;
+      Fim
+    Fim
+              
+      Se (xHorSitSex > 0)  @ Verifica as marcações da sexta Semana @
+      Inicio
+        Se (xHorSitSex <= 360)
+        Inicio
+          xSexEvt50 = xHorSitSex;
+          xSexEvt52 = 0;
+        Fim
+        Senao 
+        Inicio
+          xSexEvt50 = 360;
+          xSexEvt52 = xHorSitSex - xSexEvt50;
+        Fim
+      Fim
+      
+      Se (xHorSitSex > 0)  @ Verifica as marcações da setima Semana @
+      Inicio
+        Se (xHorSitSet <= 360)
+        Inicio
+          xSetEvt50 = xHorSitSet;
+          xSetEvt52 = 0;
+        Fim
+        Senao 
+        Inicio
+          xSetEvt50 = 360;
+          xSetEvt52 = xHorSitSet - xSetEvt50;
+        Fim
+      Fim
+    Fim
+    
+    Senao
+    Se (HorSem < 2640)  @ Escalas com horas semanais menores que 44 horas    @
+    Inicio
+      xHorDif = 2640 - HorSem;              
+      Se (xHorSitPri > 0)    @ Verifica as marcações da Primeira Semana @
+      Inicio
+        Se ((xHorDif > xExtAcu) E (xHorSitPri > 0) E (xExtAcu > 0) E (xHorSitPri > (xHorDif - xExtAcu)))
+        Inicio
+          xPriEvt52 = xHorSitPri - (xHorDif - xExtAcu);
+          xPriEvt50 = xHorSitPri - xPriEvt52;  
+        Fim
+        Senao Se (xExtAcu >= xHorDif)  @ Considera as Horas extras do período anterior @
+        Inicio
+          xPriEvt50 = 0;    
+          xPriEvt52 = xHorSitPri;
+        Fim
+        Senao Se ((xExtAcu > 0) e (xExtAcu < xHorDif))
+        Inicio
+          Se (xHorSitPri <= xHorDif)
+          Inicio
+            /*xHorSitAnt = xHorDif - xExtAcu;  
+            xPriEvt50 = xHorSitAnt;                Comentado por: Everton Ribeiro  Chamado: 70404   Tarefa: 208
+            xPriEvt52 = xHorSitPri - xHorSitAnt; */ 
+            /*xTotSem = xExtAcu + xHorSitPri;
+            Se (xTotSem > xHorDif)
+            Inicio
+              xPriEvt50 = xHorDif - xExtAcu;
+              xPriEvt52 = xTotSem - xHordif;
+            Fim 
+            Senao
+            Inicio
+              xPriEvt50 = xHorSitPri;
+              xPriEvt52 = 0;
+            Fim; 
+          Fim  
+          Se (xHorSitPri > xHorDif)
+          Inicio
+            xPriEvt50 = 0;
+            xPriEvt52 = xHorSitPri;
+          Fim  
+        Fim
+        Senao Se (xExtAcu = 0)
+        Inicio
+          Se (xHorSitPri <= xHorDif)
+          Inicio
+            xPriEvt50 = xHorSitPri;
+            xPriEvt52 = 0;
+          Fim
+          Senao
+          Se (xHorSitPri > xHorDif)
+          Inicio
+            xPriEvt50 = xHorDif;
+            xPriEvt52 = xHorSitPri - xHorDif;
+          Fim       
+        Fim
+      Fim
+      Se (xHorSitSeg > 0)  @ Verifica as marcações da Segunda Semana @
+      Inicio
+        Se (xHorSitSeg <= xHorDif)
+        Inicio
+          xSegEvt50 = xHorSitSeg;
+          xSegEvt52 = 0;
+        Fim
+        Senao Se (xHorSitSeg > xHorDif)
+          Inicio
+            xSegEvt50 = xHorDif;
+            xSegEvt52 = xHorSitSeg - xHorDif;
+          Fim       
+        Fim
+        Se (xHorSitTer > 0)  @ Verifica as marcações da Terceira Semana @
+        Inicio
+          Se (xHorSitTer <= xHorDif)
+          Inicio
+            xTerEvt50 = xHorSitTer;
+            xTerEvt52 = 0;
+          Fim
+          Senao Se (xHorSitTer > xHorDif)
+          Inicio
+            xTerEvt50 = xHorDif;
+            xTerEvt52 = xHorSitTer - xHorDif;
+          Fim       
+        Fim
+        Se (xHorSitQua > 0)  @ Verifica as marcações da Quarta Semana @
+        Inicio
+          Se (xHorSitQua <= xHorDif)
+          Inicio
+            xQuaEvt50 = xHorSitQua;
+            xQuaEvt52 = 0;
+          Fim
+          Senao Se (xHorSitQua > xHorDif)
+          Inicio
+            xQuaEvt50 = xHorDif;
+            xQuaEvt52 = xHorSitQua - xHorDif;
+          Fim       
+        Fim
+        Se (xHorSitQui > 0)  @ Verifica as marcações da Quinta Semana @
+        Inicio
+          Se (xHorSitQui <= xHorDif)
+          Inicio
+            xQuiEvt50 = xHorSitQui;
+            xQuiEvt52 = 0;
+          Fim
+          Senao Se (xHorSitQui > xHorDif)
+          Inicio
+            xQuiEvt50 = xHorDif;
+            xQuiEvt52 = xHorSitQui - xHorDif;
+          Fim 
+        Fim        
+        Se (xHorSitSex > 0)  @ Verifica as marcações da sexta Semana @
+        Inicio
+          Se (xHorSitSex <= xHorDif)
+          Inicio
+            xSexEvt50 = xHorSitSex;
+            xSexEvt52 = 0;
+          Fim
+        Senao Se (xHorSitSex > xHorDif)
+        Inicio
+          xSexEvt50 = xHorDif;
+          xSexEvt52 = xHorSitSex - xHorDif;
+        Fim  
+      Fim       
+      Se (xHorSitSex > 0)  @ Verifica as marcações da setima Semana @
+      Inicio
+        Se (xHorSitSet <= xHorDif)
+        Inicio
+          xSetEvt50 = xHorSitSet;
+          xSetEvt52 = 0;
+        Fim
+      Senao Se (xHorSitSet > xHorDif)
+      Inicio
+        xSetEvt50 = xHorDif;
+        xSetEvt52 = xHorSitSet - xHorDif;
+      Fim              
+    Fim
+  Fim  
+
+  @ Soma todos os eventos de todas as semanas @         
+  CodEvt[50] =  xPriEvt50 + xSegEvt50 + xTerEvt50 + xQuaEvt50 + xQuiEvt50 + xSexEvt50 + xSetEvt50 + xHorSit301; @ 50% @ 
+  CodEvt[52] =  CodEvt[52] + xPriEvt52 + xSegEvt52 + xTerEvt52 + xQuaEvt52 + xQuiEvt52 + xSexEvt52 + XSetEvt52; @ 100% @
+ /* CodEvt{54] =                                                                                                  @ 50% Noturno @
+  CodEvt[55] =                                                                                                 @ 100% Noturno @   */
+  /*CodEvt[520]=  xHorSitPriDsr + xHorSitSegDsr + xHorSitTerDsr + xHorSitQuaDsr + xHorSitQuiDsr +  xHorSitSexDsr +  xHorSitSetDsr;
+  
+  xHorSitPri = 0;
+  xHorSitSeg = 0;
+  xHorSitTer = 0;
+  xHorSitQua = 0;
+  xHorSitQui = 0;
+  xHorSitSex = 0;
+  xHorSitSet = 0;
+  xHorSitPriDsr = 0;
+  xHorSitSegDsr = 0;
+  xHorSitTerDsr = 0;
+  xHorSitQuaDsr = 0;
+  xHorSitQuiDsr = 0;
+  xHorSitSexDsr = 0;
+  xHorSitSetDsr = 0;
+  xHorSit301 = 0;   
+  xExtAcu    = 0;
+  xSem      = 0;
+  xVolSem   = 0;
+  xPriEvt50 = 0; 
+  xSegEvt50 = 0; 
+  xTerEvt50 = 0; 
+  xQuaEvt50 = 0; 
+  xQuiEvt50 = 0; 
+  xSexEvt50 = 0;
+  xSetEvt50 = 0;
+  xPriEvt52 = 0; 
+  xSegEvt52 = 0; 
+  xTerEvt52 = 0; 
+  xQuaEvt52 = 0; 
+  xQuiEvt52 = 0;
+  xSexEvt52 = 0;
+  XSetEvt52 = 0;
+                             
+Fim; */

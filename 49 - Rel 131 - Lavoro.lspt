@@ -1,0 +1,659 @@
+@ Valores da tela de entrada @
+Definir Alfa ETipExe;
+Definir Alfa EAbrEmp;
+Definir Alfa EAbrCol;
+Definir Data dDatAci;
+
+@ Monta data zerada @
+Definir Data dDatZer;
+MontaData(31, 12, 1900, dDatZer);
+dDatRef = EDatIni;
+
+@ Define o inicio e fim do mês de referencia @
+Definir Data dDatIni;
+Definir Data dDatFim;
+dDatIni = EDatIni;
+dDatFim = dDatIni;
+UltimoDia(dDatFim); 
+
+@ Monta a abrangência para o campo NumEmp @
+Definir Alfa EAbrEmp;
+Definir Alfa PCodEmp;
+PCodEmp = ""; 
+
+MontaAbrangencia("R034FUN.NumEmp", EAbrEmp, PCodEmp);
+EstaNulo(PCodEmp, vRet1);
+Se(vRet1 = 0) {
+  PCodEmp = " AND " + PCodEmp;
+}
+
+@ ================================================== @
+@ Deletar dados (D - Deletar dados, tela de entrada) @
+@ ================================================== @
+Definir Alfa aNumEmp;
+Definir Alfa aMsgRet;
+
+Se ((ETipExe = "D") ou (ETipExe = "d")) {
+  ExecSql"DELETE USU_THISFUN WHERE USU_DATREF >= :dDatIni AND USU_DATREF <= :dDatFim AND USU_NUMEMP IN (:EAbrEmp)";               
+  
+  @ Mensagem de sucesso da exclusão @
+  aNumEmp = EAbrEmp;
+  aMsgRet = "Os dados das empresas " + aNumEmp + " foram deletados!";
+  Mensagem(Retorna, aMsgRet);
+  Cancel(1);
+}
+
+
+@ ============================================== @
+@ Gerar dados (G - Gerar dados, tela de entrada) @
+@ ============================================== @
+Definir Cursor CR034FUN;
+Definir Data dDatAdm;
+Definir Data dDatNas; 
+Definir Alfa aNomFun;
+Definir Alfa aConDef;
+Definir Alfa aTipSex;
+
+CR034FUN.sql"SELECT * FROM R034FUN WHERE TIPCOL = 1 __Inserir(:PCodEmp)";  
+CR034FUN.AbrirCursor()
+Enquanto (CR034FUN.Achou) {  
+  nNumEmp = 0;
+  nTipCol = 0;
+  nNumCad = 0;
+  nGraIns = 0;
+  nCauDem = 0;
+  nTipCon = 0;
+  nCodDef = 0;
+  aTipSex = "";
+  aNomFun = "";
+  aConDef = "";
+  dDatAdm = dDatZer;
+  dDatNas = dDatZer;
+  
+  @ Seta as variaveis basicas @
+  nNumEmp = CR034FUN.NumEmp;
+  nTipCol = CR034FUN.TipCol;
+  nNumCad = CR034FUN.NumCad;
+  aTipSex = CR034FUN.TipSex;
+  nGraIns = CR034FUN.GraIns;
+  aNomFun = CR034FUN.NomFun;
+  dDatAdm = CR034FUN.DatAdm;
+  nTipCon = CR034FUN.TipCon;
+  aConDef = CR034FUN.DefFis;
+  nCodDef = CR034FUN.CodDef;
+  dDatNas = CR034FUN.DatNas;
+  nNumCpf = CR034FUN.NumCpf;
+  nRacCor = CR034FUN.RacCor;
+  
+  @ Primeiro e ultimo dia do mês de referencia setado na tela de entrada @
+  Enquanto (dDatIni <= dDatFim) {
+    Se (dDatAdm <= dDatIni) {   
+                
+      @ Busca o Posto do Colaborador @
+      Definir Alfa aPosTra;
+      Definir Alfa aDesPos;
+      RetornaPostoColaborador(nNumEmp,nTipCol,nNumCad,dDatIni,nEstPos,aPosTra,aDesPos);
+
+      @ Retorna o nível da hierarquia do posto de trabalho @
+      Definir Cursor cBuscaNivHie; 
+      cBuscaNivHie.sql"Select DatIni,CodHie From R017CAR  \
+                        Where EstPos = :nEstPos           \
+                          And PosTra = :aPosTra           \
+                          And DatIni <= :dDatIni          \
+                        Order by DatIni desc";
+      cBuscaNivHie.AbrirCursor()
+      Se (cBuscaNivHie.Achou) {
+        nCodHie = cBuscaNivHie.CodHie;
+      }
+      cBuscaNivHie.FecharCursor(); 
+      
+      @ Busca a Filial do Colaborador @
+      nCodFil = 0;
+      RetFilEmp(nNumEmp,nTipCol,nNumCad,dDatIni);
+      nCodFil = FilEmp;
+      Se (nCodFil = 0) {
+        VaPara ProximoReg;
+      }
+      
+      @ Busca o Local do Colaborador @
+      nNumLoc = 0;
+      nTabOrg = 0;
+      RetLocEmp(nNumEmp,nTipCol,nNumCad,dDatIni);
+      nNumLoc = LocEmp;
+      nTabOrg = TabOrgEmp;
+      
+      @ Busca o Cargo do Colaborador @
+      Definir Alfa aCodCar;
+      nEstCar = 0;
+      aCodCar = "";
+      RetCarEmp(nNumEmp,nTipCol,nNumCad,dDatIni);
+      nEstCar = EstCarEmp;
+      aCodCar = CarEmp;
+      
+      @ Busca o Centro de Custo do Colaborador @
+      Definir Alfa aCodCcu;
+      aCodCcu = "";
+      RetCcuEmp(nNumEmp,nTipCol,nNumCad,dDatIni);
+      aCodCcu = CcuEmp;
+      
+      @ Busca o Salário do Colaborador @
+      nValSal = 0;
+      RetSalEmp(nNumEmp,nTipCol,nNumCad,dDatIni);
+      nValSal = SalEmp;
+                  
+      @ Busca a Escala do Colaborador @
+      nCodEsc = 0;
+      RetEscEmp(nNumEmp,nTipCol,nNumCad,dDatIni);
+      nCodEsc = EscEmp;
+      
+      @ Busca a Situação do Colaborador @
+      nSitAfa = 0;
+      RetSitEmp(nNumEmp,nTipCol,nNumCad,dDatIni);  
+      nSitAfa = SitEmp;
+
+      @ Se o colaborador estiver demitido, o cursor vai buscar a causa e a data de demissão @
+      Definir Data dDatAfa;
+      dDatAfa = dDatZer;
+      Se(nSitAfa = 7) {
+        Definir Cursor cBuscaInfAfa; 
+        cBuscaInfAfa.sql"SELECT DATAFA,CAUDEM     \
+                           FROM R038AFA           \
+                          WHERE NUMEMP = :nNumEmp \          
+                            AND TIPCOL = :nTipCol \          
+                            AND NUMCAD = :nNumCad \          
+                            AND SITAFA = 7";
+        cBuscaInfAfa.AbrirCursor()
+        Se (cBuscaInfAfa.Achou) {
+          dDatAfa = cBuscaInfAfa.DatAfa;
+          nCauDem = cBuscaInfAfa.CauDem;
+        }
+        cBuscaInfAfa.FecharCursor();
+      }
+      
+      @ Desmonta a data inicial (Primeiro dia do mês de referencia) @
+      DesmontaData(dDatIni,nDia,nMes,nAno);
+      
+      @ - Monta a data de demissão referencia - @
+      @MontaData(1,nMes,nAno,dDemRef);@
+
+
+      @ Data de afastamento menor que a Data de referencia da demissão ou Data do afastamento maior que a referencia @
+      /*Se ((nSitAfa <> 7) e ((dDatAfa < dDatIni) ou (dDatAfa > dDatIni))) {
+        dDatAfa = dDatZer; @ Data do afastamento fica zerada @
+      } */
+      
+      @ Demitidos meses anteriores @
+      Se ((nSitAfa = 7) e (dDatAfa < dDatIni)){
+        VaPara ProximoReg; 
+      }
+        
+      @ Descrição - Tipo de Contrato @
+      Definir Alfa aDesCon;
+      Definir Alfa aTipCon;
+      aDesCon = "";
+      IntParaAlfa(nTipCon,aTipCon);
+      DescItemLista("LTipCon",aTipCon,aDesCon);
+            
+      @ Nome da Filial @
+      Definir Cursor cBuscarNomFil;
+      Definir Alfa aNomFil;
+      Definir Alfa aRegFil;  
+      aNomFil = "";
+      aRegFil = "";
+      cBuscarNomFil.sql"Select NomFil,USU_RegFil From R030FIL Where NumEmp = :nNumEmp And CodFil = :nCodFil";
+      cBuscarNomFil.AbrirCursor()
+      Se(cBuscarNomFil.Achou) {
+        aNomFil = cBuscarNomFil.NomFil;
+        aRegFil = cBuscarNomFil.USU_RegFil;
+      }
+      cBuscarNomFil.FecharCursor()
+            
+      @ Descrição do Centro de Custo @
+      Definir Cursor CR018CCU;
+      Definir Alfa aNomCcu;
+      aNomCcu = "";
+      CR018CCU.sql"Select NomCcu From R018CCU Where NumEmp = :nNumEmp And CodCcu = :aCodCcu";
+      CR018CCU.AbrirCursor()
+      Se (CR018CCU.Achou) {
+        aNomCcu = CR018CCU.NomCcu;
+      }
+      CR018CCU.FecharCursor()
+            
+            
+      @ Descrição do cargo / Cód da Familia do cargo / Natureza da despesa / CodCBO2 @
+      Definir Cursor CR024CAR;
+      Definir Alfa aCarGes;
+      Definir Alfa aCodCb2;
+      Definir Alfa aNomCar;
+      Definir Alfa aDesFam;
+      aNomCar = "";
+      aDesFam = "";
+      aCarGes = "";
+      nNatDes = 0;
+      nCodFam = 0;
+      CR024CAR.sql"Select * From R024CAR Where EstCar = :nEstCar And CodCar = :aCodCar";
+      CR024CAR.AbrirCursor()
+      Se (CR024CAR.Achou) {
+        aNomCar = CR024CAR.TitRed;
+        nCodFam = CR024CAR.USU_CodFam;
+        nNatDes = CR024CAR.NatDes;
+        aCodCb2 = CR024CAR.CodCb2;
+        nSisCar = CR024CAR.SisCar;
+        Se (nSisCar = 2) {
+          aCarGes = "S";
+        } Senao {
+          aCarGes = "N";
+        }
+                
+        @ Descrição Familia de cargos @
+        Definir Cursor CUSU_T024FAM;
+        CUSU_T024FAM.sql"Select USU_DesFam From USU_T024FAM Where USU_CodFam = :nCodFam";
+        CUSU_T024FAM.AbrirCursor()
+        Se (CUSU_T024FAM.Achou) {
+          aDesFam = CUSU_T024FAM.USU_DesFam;
+        }
+        CUSU_T024FAM.FecharCursor();
+                
+        @ Busca no cadastro do CBO se o mesmo entra para cota de aprendiz @
+        Definir Cursor CR024CB2;
+        Definir Alfa aCotApr;
+        CR024CB2.sql"Select USU_CotApr From R024CB2 Where CodCbo = :aCodCb2";
+        CR024CB2.AbrirCursor()
+        Se (CR024CB2.Achou){
+          aCotApr = CR024CB2.USU_CotApr;
+        }
+        CR024CB2.FecharCursor();       
+      }
+      CR024CAR.FecharCursor();
+            
+      @ Descrição da Causa de Desligamento @
+      Definir Cursor CR042CAU;
+      Definir Alfa aDesCau;
+      Definir Alfa aTipRes;
+      aDesCau = "";
+      aTipRes = "";
+      CR042CAU.sql"Select DesDem, USU_TipRes From R042CAU Where CauDem = :nCauDem";
+      CR042CAU.AbrirCursor()
+      Se (CR042CAU.Achou) {
+        aDesCau = CR042CAU.DesDem;
+        aTipRes = CR042CAU.USU_TipRes;
+      }
+      CR042CAU.FecharCursor();
+       
+      @ Busca os dados da Escala do Colaborador @
+      Definir Cursor CR006ESC;
+      CR006ESC.sql"Select HorMes From R006ESC Where CodEsc = :nCodEsc";
+      CR006ESC.AbrirCursor()
+      Se (CR006ESC.Achou) {
+        nHorMes = CR006ESC.HorMes;
+      }
+      CR006ESC.FecharCursor();
+            
+      @ Descrição do Local @
+      Definir Cursor CR016ORN;
+      Definir Alfa aNomLoc;
+      aNomLoc = "";
+      CR016ORN.sql"Select NomLoc From R016ORN Where TabOrg = :nTabOrg And NumLoc = :nNumLoc";
+      CR016ORN.AbrirCursor()
+      Se (CR016ORN.Achou) {
+        aNomLoc = CR016ORN.NomLoc;
+      }
+      CR016ORN.FecharCursor();
+            
+      @ Linha do Orçamento da Posição @
+      Definir Cursor CR017POS;
+      Definir Alfa aLinOrc;
+      aLinOrc = "";
+      CR017POS.sql"Select USU_LinOrc From R017POS Where EstPos = :nEstPos And PosTra = :aPosTra";
+      CR017POS.AbrirCursor()
+      Se (CR017POS.Achou) { 
+        aLinOrc = CR017POS.USU_LinOrc;
+      }
+      CR017POS.FecharCursor();
+      
+      @ Descrição do Grau de Instrução @
+      Definir Cursor CR022GRA;
+      Definir Alfa aDesGra;
+      aDesGra = "";
+      CR022GRA.sql"Select DesGra From R022GRA Where GraIns = :nGraIns";
+      CR022GRA.AbrirCursor()
+      Se (CR022GRA.Achou) {
+        aDesGra = CR022GRA.DesGra;
+      }
+      CR022GRA.FecharCursor(); 
+      
+
+      @ Descrição da Deficiencia do Colaborador @
+      Definir Cursor CR022DEF;
+      Definir Alfa aDesDef;
+      aDesDef = "";
+      CR022DEF.sql"Select DesDef From R022DEF Where CodDef = :nCodDef";
+      CR022DEF.AbrirCursor()
+      Se (CR022DEF.Achou) {
+        aDesDef = CR022DEF.DesDef;
+      }
+      CR022DEF.FecharCursor();
+      
+
+      @ Descrição da Situação @
+      Definir Cursor CR010SIT;
+      Definir Alfa aDesSit;
+      aDesSit = "";
+      CR010SIT.sql"Select DesSit From R010SIT Where CodSit = :nSitAfa";
+      CR010SIT.AbrirCursor()
+      Se (CR010SIT.Achou) {
+        aDesSit = CR010SIT.DesSit;
+      }
+      CR010SIT.FecharCursor();
+      
+      @ Descrição da Natureza de Despesa @
+      Definir Cursor CR048NAT;
+      Definir Alfa aDesNat;
+      aDesNat = "";
+      CR048NAT.sql"Select NomNat From R048NAT Where NatDes = :nNatDes";
+      CR048NAT.AbrirCursor()
+      Se (CR048NAT.Achou) {
+        aDesNat = CR048NAT.NomNat;
+      }
+      CR048NAT.FecharCursor();
+      
+      Se (aDesNat <> "COMERCIAL") {
+        aDesNat = "ADMINISTRATIVO";
+      }
+            
+      @ Nome da Empresa @
+      Definir Alfa aNomEmp;
+      aNomEmp = "";
+      Definir Cursor cBuscarApeEmp; 
+      cBuscarApeEmp.SQL"SELECT APEEMP FROM R030EMP WHERE NUMEMP = :nNumEmp";
+      cBuscarApeEmp.AbrirCursor()
+      Se(cBuscarApeEmp.Achou){
+        aNomEmp = cBuscarApeEmp.ApeEmp; 
+      }
+      cBuscarApeEmp.FecharCursor();       
+
+
+      @ Busca o codigo e o nome do Cluster @
+      Definir Cursor cBuscarCluster;
+      Definir Cursor cBuscarNomClus;
+      Definir Alfa aNomClu;  
+      cBuscarCluster.SQL"SELECT USU_CODCLU FROM R030EMP WHERE NUMEMP = :nNumEmp";
+      cBuscarCluster.AbrirCursor()
+      Se(cBuscarCluster.Achou){
+        nCodClu = cBuscarCluster.USU_CodClu;
+        
+        cBuscarNomClus.SQL"SELECT USU_DESCLU FROM USU_TCADCLU WHERE USU_CODCLU = :nCodClu"; 
+        cBuscarNomClus.AbrirCursor()
+        Se(cBuscarNomClus.Achou){
+          aNomClu = cBuscarNomClus.USU_DesClu; 
+        }
+        cBuscarNomClus.FecharCursor();
+      }
+      cBuscarCluster.FecharCursor(); 
+      
+      
+      
+      /*desmontadata(dDatRef, nDia, nMes, nAno);
+      montaData(1, nMes, nAno, dCmpBan); */
+      
+      @ Banco de horas @
+      Definir Cursor CR011LAN;
+      nQtdDeb = 0;
+      nQtdCre = 0;
+      CR011LAN.sql "SELECT CODSIT, QTDHOR, CODBHR FROM R011LAN \
+                     WHERE CMPLAN = :dDatIni \
+                       AND NUMEMP = :nNumEmp \
+                       AND TIPCOL = :nTipCol \                       
+                       AND NUMCAD = :nNumCad";                                                     
+      CR011LAN.AbrirCursor()
+      Enquanto(CR011LAN.Achou) {
+        nCodSit = CR011LAN.CODSIT;
+        nQtdHor = CR011LAN.QTDHOR;
+        nCodBhr = CR011LAN.CODBHR;
+        Se(nCodSit = 211) {
+          nQtdDeb = nQtdHor + nQtdDeb;   
+        } 
+        Senao {
+          nQtdCre = nQtdHor + nQtdCre;
+        }
+        CR011LAN.proximo();
+      }                                                     
+      CR011LAN.FecharCursor();
+        
+        
+      @ Busca o Inicio e Fim da apuração @
+      Definir Cursor CR044CAL;
+      Definir Data dFimApu;
+      Definir Data dIniApu;
+      dIniApu = 0;
+      dFimApu = 0;
+      CR044CAL.sql"SELECT IniApu, FimApu From R044CAL \
+                    Where NumEmp = :nNumEmp  \
+                      And TipCal = 11        \
+                      And FimCmp = :dDatFim";
+      CR044CAL.AbrirCursor()
+      Se(CR044CAL.Achou) {
+        dIniApu = CR044CAL.IniApu;
+        dFimApu = CR044CAL.FimApu;
+        
+        @ Retorna o código do banco de horas do colaborador @
+        RetBHRDat(nNumEmp,nTipCol,nNumCad,nCodBhr,dFimApu,nQtdSal);
+        
+        @ @
+        RetHorPrvTrb(nNumEmp,nTipCol,nNumCad,dIniApu,0,dFimApu,0,0,nHorPre,nDiaInt);
+      }
+      CR044CAL.FecharCursor()
+          
+      @ Verifica se o colaborador teve férias iniciadas no mês @
+      Definir Cursor CR040FEM;
+      Definir Alfa aFerMes;
+      aFerMes = "";
+      CR040FEM.sql"Select IniFer From R040FEM \
+                    Where NumEmp = :nNumEmp   \
+                      And TipCol = :nTipCol   \
+                      And NumCad = :nNumCad   \
+                      And IniFer >= :dDatIni  \
+                      And IniFer <= :dDatFim";
+      CR040FEM.AbrirCursor()
+      Se (CR040FEM.Achou) {
+        aFerMes = "S";
+      }
+      Senao {
+        aFerMes = "N";
+      }
+      CR040FEM.FecharCursor();
+            
+      @ Verifica se houve promoção - histórico salarial @
+      Definir Cursor CR038HSA;
+      Definir Alfa aProMes;
+      aProMes = "";
+      CR038HSA.sql"Select CodMot From R038HSA \
+                    Where NumEmp = :nNumEmp   \
+                      And TipCol = :nTipCol   \
+                      And NumCad = :nNumCad   \
+                      And DatAlt >= :dDatIni  \
+                      And DatAlt <= :dDatFim";
+      CR038HSA.AbrirCursor()
+      Se (CR038HSA.Achou) {
+        nCodMot = CR038HSA.CodMot;
+        Se (nCodMot = 3) {
+          aProMes = "S";
+        } 
+        Senao {
+          aProMes = "N";
+        }
+      }
+      Senao {
+        aProMes = "N";
+      }
+      CR038HSA.FecharCursor();
+            
+
+      @ Busca o Regime de Trabalho do Colaborador @
+      Definir Cursor CR038APU;
+      CR038APU.sql"Select IniApu, USU_RegTra From R038APU \
+                    Where NumEmp = :nNumEmp     \
+                      And TipCol = :nTipCol     \
+                      And NumCad = :nNumCad     \
+                      And IniApu <= :dDatIni    \
+                    Order By IniApu desc";
+      CR038APU.AbrirCursor()
+      Se (CR038APU.Achou) {
+        nRegTra = CR038APU.USU_RegTra;
+      }
+      CR038APU.FecharCursor();
+
+      
+      @ --- Busca a Quantidade de Ocorrências do Colaborador --- @
+      @ >>>>>>>>>>>>> Interjornada e Intrajornada <<<<<<<<<<<<<< @
+      
+      @ Zera as variaveis que serão utilizadas @
+      Definir Cursor CR070ACC;
+      dDatAtu = dDatZer;
+      dDatOld = dDatZer;
+      nHorAc1 = 0;
+      nHorAc2 = 0;
+      nHorAc3 = 0;
+      nHorAc4 = 0;
+      nHorAc5 = 0;
+      nHorAc6 = 0;
+      nInterj = 0;
+      nIntraj = 0;
+      nMIntra = 0;
+      nMInter = 0;
+          
+      CR070ACC.sql"Select DatAcc, HorAcc From R070ACC  \
+                    Where NumEmp = :nNumEmp    \
+                      And TipCol = :nTipCol    \
+                      And NumCad = :nNumCad    \
+                      And DatAcc >= :dIniApu   \
+                      And DatAcc <= :dFimApu   \
+                    Order By DatAcc,HorAcc";
+      CR070ACC.AbrirCursor()
+      Enquanto (CR070ACC.Achou){
+        dDatAtu = CR070ACC.DatAcc;
+      
+        @ Calcular a Intrajornada @
+        Se ((dDatOld <> dDatAtu) e (dDatOld <> dDatZer)) {
+          
+          @ Variação 01 @
+          nMIntra = nHorAc3 - nHorAc2;
+          Se ((nMIntra > 0) e (nMIntra < 60)) {
+            nIntraj = nIntraj + 1;
+          }
+
+          @ Variação 02 @
+          nMIntra = nHorAc5 - nHorAc4;
+          Se ((nMIntra > 0) e (nMIntra < 60)) {
+            nIntraj = nIntraj + 1;
+          }
+        }
+
+        Se ((dDatOld = dDatAtu) ou (dDatOld = dDatZer)) {
+          Se (nHorAc1 = 0) {
+            nHorAc1 = CR070ACC.HorAcc;
+          }
+          Senao Se (nHorAc2 = 0) {
+            nHorAc2 = CR070ACC.HorAcc;
+          }
+          Senao Se (nHorAc3 = 0) {
+            nHorAc3 = CR070ACC.HorAcc;
+          }
+          Senao Se (nHorAc4 = 0) {
+            nHorAc4 = CR070ACC.HorAcc;
+          }
+          Senao Se (nHorAc5 = 0) {
+            nHorAc5 = CR070ACC.HorAcc;
+          }
+          Senao {
+            nHorAc6 = CR070ACC.HorAcc;
+          }
+        }
+          
+        Senao {
+          nHorAc1 = CR070ACC.HorAcc;
+          
+          @ Calcular a Interjornada @
+          Se (nHorAc6 <> 0) {
+            CalculaQtdMinutos(dDatOld,nHorAc6,dDatAtu,nHorAc1,nMInter);
+            Se (nMInter < 660) {
+              nInterj = nInterj + 1;
+            }
+          }  
+          Senao Se (nHorAc5 <> 0){
+            CalculaQtdMinutos(dDatOld,nHorAc5,dDatAtu,nHorAc1,nMInter);
+            Se (nMInter < 660) {
+              nInterj = nInterj + 1;
+            }
+          }
+          Senao Se (nHorAc4 <> 0) {
+            CalculaQtdMinutos(dDatOld,nHorAc4,dDatAtu,nHorAc1,nMInter);    
+            Se (nMInter < 660) {
+              nInterj = nInterj + 1;
+            }
+          }
+          Senao Se (nHorAc3 <> 0) {
+            CalculaQtdMinutos(dDatOld,nHorAc3,dDatAtu,nHorAc1,nMInter);      
+            Se (nMInter < 660) {
+              nInterj = nInterj + 1;
+            }
+          }
+          Senao Se (nHorAc2 <> 0) {
+            CalculaQtdMinutos(dDatOld,nHorAc2,dDatAtu,nHorAc1,nMInter);  
+            Se (nMInter < 660) {
+              nInterj = nInterj + 1;
+            }
+          }
+        }                          
+        
+        @ Atualiza o campo da DataOld @  
+        dDatOld = dDatAtu;
+        CR070ACC.Proximo();
+      }
+      CR070ACC.FecharCursor()
+       
+      nQtdSal = 0;
+            
+      @___ Insere as informações na tabela USU_THISFUN ___@  
+      /*ExecSql"Insert into USU_THISFUN                     \
+              (USU_NumEmp,USU_TipCol,USU_NumCad,USU_NomFun, \
+               USU_DatAdm,USU_DatRef,USU_DatAfa,USU_CodCcu, \
+               USU_NomCcu,USU_CodFil,USU_EstCar,USU_CodCar, \
+               USU_TitRed,USU_CauDem,USU_DesCau,USU_NomFil, \
+               USU_EstPos,USU_PosTra,USU_TabOrg,USU_NumLoc, \                        
+               USU_NomLoc,USU_DesCon,USU_TipCon,USU_LinOrc, \
+               USU_ValSal,USU_TipSex,USU_GraIns,USU_DesGra, \
+               USU_DatNas,USU_CluFun,USU_ConDef,USU_DesDef, \
+               USU_NatDes,USU_SitAfa,USU_DesSit,USU_DesNat, \
+               USU_FamCar,USU_NomEmp,USU_TipRes,USU_RegFil, \
+               USU_QtdDeb,USU_QtdCre,USU_QtdSal,USU_GozFer, \
+               USU_ProMes,USU_CarGes,USU_CotApr,USU_CHoMes, \
+               USU_HorPre,USU_NumCpf,USU_RacCor,USU_HouAci, \
+               USU_DatAci,USU_AfaAci,USU_ObiAci,USU_Interj, \
+               USU_Intraj,USU_RegTra,USU_SinSal)            \                                                         
+               Values                                       \
+              (:nNumEmp,:nTipCol,:nNumCad,:aNomFun,         \
+               :dDatAdm,:dDatIni,:dDatAfa,:aCodCcu,         \
+               :aNomCcu,:nCodFil,:nEstCar,:aCodCar,         \
+               :aNomCar,:nCauDem,:aDesCau,:aNomFil,         \
+               :nEstPos,:aPosTra,:nTabOrg,:nNumLoc,         \      
+               :aNomLoc,:aDesCon,:nTipCon,:aLinOrc,         \
+               :nValSal,:aTipSex,:nGraIns,:aDesGra,         \
+               :dDatNas,:aNomClu,:aConDef,:aDesDef,         \
+               :nNatDes,:nSitAfa,:aDesSit,:aDesNat,         \
+               :aDesFam,:aNomEmp,:aTipRes,:aRegFil,         \
+               :nQtdDeb,:nQtdCre,:nQtdSal,:aFerMes,         \
+               :aProMes,:aCarGes,:aCotApr,:nHorMes,         \
+               :nHorPre,:nNumCpf,:nRacCor,'N',:dDatAci,     \
+               'N','N',:nInterj,:nIntraj,:nRegTra, '')";  */
+    }
+     
+    Vapara FinalReg;              
+    ProximoReg: 
+  }
+    
+  FinalReg:
+  CR034FUN.Proximo()
+  
+}
+CR034FUN.FecharCursor();   

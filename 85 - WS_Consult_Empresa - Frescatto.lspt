@@ -1,0 +1,47 @@
+Definir Alfa vCursor;
+Definir Alfa aAux;
+Definir Alfa aSql;
+Definir Alfa aCodEmp;
+Definir Alfa xNomEmp;
+Definir Alfa aNomEmp;
+Definir Alfa aCodEmp;
+Definir Alfa aEmpresa;
+   
+xCodEmp = consult_empresa.codemp;
+IntParaAlfa (xCodEmp, aCodEmp);
+LimpaEspacos(aCodEmp);
+Se(xCodEmp <> 0){
+  aSql = aSql + " Where E070EMP.CodEmp = "+aCodEmp;
+}
+  
+aNomEmp = consult_empresa.nomemp;
+LimpaEspacos(aNomEmp);
+Se(aNomEmp <> ""){
+  ConverteParaMaiusculo(aNomEmp);
+  aSql = aSql + " Where UPPER (E070EMP.NomEmp) like '%"+aNomEmp+"%'";
+}
+  
+   
+SQL_Criar(vCursor);
+SQL_UsarAbrangencia(vCursor, 1); @ 1 = Usa abrangência, 0 = Não usa abrangência. @                   
+aSql = "Select CodEmp, NomEmp FROM E070EMP "+aSql+"";                 
+        
+SQL_DefinirComando (vCursor, aSql);    
+SQL_AbrirCursor(vCursor);
+Enquanto(SQL_EOF(vCursor) = 0){
+  SQL_Retornarinteiro(vCursor, "CodEmp", nCodEmp);
+  SQL_Retornaralfa(vCursor, "NomEmp", xNomEmp);
+
+  IntParaAlfa(nCodEmp, aCodEmp);
+
+  consult_empresa.grid.CriarLinha();
+  consult_empresa.grid.LinhaAtual = nConLin;
+  consult_empresa.grid.codemp = nCodEmp;
+  consult_empresa.grid.nomemp = xNomEmp;
+  consult_empresa.grid.empresa = aCodEmp+ " - " +xNomEmp;
+  nConLin++;
+  SQL_Proximo(vCursor);
+
+}
+SQL_FecharCursor(vCursor);
+SQL_Destruir(vCursor);

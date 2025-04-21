@@ -1,0 +1,72 @@
+Definir Alfa vCursor;
+Definir Alfa aAux;
+Definir Alfa aSql;
+Definir Alfa xCepIni;
+Definir Alfa xCepFim; 
+Definir Alfa xNomCid;
+Definir Alfa xEndCid;
+Definir Alfa aCepIni;
+Definir Alfa aCepFim;
+Definir Alfa aNomCid;
+Definir Alfa aSigUfs;
+Definir Alfa aBaiCid;
+Definir Alfa aEndCid;
+
+xCepIni = consult_cep.cepini;
+Se (xCepIni <> "")
+  aSql = aSql + " Where E008CEP.CepIni = " +xCepIni;
+  
+xCepFim = consult_cep.cepfim;
+Se (xCepFim <> "")
+  aSql = aSql + " Where E008CEP.CepFim = " +xCepFim;
+
+    
+xNomCid = consult_cep.nomcid;
+RetiraCaracteresEspeciais(xNomCid);
+ConverteParaMaiusculo (xNomCid);
+se(xNomCid <> "")
+  aSql = aSql + " Where UPPER (E008CEP.NomCid) like '%"+xNomCid+"%'";
+  
+xEndCid = consult_cep.endcid;
+RetiraCaracteresEspeciais(xNomCid);
+ConverteParaMaiusculo (xEndCid);
+se(xEndCid <> "")
+  aSql = aSql + " where UPPER (E008CEP.endcid) like '%"+xEndCid+"%'";  
+ 
+SQL_Criar(vCursor);
+@ 1 = Usa abrangência, 0 = Não usa abrangência. @
+SQL_UsarAbrangencia(vCursor, 1);
+
+aSql = "Select CepIni, CepFim, NomCid, SigUfs, BaiCid, EndCid  \
+            from E008CEP  "+aSql+"            \
+        order by E008CEP.CepIni";
+
+SQL_DefinirComando (vCursor, aSql);    
+SQL_AbrirCursor(vCursor);
+nConLin = 0;
+Enquanto((SQL_EOF(vCursor) = 0) e (nConLin < 20))
+Inicio
+
+  SQL_RetornarInteiro(vCursor, "CepIni", nCepIni);
+  IntParaAlfa(nCepIni, aCepIni);
+  SQL_RetornarInteiro(vCursor, "CepFim", nCepFim);
+  IntParaAlfa(nCepFim, aCepFim);
+  SQL_Retornaralfa(vCursor, "NomCid", aNomCid);
+  SQL_Retornaralfa(vCursor, "SigUfs", aSigUfs);
+  SQL_Retornaralfa(vCursor, "BaiCid", aBaiCid);
+  SQL_Retornaralfa(vCursor, "EndCid", aEndCid);
+    
+  consult_cep.grid.CriarLinha();
+  consult_cep.grid.LinhaAtual = nConLin;
+  consult_cep.grid.cepini = aCepIni;
+  consult_cep.grid.cepfim = aCepFim;
+  consult_cep.grid.nomcid = aNomCid;
+  consult_cep.grid.sigufs = aSigUfs;
+  consult_cep.grid.baicid = aBaiCid;
+  consult_cep.grid.endcid = aEndCid;
+  
+  nConLin++;
+SQL_Proximo(vCursor);   
+fim;
+SQL_FecharCursor(vCursor);
+SQL_Destruir(vCursor);

@@ -1,0 +1,286 @@
+Definir lista ListaHorarioApurado;
+Definir lista ListaDeBatidasHorario; 
+Definir lista ListaBatHor;
+Definir lista ListaDeMarcacoes;
+Definir lista ListaDeSituacoes;
+Definir lista ListaDeOcorrencia; 
+
+Definir data xDatIni;
+Definir data xDatFim;
+Definir alfa DDiaSem;
+Definir alfa DBatidasHorario;
+Definir alfa DMarcacoes;
+Definir alfa DSituacoes;
+Definir alfa DOcorrencias;
+
+xDatIni = EDatIni;
+xDatFim = EDatFim;
+            
+Definir data xDatAnt;
+Definir data xDataComOcorrencia; /* Controle para listar apenas data com ocorrência */                     
+
+xDatAnt = 0;
+xDataComOcorrencia = 0;         
+             
+xDatAux = xDatIni;
+Enquanto ((xDatAux <= xDatFim) e ((xTemRegBat = 1) ou (xTemRegMar = 1) ou (xTemRegSit = 1) ou (xTemRegOco = 1))) {
+  
+    Se ((xFimBatidas = 1) e (xFimMarcacoes = 1) e (xFimSituacoes = 1) e (xFimOcorrencias = 1)) {
+        xFimBatidas = 0;
+        xFimMarcacoes = 0;
+        xFimSituacoes = 0;
+        xFimOcorrencias = 0;
+        xDatAux++;
+        Continue;
+    }
+  
+    ListaHorarioApurado.SetarChave();
+    ListaHorarioApurado.LDatHor = xDatAux;     
+    xTemReg = ListaHorarioApurado.VaiParaChave(); 
+    Se (xTemReg = 0) {
+        xDatAux++;
+        xDatAnt = xDatAux;
+    }   
+    
+    Senao {
+    
+        @ Evanderson - 21/02/25 @
+        Definir Data dDatSis;
+        Definir Alfa aCondEsc;  
+        nNumEmp = R034FUN.NumEmp;
+        nTipCol = R034FUN.TipCol; 
+        nNumCad = R034FUN.NumCad; 
+        dDatSis = DatSis; 
+        
+        RetEscEmp (nNumEmp, nTipCol, nNumCad, dDatSis);
+        nEscEmp = EscEmp; 
+        
+        Definir Cursor C06ESC; 
+        C06ESC.SQL"SELECT USU_ESCESP FROM R006ESC WHERE CODESC = :nEscEmp";
+        C06ESC.AbrirCursor()
+        Se(C06ESC.Achou){
+        aCondEsc =  C06ESC.USU_ESCESP; 
+        }
+        C06ESC.FecharCursor();  
+        
+        
+        @ Recebe o CodHor @
+        FDia = xDatAux;
+        RetornaDiaSemana(FDia,DDiaSem);
+        FCodHor = ListaHorarioApurado.LHorDat;  
+        DBatidasHorario = "";
+        
+        Se((FCodHor = 9997) e (aCondEsc = "N")){
+            AlteraControle("Detalhe_Colaborador", "Imprimir", "Falso"); 
+            AlteraControle("Adicional_1", "Imprimir","Falso"); 
+            Cancel(1);   
+        }    
+        
+        Se(xTemRegBat = 0) { 
+            xFimBatidas = 1; 
+        }   
+        Senao Se (xTemRegBat = 1){
+            Se (ListaDeBatidasHorario.LDatApu < xDatAux) {
+                Enquanto (xTemRegBat = 1){
+                    Se (ListaDeBatidasHorario.LDatApu >= xDatAux){
+                        Pare;      
+                    }
+                    xTemRegBat = ListaDeBatidasHorario.Proximo();      
+                } 
+            }
+      
+            Se(xTemRegBat = 0) {
+                xFimBatidas = 1;
+            }
+            Senao Se (xTemRegBat = 1) { 
+                Se (ListaDeBatidasHorario.LDatApu = xDatAux) {     
+                    DBatidasHorario = ListaDeBatidasHorario.LBatHor; 
+                    xTemRegBat = ListaDeBatidasHorario.Proximo();
+          
+                    Se (xTemRegBat = 0){
+                        xFimBatidas = 1;
+                    }
+                
+                    Senao Se (xDatAux <> ListaDeBatidasHorario.LDatApu){
+                        xFimBatidas = 1;
+                    }
+                }
+                Senao {
+                    xFimBatidas = 1;
+                }    
+            }
+        }
+    
+    
+        @ =========================================== @
+        @ ================ Situação ================= @
+        @ =========================================== @
+        FCodSit = 0;
+        DSituacoes = ""; 
+        AlteraControle ("FCodSit", "Imprimir", "Falso");
+        AlteraControle ("DTraco3", "Imprimir", "Falso");    
+        Se(xTemRegSit = 0) {
+            xFimSituacoes = 1;  
+        }      
+        Senao Se (xTemRegSit = 1) {
+            Se (ListaDeSituacoes.LDatApu < xDatAux) {
+                Enquanto (xTemRegSit = 1) {
+                    Se(ListaDeSituacoes.LDatApu >= xDatAux) {
+                        Pare;
+                    }      
+                    xTemRegSit = ListaDeSituacoes.Proximo();      
+                } 
+            }
+        
+            Se(xTemRegSit = 0){ 
+                xFimSituacoes = 1;
+            }
+            Senao Se (xTemRegSit = 1) { 
+                Se (ListaDeSituacoes.LDatApu = xDatAux) {
+                    AlteraControle ("FCodSit", "Imprimir", "Verdadeiro");
+                    AlteraControle ("DTraco3", "Imprimir", "Verdadeiro");        
+                    FCodSit = ListaDeSituacoes.LCodSit; 
+            
+                    DSituacoes = ListaDeSituacoes.LDesSit; 
+                    xTemRegSit = ListaDeSituacoes.Proximo();
+                
+                    Se (xTemRegSit = 0){
+                        xFimSituacoes = 1;
+                    }
+                    Senao Se (xDatAux <> ListaDeSituacoes.LDatApu) {
+                        xFimSituacoes = 1;
+                    }
+                }
+                Senao {
+                    xFimSituacoes = 1; 
+                }   
+            }
+        } 
+    
+    
+        @ =========================================== @
+        @ ================ Marcações ================ @
+        @ =========================================== @
+        DMarcacoes = "";  
+        Se(xTemRegMar = 0){ 
+            xFimMarcacoes = 1;
+        }           
+        Senao Se (xTemRegMar = 1) {
+            Se (ListaDeMarcacoes.LDatApu < xDatAux) {
+                Enquanto (xTemRegMar = 1) {
+                    Se(ListaDeMarcacoes.LDatApu >= xDatAux){
+                        Pare;      
+                    }
+                    xTemRegMar = ListaDeMarcacoes.Proximo();      
+                } 
+            }
+            
+            Se(xTemRegMar = 0) { 
+                xFimMarcacoes = 1;
+            }
+            
+            Senao Se (xTemRegMar = 1) { 
+                Se(ListaDeMarcacoes.LDatApu = xDatAux) {
+                    DMarcacoes = ListaDeMarcacoes.LMarApu; 
+                    xTemRegMar = ListaDeMarcacoes.Proximo();
+          
+                    Se (xTemRegMar = 0){
+                        xFimMarcacoes = 1;
+                    }
+                    Senao Se (xDatAux <> ListaDeMarcacoes.LDatApu){
+                        xFimMarcacoes = 1;
+                    }
+                }
+                Senao {
+                    xFimMarcacoes = 1;
+                }    
+            }
+        } 
+     
+     
+        @ ============================================= @
+        @ ================ Ocorrências ================ @
+        @ ============================================= @
+        DOcorrencias = "";  
+        Se (xTemRegOco = 0) { 
+            xFimOcorrencias = 1;
+        }         
+        Senao Se (xTemRegOco = 1){
+            Se (ListaDeOcorrencias.LDatApu < xDatAux) {
+                Enquanto (xTemRegOco = 1) {
+                    Se (ListaDeOcorrencias.LDatApu >= xDatAux){
+                        Pare;      
+                    }
+                    xTemRegOco = ListaDeOcorrencias.Proximo();      
+                } 
+            }
+        
+            Se(xTemRegOco = 0){
+                xFimOcorrencias = 1;
+            }
+        
+            Senao Se (xTemRegOco = 1) { 
+                Se (ListaDeOcorrencias.LDatApu = xDatAux) {
+                    xDataComOcorrencia = xDatAux;        
+                    DOcorrencias = ListaDeOcorrencias.LDesOco; 
+                    xTemRegOco = ListaDeOcorrencias.Proximo();
+                
+                    Se (xTemRegOco = 0){
+                        xFimOcorrencias = 1;
+                    }
+                    Senao Se (xDatAux <> ListaDeOcorrencias.LDatApu){
+                        xFimOcorrencias = 1;
+                    }
+                }
+                Senao {
+                    xFimOcorrencias = 1;
+                }    
+            }
+        } 
+    
+
+        @ =========================================== @
+        @ ================ Marcações ================ @
+        @ =========================================== @
+        Se (xDatAnt <> xDatAux) {
+            Alterou = 1;
+            AlteraControle ("FDia", "Imprimir", "Verdadeiro");
+            AlteraControle ("DTraco", "Imprimir", "Verdadeiro");
+            AlteraControle ("DDiaSem", "Imprimir", "Verdadeiro");
+            AlteraControle ("FCodHor", "Imprimir", "Verdadeiro");
+            AlteraControle ("DTraco2", "Imprimir", "Verdadeiro");
+            xDatAnt = xDatAux;
+        } 
+        Senao {
+            Alterou = 2;
+            AlteraControle ("FDia", "Imprimir", "Falso");
+            AlteraControle ("DTraco", "Imprimir", "Falso");      
+            AlteraControle ("DDiaSem", "Imprimir", "Falso");      
+            AlteraControle ("FCodHor", "Imprimir", "Falso");
+            AlteraControle ("DTraco2", "Imprimir", "Falso");
+        }
+    
+    
+    
+        /*@ Lista somente dias com ocorrência @
+        Se (ESomOco = 'S') {
+        Se (xDataComOcorrencia = xDatAux) {
+            Se (Alterou = 1) {
+            ListaSecao ("Adicional_Branco");
+            ListaSecao ("Adicional_Detalhe");
+            }
+        }
+        }
+        Senao {
+        @Senão lista todos os dias apurados.@
+        ListaSecao ("Adicional_Detalhe");  
+        } */   
+    
+    } 
+}
+
+
+FTotHorExt = FHorExt;
+FTotJorSup = FJorSup;
+FTotIntMen = FIntMen;
+FTotInterj = FInterj;                                               

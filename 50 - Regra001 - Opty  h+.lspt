@@ -1,0 +1,177 @@
+
+/*
+  Regra reestruturada - Evanderson Pereira 
+  CH - 229320 - 11/10/2024  
+
+  Regra irá buscar os valores definidos na tabela - Valores Gerais (R026VLR)
+  
+  Faixas - R026VLR
+  
+  17 - Seg. Vida - Capital Estagiario - 15.000 (Fixo) 
+  18 - Seg. Vida - Sal limite Multiplo - Até 5.000
+  19 - Seg. vida - Multiplicador Limite - 12 
+  20 - Seg. Vida - Multioplicador Limite - 18 
+  23 - Seg. Vida - Salário Limite Multiplo - 20.000
+  24 - Seg. Vida - Seg Vida. Multiplicador Limite - 24
+  25 - Seg. Vida - Limite Salário até 5k 
+  26 - Seg. Vida - Limite Salário acima de 5k
+  27 - Seg. Vida - Limite Salário acima de 20k 
+  28 - Seg. Vida - Limite para diretores
+
+  Condições para os Multiplicadores 
+  
+  ---------------- 
+  TABELA 
+  
+  Multiplos                      Prêmio Atual 
+  Estágiarios                    15.000 (Fixo) 
+  Salário até R$5.000            12x o valor do salário - Limitado a 40k 
+  Salário acima de R$ 5.000      18x o valor do salário - Limitado a 180k 
+  Salário acima de R$ 20.000     24x o valor do salário - Limitado a 1M e 200k 
+  Diretores                      24x o valor do salário - Limitado a 2M e 200K (Apenas para cargos de diretoria)
+  ---------------- 
+  
+*/
+
+Definir Cursor C26VLR; 
+Definir Data dDatRef; 
+
+dDatRef = FimCmp; 
+
+
+@ Validação das empresas @
+Se((empatu = 2)  ou (empatu = 6)  ou (empatu = 9)  ou 
+   (empatu = 12) ou (empatu = 13) ou (empatu = 15) ou 
+   (empatu = 16) ou (empatu = 17) ou (empatu = 19) ou 
+   (empatu = 20) ou (empatu = 21) ou (empatu = 23) ou 
+   (empatu = 26) ou (empatu = 28) ou (empatu = 29) ou 
+   (empatu = 30) ou (empatu = 31) ou (empatu = 32) ou 
+   (empatu = 33) ou (empatu = 34) ou (empatu = 35) ou 
+   (empatu = 36) ou (empatu = 37) ou (empatu = 38) ou 
+   (empatu = 39) ou (empatu = 42) ou (empatu = 43) ou 
+   (empatu = 44) ou (empatu = 45) ou (empatu = 46) ou 
+   (empatu = 47) ou (empatu = 53) ou (empatu = 54) ou 
+   (empatu = 55))
+{
+
+
+    @ Cursor que irá buscar as faixas da tabela R026VLR @
+    C26VLR.SQL"SELECT COMVLR, CODVLR, VALVLR                         \
+                 FROM R026VLR                                        \
+                WHERE CODVLR IN (17,18,19,20,23,24,25,26,27,28)      \
+                  AND COMVLR = (SELECT MAX(B.COMVLR)                 \
+                                  FROM R026VLR B                     \
+                                 WHERE B.CODVLR = R026VLR.CODVLR     \
+                                   AND B.COMVLR <= :dDatRef)";
+    C26VLR.AbrirCursor()
+    Enquanto(C26VLR.Achou) {
+    
+      @ Faixa de 15k (Fixo) Estagiário @
+      Se (C26VLR.CodVlr = 17) {
+        nValFaixa17 = C26VLR.ValVlr;
+      }
+    
+      @ Faixa de 5k @
+      Se (C26VLR.CodVlr = 18) {
+        nValFaixa18 = C26VLR.ValVlr;
+      }
+      
+      @ Multiplicador para salários até 5k * 12x @
+      Se (C26VLR.CodVlr = 19) {
+        nValFaixa19 = C26VLR.ValVlr;
+      }
+      
+      @ Multiplicador para salários acima de 5k e menos que 20k * 18x @
+      Se (C26VLR.CodVlr = 20) {
+        nValFaixa20 = C26VLR.ValVlr;
+      }
+      
+      @ Faixa de 20k @
+      Se (C26VLR.CodVlr = 23) {
+        nValFaixa23 = C26VLR.ValVlr;
+      }
+      
+      @ Multiplicador salários acima de 20k * 24x @
+      Se (C26VLR.CodVlr = 24) {
+        nValFaixa24 = C26VLR.ValVlr;
+      }
+    
+      @ Limite de 40k para salários abaixo de 5k @
+      Se (C26VLR.CodVlr = 25) {
+        nValFaixa25 = C26VLR.ValVlr;
+      }
+  
+      @ Limite de 180k para salarios entre 5k e 20k @
+      Se (C26VLR.CodVlr = 26) {
+        nValFaixa26 = C26VLR.ValVlr;
+      }
+      
+      @ Limite de 1M 200K para salarios acima de 20k @
+      Se (C26VLR.CodVlr = 27) {
+        nValFaixa27 = C26VLR.ValVlr;
+      }
+      
+      @ Limite para diretores - 2M 200K @
+      Se (C26VLR.CodVlr = 28) {
+        nValFaixa28 = C26VLR.ValVlr;
+      }
+    
+      C26VLR.Proximo(); 
+    } 
+
+    C26VLR.FecharCursor();
+
+  
+
+  @ Retorna o salário do colaborador @
+  RetSalEmp (R034FUN.NumEmp, R034FUN.TipCol, R034FUN.NumCad, dDatRef);
+  nSalEmp = SalEmp;
+
+  @ Contrato de estagiário, como a faixa é fixa, recebe o valor da faixa 17 = 15k@
+  Se (R034FUN.TipCon = 5){
+    nValTot = nValFaixa17;   
+  }
+
+  @ Colaboradores com salário até 5k @
+  Se(nSalEmp <= nValFaixa18) {
+    nValTot = nSalEmp * nValFaixa19; 
+    
+    @ Verifica se a nValTot passou de 40k (Limite) @
+    Se(nValTot > nValFaixa25){
+      nValTot = nValFaixa25; 
+    }
+  }
+
+  @ Colaborador com salário acima de 5k até 20k @
+  Se((nSalEmp > nValFaixa18) e (nSalEmp < nValFaixa23)){
+    nValTot = nSalEmp * nValFaixa20;
+    
+    @ Verifica se a nValTot passou de 180k (Limite) @
+    Se(nValTot > nValFaixa26){
+      nValTot = nValFaixa26; 
+    }
+  }
+
+  @ Colaborador com salário acima de 20k @
+  Se(nSalEmp >= nValFaixa23) {
+    nValTot = nSalEmp * nValFaixa24;
+    
+    @ Verifica se a nValTot passou de R$1.200.000 (Limite) @
+    Se(nValTot > nValFaixa27){
+      nValTot = nValFaixa27; 
+    } 
+  }
+
+  @ Para cargos de diretores @
+  Se(nCodCar = 1) {
+    nValTot = nSalEmp * nValFaixa24;
+    
+    @ Verifica se a nValTot passou de R$2.200.000 (Limite) @
+    Se(nValTot > nValFaixa28){
+      nValTot = nValFaixa28; 
+    } 
+  }
+
+  ValEvt = nValTot * 0.0001310;
+  
+};

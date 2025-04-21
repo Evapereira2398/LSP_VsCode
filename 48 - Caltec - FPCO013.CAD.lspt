@@ -1,0 +1,114 @@
+Definir Cursor C048CLC;
+Definir Alfa aNomCon;
+Definir Alfa aTipLan; 
+
+xTabEve = R048CLC.TabEve;
+xCodClc = R048CLC.CodClc;
+
+@ ============================================ @
+@ ======= Busca CLC - Contra Partida ========= @
+@ ============================================ @
+C048CLC.SQL "SELECT R048CLC.CODCLC,      \
+                        R048CLC.NOMCON,  \
+                        R048CLC.TIPLAN,  \
+                        R048CLC.NIVLAN   \
+                   FROM R048CLC, R048CLB \  
+                  WHERE R048CLC.CODCLC = R048CLB.CODCLC \
+                    AND R048CLC.TABEVE = R048CLB.TABEVE \
+                    AND R048CLC.TABEVE = :xTabEve \
+                    AND R048CLB.CLCBAS = :xCodClc ";
+
+C048CLC.AbrirCursor();
+Se (C048CLC.Achou) {
+  FClcConPart = C048CLC.CodClc;
+  aNomCon = C048CLC.NomCon; 
+  aTipLan = C048CLC.TipLan;    
+}
+C048CLC.FecharCursor();
+
+
+Se(aNomCon <> ""){
+  AlteraControle ("DesClcConPart", "Descrição", aNomCon);
+} Senao {
+  AlteraControle ("DesClcConPart", "Descrição", " ");  
+}
+  
+Se(aTipLan <> ""){
+  AlteraControle ("TipLanConPart", "Descrição", aTipLan);  
+} Senao {
+  AlteraControle ("TipLanConPart", "Descrição", " ");   
+}   
+  
+
+
+@ ============================================ @
+@ ======= Busca a conta contábil CLC ========= @
+@ ============================================ @
+
+Definir Cursor cBuscaConta; 
+Definir Alfa aNumConDeb;
+Definir Alfa aNumConCre;
+Definir Alfa aTipLan;   
+
+nTabEve = R048CLC.TabEve;
+nCodClc = R048CLC.CodClc;
+aTipLan = R048CLC.TipLan; 
+
+cBuscaConta.SQL"SELECT RedDeP, RedCrP \
+                  FROM R048CTB \
+                 WHERE TABEVE = :nTabEve \
+                   AND CODCLC = :nCodClc";
+cBuscaConta.AbrirCursor()
+Se(cBuscaConta.Achou){
+  nNumConDeb = cBuscaConta.RedDeP;    
+  nNumConCre = cBuscaConta.RedCrP; 
+}
+cBuscaConta.FecharCursor();
+
+@ Converte o numero da conta para Alfa @
+IntParaAlfa(nNumConDeb, aNumConDeb);
+IntParaAlfa(nNumConCre, aNumConCre); 
+
+@ Verifica o tipo de lançamento do CLC - Deb/Cre para informar a conta contábil @
+Se(aTipLan = "D") {
+  AlteraControle("ClcConCont", "Descrição", aNumConDeb);    
+}
+Senao Se(aTipLan = "C") {
+  AlteraControle("ClcConCont", "Descrição", aNumConCre);
+} 
+
+
+@ ===================================================== @
+@ ==== Busca a conta contábil CLC - Contra Partida ==== @
+@ ===================================================== @
+Definir Cursor cBuscaContaCP; 
+Definir Alfa aNumConDebCP;
+Definir Alfa aNumConCreCP;
+Definir Alfa aTipLanCP;   
+
+nTabEveCP = R048CLC.TabEve;
+aTipLanCP = aTipLan;
+nCodClcCP = FClcConPart;  
+
+cBuscaContaCP.SQL"SELECT RedDeP, RedCrP      \  
+                    FROM R048CTB             \
+                   WHERE TABEVE = :nTabEveCP \
+                     AND CODCLC = :nCodClcCP";
+cBuscaContaCP.AbrirCursor()
+Se(cBuscaContaCP.Achou){
+  nNumConDebCP = cBuscaContaCP.RedDeP;    
+  nNumConCreCP = cBuscaContaCP.RedCrP; 
+}
+cBuscaContaCP.FecharCursor();
+
+@ Converte o numero da conta para Alfa @
+IntParaAlfa(nNumConDebCP, aNumConDebCP);
+IntParaAlfa(nNumConCreCP, aNumConCreCP); 
+
+@ Verifica o tipo de lançamento do CLC - Deb/Cre para informar a conta contábil @
+Se(aTipLanCP = "D") {
+  AlteraControle("Descricao014", "Descrição", aNumConDebCP);    
+}
+Senao Se(aTipLanCP = "C") {
+  AlteraControle("Descricao014", "Descrição", aNumConCreCP);
+} 

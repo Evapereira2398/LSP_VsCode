@@ -1,0 +1,785 @@
+Se (ELisDem = 'N'){
+  InsClauSQLWhere("Detalhe_1"," AND R034FUN.SITAFA <> 7");
+}
+
+Definir Cursor C_R046VER;
+Definir Cursor C_R046VER2;
+Definir Cursor C_R146PRV;
+Definir Cursor C_R162GER;
+
+Definir Alfa EAbrEmp;
+Definir Alfa EAbrFil;                            
+Definir Alfa EAbrCcu;
+Definir Alfa EAbrCad;
+Definir Alfa aEvento;                                
+Definir Alfa aAux;
+Definir Alfa aMsg;                                 
+
+Definir Data dIniCmp;                                             
+Definir Data dFimCmp;                                              
+Definir Data EDatIni;                                              
+Definir Data EDatFim;
+Definir Data nPerRef;                                                            
+
+Definir Funcao gravaGrade();
+Definir Lista vLista;
+
+vLista.DefinirCampos();
+vLista.AdicionarCampo("Grade", Numero);
+vLista.AdicionarCampo("Coluna", Numero);
+vLista.AdicionarCampo("Tipo", Numero);
+vLista.AdicionarCampo("Descricao", Alfa);
+vLista.AdicionarCampo("Evento", Numero);
+vLista.EfetivarCampos();
+
+Se ((eAbrEmp <> "") e (eAbrEmp <> " ")) {
+  MontaAbrangencia("R034FUN.NUMEMP", eAbrEmp, eAbrEmp);
+  eAbrEmp = " AND " + eAbrEmp;
+}
+
+Se ((eAbrFil <> "") e (eAbrFil <> " ")){
+  MontaAbrangencia("R038HFI.CODFIL", eAbrFil, eAbrFil);
+  eAbrFil = " AND " + eAbrFil;
+}
+
+Se ((eAbrCcu <> "") e (eAbrCcu <> " ")){
+  MontaAbrangencia("R038HCC.CODCCU", eAbrCcu, eAbrCcu);
+  eAbrCcu = " AND " + eAbrCcu;
+}         
+
+Se ((eAbrCad <> "") e (eAbrCad <> " ")){
+  MontaAbrangencia("R034FUN.NUMCAD", eAbrCad, eAbrCad);
+  eAbrCad = " AND " + eAbrCad;
+}
+
+
+@ - CABEÇALHO DA GRID FIXA - @
+AdicionaDadosGrade("gradeFixa",  1, 1, "Cadastro_Funcionario");
+AdicionaDadosGrade("gradeFixa",  1, 2, "Nome_Funcionario");
+AdicionaDadosGrade("gradeFixa",  1, 3, "Titulo_Cargo");
+AdicionaDadosGrade("gradeFixa",  1, 4, "Nome_CCusto");
+AdicionaDadosGrade("gradeFixa",  1, 5, "Mes_Ano_Folha");
+
+dIniCmp = EDatIni;
+dFimCmp = EDatFim;
+nColuna = 0;
+nColGer = 0;
+
+@ - TOTAL PROVENTOS - @
+  aAux = "TOTAL PROVENTOS";
+  gravaGrade();       
+  vLista.Adicionar();
+  vLista.Grade = nGrade;
+  vLista.Coluna = nColuna;
+  vLista.Tipo = 4;
+  vLista.Evento = 10101;
+  vLista.Descricao = "TOTAL PROVENTOS";
+  vLista.Gravar();
+  
+@ - TOTAL DESCONTOS - @
+  aAux = "TOTAL DESCONTOS";
+  gravaGrade();       
+  vLista.Adicionar();
+  vLista.Grade = nGrade;
+  vLista.Coluna = nColuna;
+  vLista.Tipo = 4;
+  vLista.Evento = 10102;
+  vLista.Descricao = "TOTAL DESCONTOS";
+  vLista.Gravar();
+  
+@ - TOTAL LÍQUIDO - @
+  aAux = "LÍQUIDO";
+  gravaGrade();       
+  vLista.Adicionar();
+  vLista.Grade = nGrade;
+  vLista.Coluna = nColuna;
+  vLista.Tipo = 4;
+  vLista.Evento = 10103;
+  vLista.Descricao = "LÍQUIDO";
+  vLista.Gravar();
+
+@ - EVENTOS DA FOLHA - @
+C_R046VER.SQL"SELECT R008EVC.CODTAB,R008EVC.TIPEVE,R008EVC.CODEVE,R008EVC.DESEVE         \
+                FROM R046VER,                                                            \
+                     R034FUN,                                                            \
+                     R044CAL,                                                            \
+                     R038HFI,                                                            \
+                     R038HCC,                                                            \
+                     R008EVC                                                             \
+               WHERE R046VER.TABEVE = R008EVC.CODTAB                                     \
+                 AND R046VER.CODEVE = R008EVC.CODEVE                                     \
+                 AND R046VER.CODCAL = R044CAL.CODCAL                                     \
+                 AND R046VER.NUMEMP = R044CAL.NUMEMP                                     \
+                 AND R044CAL.INICMP >= :dIniCmp                                          \
+                 AND R044CAL.INICMP <= :dFimCmp                                          \
+                 AND R046VER.NUMEMP = R038HFI.NUMEMP                                     \
+                 AND R046VER.TIPCOL = R038HFI.TIPCOL                                     \
+                 AND R046VER.NUMCAD = R038HFI.NUMCAD                                     \
+                 AND R046VER.NUMEMP = R034FUN.NUMEMP                                     \
+                 AND R046VER.TIPCOL = R034FUN.TIPCOL                                     \
+                 AND R046VER.NUMCAD = R034FUN.NUMCAD                                     \
+                 AND R044CAL.TIPCAL 11                                                   \
+                 AND R038HFI.DATALT =(SELECT MAX(R038HFI.DATALT)                         \                       
+                                              FROM R038HFI                               \          
+                                             WHERE R038HFI.NUMEMP = R046VER.NUMEMP       \                  
+                                               AND R038HFI.TIPCOL = R046VER.TIPCOL       \                  
+                                               AND R038HFI.NUMCAD = R046VER.NUMCAD       \                  
+                                               AND R038HFI.DATALT <= R044CAL.FIMCMP)     \
+                 AND R046VER.NUMEMP = R038HCC.NUMEMP                                     \
+                 AND R046VER.TIPCOL = R038HCC.TIPCOL                                     \
+                 AND R046VER.NUMCAD = R038HCC.NUMCAD                                     \
+                 AND R038HCC.DATALT = (SELECT MAX(R038HCC.DATALT)                        \
+                                              FROM R038HCC                               \         
+                                             WHERE R038HCC.NUMEMP = R046VER.NUMEMP       \                  
+                                               AND R038HCC.TIPCOL = R046VER.TIPCOL       \                  
+                                               AND R038HCC.NUMCAD = R046VER.NUMCAD       \                  
+                                               AND R038HCC.DATALT <= R044CAL.FIMCMP)     \
+                     __Inserir(:eAbrEmp)                                                 \
+                     __Inserir(:eAbrFil)                                                 \
+                     __Inserir(:eAbrCcu)                                                 \
+                     __Inserir(:eAbrCad)                                                 \
+                 GROUP BY R008EVC.CODTAB,R008EVC.TIPEVE,R008EVC.CODEVE,R008EVC.DESEVE    \
+                 ORDER BY R008EVC.CODTAB,R008EVC.TIPEVE,R008EVC.CODEVE";
+ @removido so select acima pois deve buscar vales em conjunto - 14/07/2021 @
+@                 AND R046VER.CODEVE NOT IN(SELECT CODEVE FROM R044TVL GROUP BY CODEVE)   \@                 
+
+C_R046VER.AbrirCursor();
+Enquanto(C_R046VER.Achou){
+  IntParaAlfa(C_R046VER.CodEve,aAux);
+  aAux = aAux + "-" + C_R046VER.DesEve;
+  gravaGrade();       
+  vLista.Adicionar();
+  vLista.Grade = nGrade;
+  vLista.Coluna = nColuna;
+  vLista.Tipo = C_R046VER.TipEve;
+  vLista.Evento = C_R046VER.CodEve;
+  vLista.Descricao = C_R046VER.DesEve;
+  vLista.Gravar();
+  
+  C_R046VER.Proximo();
+
+}                 
+C_R046VER.FecharCursor();
+
+@ - INSS PARTE EMPRESA - @
+  aAux = "INSS EMPRESA";
+  gravaGrade();       
+  vLista.Adicionar();
+  vLista.Grade = nGrade;
+  vLista.Coluna = nColuna;
+  vLista.Tipo = 4;
+  vLista.Evento = 10100;
+  vLista.Descricao = "INSS EMPRESA";
+  vLista.Gravar();
+
+@ - EVENTOS DE PROVISÃO - @
+C_R146PRV.SQL"SELECT R146PRV.TipPrv,                                                     \
+                     R146PRV.TipVal,                                                     \
+                     R146DEF.DESPRV,                                                     \
+                     R146DET.DESVAL                                                      \
+                FROM R146PRV,                                                            \
+                     R034FUN,                                                            \
+                     R044CAL,                                                            \
+                     R038HFI,                                                            \
+                     R038HCC,                                                            \
+                     R146DEF,                                                            \
+                     R146DET                                                             \
+               WHERE R146PRV.TIPPRV = R146DEF.TIPPRV                                     \
+                 AND R146PRV.TIPPRV = R146DET.TIPPRV                                     \
+                 AND R146PRV.TIPVAL = R146DET.TIPVAL                                     \
+                 AND R146PRV.NUMEMP = R044CAL.NUMEMP                                     \
+                 AND R146PRV.MESANO = R044CAL.PERREF                                     \
+                 AND R044CAL.INICMP >= :dIniCmp                                          \
+                 AND R044CAL.INICMP <= :dFimCmp                                          \
+                 AND R146PRV.PRVMES <> 0                                                 \
+                 AND R146PRV.NUMEMP = R038HFI.NUMEMP                                     \
+                 AND R146PRV.TIPCOL = R038HFI.TIPCOL                                     \
+                 AND R146PRV.NUMCAD = R038HFI.NUMCAD                                     \
+                 AND R146PRV.NUMEMP = R034FUN.NUMEMP                                     \
+                 AND R146PRV.TIPCOL = R034FUN.TIPCOL                                     \
+                 AND R146PRV.NUMCAD = R034FUN.NUMCAD                                     \                 
+                 AND R038HFI.DATALT = (SELECT MAX(R038HFI.DATALT)                        \                       
+                                              FROM R038HFI                               \          
+                                             WHERE R038HFI.NUMEMP = R146PRV.NUMEMP       \                  
+                                               AND R038HFI.TIPCOL = R146PRV.TIPCOL       \                  
+                                               AND R038HFI.NUMCAD = R146PRV.NUMCAD       \                  
+                                               AND R038HFI.DATALT <= R044CAL.FIMCMP)     \
+                 AND R146PRV.NUMEMP = R038HCC.NUMEMP                                     \
+                 AND R146PRV.TIPCOL = R038HCC.TIPCOL                                     \
+                 AND R146PRV.NUMCAD = R038HCC.NUMCAD                                     \
+                 AND R038HCC.DATALT = (SELECT MAX(R038HCC.DATALT)                        \
+                                              FROM R038HCC                               \         
+                                             WHERE R038HCC.NUMEMP = R146PRV.NUMEMP       \                  
+                                               AND R038HCC.TIPCOL = R146PRV.TIPCOL       \                  
+                                               AND R038HCC.NUMCAD = R146PRV.NUMCAD       \                  
+                                               AND R038HCC.DATALT <= R044CAL.FIMCMP)     \                   
+                     __Inserir(:eAbrEmp)                                                 \
+                     __Inserir(:eAbrFil)                                                 \
+                     __Inserir(:eAbrCcu)                                                 \
+                     __Inserir(:eAbrCad)                                                 \
+                     GROUP BY R146PRV.TIPPRV,                                            \
+                              R146DEF.DESPRV,                                            \
+                              R146PRV.TIPVAL,                                            \
+                              R146DET.DESVAL";
+
+C_R146PRV.AbrirCursor();
+Enquanto(C_R146PRV.Achou){
+  aAux = C_R146PRV.DesPrv + " - " + C_R146PRV.DesVal; 
+  gravaGrade();
+  vLista.Adicionar();
+  vLista.Grade = nGrade;
+  vLista.Coluna = nColuna;
+  vLista.Tipo = 1;
+  IntParaAlfa(C_R146PRV.TipPrv,aAux);
+  aEvento = aAux;
+  IntParaAlfa(C_R146PRV.TipVal,aAux);   
+  aEvento = aEvento + aAux + "1000";
+  AlfaParaInt (aEvento, nEvento);
+  vLista.Evento = nEvento;
+  aAux = C_R146PRV.DesPrv + " - " + C_R146PRV.DesVal;
+  vLista.Descricao = aAux;
+  vLista.Gravar();
+  C_R146PRV.Proximo();
+
+}
+
+C_R146PRV.FecharCursor();
+
+/* Cliente não utiliza o benefícios, parte do cabeçalho está pronta para ser utilizada - 14/07/2021 
+@EVENTOS DE BENEFÍCIOS R162GER@
+C_R162GER.SQL"SELECT R044TVL.TIPWIP                                                      \
+                FROM R162GER,                                                            \
+                     R044CAL,                                                            \
+                     R038HFI,                                                            \
+                     R038HCC,                                                            \
+                     R044TVL,                                                            \
+                     R034FUN                                                             \
+               WHERE R162GER.DATVAL BETWEEN R044CAL.INICMP AND R044CAL.FIMCMP            \
+                 AND R162GER.NUMEMP = R044CAL.NUMEMP                                     \
+                 AND R044CAL.TIPCAL = 11                                                 \
+                 AND R044CAL.INICMP >= :dIniCmp                                          \
+                 AND R044CAL.INICMP <= :dFimCmp                                          \
+                 AND R162GER.NUMEMP = R038HFI.NUMEMP                                     \
+                 AND R162GER.TIPCOL = R038HFI.TIPCOL                                     \
+                 AND R162GER.NUMCAD = R038HFI.NUMCAD                                     \
+                 AND R162GER.NUMEMP = R034FUN.NUMEMP                                     \
+                 AND R162GER.TIPCOL = R034FUN.TIPCOL                                     \
+                 AND R162GER.NUMCAD = R034FUN.NUMCAD                                     \                 
+                 AND R038HFI.DATALT =(SELECT MAX(R038HFI.DATALT)                         \                       
+                                              FROM R038HFI                               \          
+                                             WHERE R038HFI.NUMEMP = R162GER.NUMEMP       \                  
+                                               AND R038HFI.TIPCOL = R162GER.TIPCOL       \                  
+                                               AND R038HFI.NUMCAD = R162GER.NUMCAD       \                  
+                                               AND R038HFI.DATALT <= R044CAL.FIMCMP)     \
+                 AND R162GER.NUMEMP = R038HCC.NUMEMP                                     \
+                 AND R162GER.TIPCOL = R038HCC.TIPCOL                                     \
+                 AND R162GER.NUMCAD = R038HCC.NUMCAD                                     \
+                 AND R038HCC.DATALT = (SELECT MAX(R038HCC.DATALT)                        \
+                                              FROM R038HCC                               \         
+                                             WHERE R038HCC.NUMEMP = R162GER.NUMEMP       \                  
+                                               AND R038HCC.TIPCOL = R162GER.TIPCOL       \                  
+                                               AND R038HCC.NUMCAD = R162GER.NUMCAD       \                  
+                                               AND R038HCC.DATALT <= R044CAL.FIMCMP)     \                   
+                 AND R162GER.TABEVE = R044TVL.TABEVE                                     \
+                 AND R162GER.CODVAL = R044TVL.CODVAL                                     \
+                 AND R044TVL.TIPWIP IN (2,3,9,4)                                         \
+                     __Inserir(:eAbrEmp)                                                 \
+                     __Inserir(:eAbrFil)                                                 \
+                     __Inserir(:eAbrCcu)                                                 \
+                     __Inserir(:eAbrCad)                                                 \
+                 GROUP BY R044TVL.TIPWIP                                                 \
+                 ORDER BY R044TVL.TIPWIP";
+
+C_R162GER.AbrirCursor();
+
+Enquanto(C_R162GER.Achou){
+
+  Se(C_R162GER.TipWip = 2){
+    aAux = "Benefício Refeição";
+    gravaGrade();
+    vLista.Adicionar();
+    vLista.Grade = nGrade;    
+    vLista.Coluna = nColuna;
+    vLista.Tipo = 1;
+    vLista.Evento = 10006;
+    vLista.Descricao = "Benefício Refeição";
+    vLista.Gravar();
+  }
+
+  Se(C_R162GER.TipWip = 3){
+    aAux = "Benefício Alimentação";
+    gravaGrade();
+    vLista.Adicionar();
+    vLista.Grade = nGrade;    
+    vLista.Coluna = nColuna;
+    vLista.Tipo = 1;
+    vLista.Evento = 10007;
+    vLista.Descricao = "Benefício Alimentação";
+    vLista.Gravar();
+  }
+
+  Se(C_R162GER.TipWip = 9){
+    aAux = "Benefício Combustível";
+    gravaGrade();
+    vLista.Adicionar();
+    vLista.Grade = nGrade;    
+    vLista.Coluna = nColuna;
+    vLista.Tipo = 1;
+    vLista.Evento = 10008;
+    vLista.Descricao = "Benefício Combustível";
+    vLista.Gravar();
+  }
+
+  Se(C_R162GER.TipWip = 4){
+    aAux = "Benefício Transporte";
+    gravaGrade();
+    vLista.Adicionar();
+    vLista.Grade = nGrade;    
+    vLista.Coluna = nColuna;
+    vLista.Tipo = 1;
+    vLista.Evento = 10009;
+    vLista.Descricao = "Benefício Transporte";
+    vLista.Gravar();
+  }
+  C_R162GER.Proximo();
+}                 
+
+C_R162GER.FecharCursor();
+ */
+ 
+Se(nColGer <= 50){
+  AlteraControle("gradeMovel2","Imprimir","Falso");
+  AlteraControle("gradeMovel3","Imprimir","Falso");
+  AlteraControle("gradeMovel4","Imprimir","Falso");
+} Senao Se(nColGer <= 100){  
+  AlteraControle("gradeMovel3","Imprimir","Falso");
+  AlteraControle("gradeMovel4","Imprimir","Falso");
+}Senao Se(nColGer <= 150){  
+  AlteraControle("gradeMovel4","Imprimir","Falso");
+}  
+
+@ - USADO PARA ZERAR VALORES E BARRA DE PROGRESSO - @
+C_R046VER.SQL"SELECT R034FUN.NUMEMP,                                                     \
+                     R034FUN.TIPCOL,                                                     \
+                     R034FUN.NUMCAD,                                                     \
+                     R044CAL.PERREF                                                      \
+                FROM R046VER,                                                            \
+                     R034FUN,                                                            \
+                     R008EVC,                                                            \
+                     R044CAL,                                                            \
+                     R038HFI,                                                            \
+                     R018CCU,                                                            \
+                     R024CAR,                                                            \
+                     R038HCA,                                                            \
+                     R038HCC                                                             \
+               WHERE R046VER.NUMEMP = R034FUN.NUMEMP                                     \
+                 AND R046VER.TIPCOL = R034FUN.TIPCOL                                     \
+                 AND R046VER.NUMCAD = R034FUN.NUMCAD                                     \
+                 AND R046VER.TABEVE = R008EVC.CODTAB                                     \
+                 AND R046VER.CODEVE = R008EVC.CODEVE                                     \
+                 AND R046VER.NUMEMP = R044CAL.NUMEMP                                     \
+                 AND R046VER.CODCAL = R044CAL.CODCAL                                     \                                    
+                 AND R044CAL.INICMP >= :dIniCmp                                          \
+                 AND R044CAL.INICMP <= :dFimCmp                                          \
+                 AND R046VER.NUMEMP = R038HCA.NUMEMP                                     \
+                 AND R046VER.TIPCOL = R038HCA.TIPCOL                                     \
+                 AND R046VER.NUMCAD = R038HCA.NUMCAD                                     \
+                 AND R044CAL.TIPCAL = 11                                                 \
+                 AND R038HCA.DATALT = (SELECT MAX(R038HCA.DATALT)                        \           
+                                              FROM R038HCA                               \         
+                                             WHERE R038HCA.NUMEMP = R046VER.NUMEMP       \                  
+                                               AND R038HCA.TIPCOL = R046VER.TIPCOL       \                  
+                                               AND R038HCA.NUMCAD = R046VER.NUMCAD       \                  
+                                               AND R038HCA.DATALT <= R044CAL.FIMCMP)     \         
+                 AND R024CAR.ESTCAR = R038HCA.ESTCAR                                     \
+                 AND R024CAR.CODCAR = R038HCA.CODCAR                                     \
+                 AND R046VER.NUMEMP = R038HFI.NUMEMP                                     \
+                 AND R046VER.TIPCOL = R038HFI.TIPCOL                                     \
+                 AND R046VER.NUMCAD = R038HFI.NUMCAD                                     \
+                 AND R038HFI.DATALT =(SELECT MAX(R038HFI.DATALT)                         \                       
+                                              FROM R038HFI                               \          
+                                             WHERE R038HFI.NUMEMP = R046VER.NUMEMP       \                  
+                                               AND R038HFI.TIPCOL = R046VER.TIPCOL       \                  
+                                               AND R038HFI.NUMCAD = R046VER.NUMCAD       \                  
+                                               AND R038HFI.DATALT <= R044CAL.FIMCMP)     \
+                 AND R046VER.NUMEMP = R038HCC.NUMEMP                                     \
+                 AND R046VER.TIPCOL = R038HCC.TIPCOL                                     \
+                 AND R046VER.NUMCAD = R038HCC.NUMCAD                                     \
+                 AND R038HCC.DATALT = (SELECT MAX(R038HCC.DATALT)                        \
+                                              FROM R038HCC                               \         
+                                             WHERE R038HCC.NUMEMP = R046VER.NUMEMP       \                  
+                                               AND R038HCC.TIPCOL = R046VER.TIPCOL       \                  
+                                               AND R038HCC.NUMCAD = R046VER.NUMCAD       \                  
+                                               AND R038HCC.DATALT <= R044CAL.FIMCMP)     \
+                 AND R038HCC.NUMEMP = R018CCU.NUMEMP                                     \
+                 AND R038HCC.CODCCU = R018CCU.CODCCU                                     \
+                     __Inserir(:eAbrEmp)                                                 \
+                     __Inserir(:eAbrFil)                                                 \
+                     __Inserir(:eAbrCcu)                                                 \
+                     __Inserir(:eAbrCad)                                                 \
+                     GROUP BY R034FUN.NUMEMP,                                            \
+                              R034FUN.TIPCOL,                                            \
+                              R034FUN.NUMCAD,                                            \
+                              R044CAL.PERREF";
+C_R046VER.AbrirCursor();
+nTotReg = 0;
+Enquanto(C_R046VER.Achou){
+  nTotReg++;
+  C_R046VER.Proximo(); 
+}
+C_R046VER.FecharCursor();
+@Adiciona valores em toda a grade para poder gerar em .xls sem suprimir dados vazios@
+Se (nTotReg > 0)
+  IniciaBarraProgresso(nTotReg);
+
+nTotLin = nTotReg;
+nTotLin++;@Cabeçalho a mais@
+Enquanto(nTotLin > 1){
+  nTotCol = nColGer;
+  Enquanto(nTotCol > 0){
+    Se(nTotCol <= 50){
+      AdicionaDadosGrade("gradeMovel1",  nTotLin, nTotCol, "-");
+    } Senao Se(nTotCol < 100){ 
+      AdicionaDadosGrade("gradeMovel2",  nTotLin, nTotCol-49, "-"); 
+    } Senao Se(nTotCol < 150){ 
+      AdicionaDadosGrade("gradeMovel3",  nTotLin, nTotCol-99, "-"); 
+    } Senao Se(nTotCol < 200){ 
+      AdicionaDadosGrade("gradeMovel4",  nTotLin, nTotCol-149, "-");
+    }
+    nTotCol--;
+  }
+  nTotLin--;    
+} 
+
+@FINALIZA CABEÇALHO E INICIA PREENCHIMENTO DOS VALORES@
+C_R046VER.SQL"SELECT R034FUN.NUMEMP, R034FUN.TIPCOL, R034FUN.NUMCAD,                     \
+                     R034FUN.NOMFUN, R024CAR.TITRED, R018CCU.NOMCCU,                     \
+                     R044CAL.PERREF, R046VER.CODEVE, R046VER.VALEVE                      \
+                FROM R046VER,                                                            \
+                     R034FUN,                                                            \
+                     R008EVC,                                                            \
+                     R044CAL,                                                            \
+                     R038HFI,                                                            \
+                     R018CCU,                                                            \
+                     R024CAR,                                                            \
+                     R038HCA,                                                            \
+                     R038HCC                                                             \
+               WHERE R046VER.NUMEMP = R034FUN.NUMEMP                                     \
+                 AND R046VER.TIPCOL = R034FUN.TIPCOL                                     \
+                 AND R046VER.NUMCAD = R034FUN.NUMCAD                                     \
+                 AND R046VER.TABEVE = R008EVC.CODTAB                                     \
+                 AND R046VER.CODEVE = R008EVC.CODEVE                                     \
+                 AND R046VER.NUMEMP = R044CAL.NUMEMP                                     \
+                 AND R046VER.CODCAL = R044CAL.CODCAL                                     \                                    
+                 AND R044CAL.INICMP >= :dIniCmp                                          \
+                 AND R044CAL.INICMP <= :dFimCmp                                          \
+                 AND R046VER.NUMEMP = R038HCA.NUMEMP                                     \
+                 AND R046VER.TIPCOL = R038HCA.TIPCOL                                     \
+                 AND R046VER.NUMCAD = R038HCA.NUMCAD                                     \
+                 AND R044CAL.TIPCAL = 11                                                 \
+                 AND R038HCA.DATALT = (SELECT MAX(R038HCA.DATALT)                        \           
+                                              FROM R038HCA                               \         
+                                             WHERE R038HCA.NUMEMP = R046VER.NUMEMP       \                  
+                                               AND R038HCA.TIPCOL = R046VER.TIPCOL       \                  
+                                               AND R038HCA.NUMCAD = R046VER.NUMCAD       \                  
+                                               AND R038HCA.DATALT <= R044CAL.FIMCMP)     \         
+                 AND R024CAR.ESTCAR = R038HCA.ESTCAR                                     \
+                 AND R024CAR.CODCAR = R038HCA.CODCAR                                     \
+                 AND R046VER.NUMEMP = R038HFI.NUMEMP                                     \
+                 AND R046VER.TIPCOL = R038HFI.TIPCOL                                     \
+                 AND R046VER.NUMCAD = R038HFI.NUMCAD                                     \
+                 AND R038HFI.DATALT =(SELECT MAX(R038HFI.DATALT)                         \                       
+                                              FROM R038HFI                               \          
+                                             WHERE R038HFI.NUMEMP = R046VER.NUMEMP       \                  
+                                               AND R038HFI.TIPCOL = R046VER.TIPCOL       \                  
+                                               AND R038HFI.NUMCAD = R046VER.NUMCAD       \                  
+                                               AND R038HFI.DATALT <= R044CAL.FIMCMP)     \
+                 AND R046VER.NUMEMP = R038HCC.NUMEMP                                     \
+                 AND R046VER.TIPCOL = R038HCC.TIPCOL                                     \
+                 AND R046VER.NUMCAD = R038HCC.NUMCAD                                     \
+                 AND R038HCC.DATALT = (SELECT MAX(R038HCC.DATALT)                        \
+                                              FROM R038HCC                               \         
+                                             WHERE R038HCC.NUMEMP = R046VER.NUMEMP       \                  
+                                               AND R038HCC.TIPCOL = R046VER.TIPCOL       \                  
+                                               AND R038HCC.NUMCAD = R046VER.NUMCAD       \                  
+                                               AND R038HCC.DATALT <= R044CAL.FIMCMP)     \
+                 AND R038HCC.NUMEMP = R018CCU.NUMEMP                                     \
+                 AND R038HCC.CODCCU = R018CCU.CODCCU                                     \
+                     __Inserir(:eAbrEmp)                                                 \
+                     __Inserir(:eAbrFil)                                                 \
+                     __Inserir(:eAbrCcu)                                                 \
+                     __Inserir(:eAbrCad)                                                 \
+                     GROUP BY R034FUN.NUMEMP,                                            \
+                              R034FUN.TIPCOL,                                            \
+                              R034FUN.NUMCAD,                                            \
+                              R034FUN.NOMFUN,                                            \                              
+                              R024CAR.TITRED,                                            \
+                              R018CCU.NOMCCU,                                            \
+                              R044CAL.PERREF,                                            \
+                              R046VER.CODEVE,                                            \
+                              R046VER.VALEVE";
+C_R046VER.AbrirCursor();
+vLista.Chave("Evento");
+Definir Alfa aGrade;
+nPri=0;
+nLinha = 1;
+nRegAtu = 1;
+Enquanto(C_R046VER.Achou){
+  Se((nNumEmpAnt <> C_R046VER.NumEmp) ou (nNumTipCol <> C_R046VER.TipCol)
+  ou (nNumCadAnt <> C_R046VER.NumCad) ou (nPerRef <> C_R046VER.PerRef)){
+    nPri = 1;
+    nLinha++;
+    
+    
+    @ Depuração @
+    
+    Definir Alfa aNomFun;
+    Definir Alfa aTitRed;
+    Definir Alfa aNomCcu;
+    aNomFun = C_R046VER.NomFun;
+    aTitRed = C_R046VER.TitRed;
+    aNomCcu = C_R046VER.NomCcu;
+    nCodEve = C_R046VER.CodEve;
+    nValEve = C_R046VER.ValEve;
+    
+    nValEve = 0; @ Zera o valor do eventos antes de começar a fazer a soma Prov. Desc. @
+    
+    
+    
+    
+    @ ====== INSS EMPRESA ====== @
+    Definir Data dPerRef;                                                    
+    dPerRef = C_R046VER.PerRef;
+    @nPerRef = C_R046VER.PerRef;@ 
+    
+    nNumEmp = C_R046VER.NumEmp;
+    nTipCol = C_R046VER.TipCol;
+    nNumCad = C_R046VER.NumCad;
+    C_R046VER2.SQL"SELECT VALEVE FROM R046VER WHERE 1=0     \
+                    UNION                                   \
+                   SELECT SUM(VALEVE)                       \
+                     FROM R046VER,R008EVC,R044CAL           \
+                    WHERE R046VER.TABEVE = R008EVC.CODTAB   \                                 
+                      AND R046VER.CODEVE = R008EVC.CODEVE   \
+                      AND R046VER.CODCAL = R044CAL.CODCAL   \
+                      AND R046VER.NUMEMP = R044CAL.NUMEMP   \
+                      AND R044CAL.PERREF = :dPerRef         \
+                      AND R046VER.NUMEMP = :nNumEmp         \
+                      AND R046VER.TIPCOL = :nTipCol         \
+                      AND R046VER.NUMCAD = :nNumCad         \
+                      AND R044CAL.TIPCAL = 11               \
+                      AND R008EVC.TIPEVE IN (1,2)";     @ IN (1, 2, 4, 5)- Removido --- :nPerRef / :dPerRef @ 
+    C_R046VER2.AbrirCursor();
+    Se(C_R046VER2.Achou){
+      vLista.SetarChave();
+      vLista.Evento = 10100; @INSS EMPRESA FIXO@
+      
+      Se (vLista.VaiParaChave()){
+        nGrade = vLista.Grade;
+        IntParaAlfa(nGrade,aGrade);
+        aGrade = "gradeMovel" + aGrade;
+        nColuna = vLista.Coluna;
+        nTeste = C_R046VER2.ValEve;                @ Teste @
+        nValEve = C_R046VER2.ValEve * 0.2;
+        ConverteMascara(2,nValEve,aAux,"ZZZ.ZZZ.ZZ9,99");
+        AdicionaDadosGrade(aGrade, nLinha, nColuna, aAux);    
+      }
+      
+      vLista.SetarChave();
+      vLista.Evento = 10101; @TOTAL PROVENTOS FIXO@
+      Se (vLista.VaiParaChave()){
+        nGrade = vLista.Grade;
+        IntParaAlfa(nGrade,aGrade);
+        aGrade = "gradeMovel" + aGrade;
+        nColuna = vLista.Coluna;
+        nValEve = C_R046VER2.ValEve;
+        nTotPro = nValEve;
+        ConverteMascara(2,nValEve,aAux,"ZZZ.ZZZ.ZZ9,99");
+        AdicionaDadosGrade(aGrade, nLinha, nColuna, aAux);    
+      }
+    }  
+    C_R046VER2.FecharCursor();      
+    
+    
+    
+    @ DESCONTO @
+    C_R046VER2.SQL"SELECT VALEVE FROM R046VER WHERE 1=0     \
+                    UNION                                   \
+                   SELECT SUM(VALEVE)                       \
+                     FROM R046VER,R008EVC,R044CAL           \
+                    WHERE R046VER.TABEVE = R008EVC.CODTAB   \                                 
+                      AND R046VER.CODEVE = R008EVC.CODEVE   \
+                      AND R046VER.CODCAL = R044CAL.CODCAL   \
+                      AND R046VER.NUMEMP = R044CAL.NUMEMP   \
+                      AND R044CAL.PERREF = :dPerRef         \
+                      AND R046VER.NUMEMP = :nNumEmp         \
+                      AND R046VER.TIPCOL = :nTipCol         \
+                      AND R046VER.NUMCAD = :nNumCad         \
+                      AND R044CAL.TIPCAL = 11               \
+                      AND R008EVC.TIPEVE IN(3,6)";     @ --- :nPerRef / :dPerRef @
+    C_R046VER2.AbrirCursor();
+    Se(C_R046VER2.Achou){      
+      vLista.SetarChave();
+      vLista.Evento = 10102;@TOTAL DESCONTOS FIXO@
+      Se (vLista.VaiParaChave()){
+        nGrade = vLista.Grade;
+        IntParaAlfa(nGrade,aGrade);
+        aGrade = "gradeMovel" + aGrade;
+        nColuna = vLista.Coluna; 
+        nValEve = C_R046VER2.ValEve;
+        nTotDes = nValEve;
+        ConverteMascara(2,nValEve,aAux,"ZZZ.ZZZ.ZZ9,99");
+        AdicionaDadosGrade(aGrade, nLinha, nColuna, aAux);    
+      } 
+    }  
+    C_R046VER2.FecharCursor();      
+      
+    vLista.SetarChave();
+    vLista.Evento = 10103;@LÌQUIDO FIXO@
+    Se (vLista.VaiParaChave()){
+      nGrade = vLista.Grade;
+      IntParaAlfa(nGrade,aGrade);
+      aGrade = "gradeMovel" + aGrade;
+      nColuna = vLista.Coluna;
+      nValEve = nTotPro - nTotDes;
+      ConverteMascara(2,nValEve,aAux,"ZZZ.ZZZ.ZZ9,99");
+      AdicionaDadosGrade(aGrade, nLinha, nColuna, aAux);    
+    }   
+    
+    @PROVISÕES@
+    C_R146PRV.SQL"SELECT R146PRV.NumEmp,                                                 \
+                     R146PRV.TipCol,                                                     \
+                     R146PRV.NumCad,                                                     \
+                     R146PRV.MesAno,                                                     \
+                     R146PRV.PrvMes,                                                     \
+                     R146PRV.TipPrv,                                                     \
+                     R146PRV.TipVal,                                                     \
+                     R146DEF.DESPRV,                                                     \
+                     R146DET.DESVAL                                                      \
+                FROM R146PRV,                                                            \
+                     R034FUN,                                                            \
+                     R044CAL,                                                            \
+                     R038HFI,                                                            \
+                     R038HCC,                                                            \
+                     R146DEF,                                                            \
+                     R146DET                                                             \
+               WHERE R146PRV.TIPPRV = R146DEF.TIPPRV                                     \
+                 AND R146PRV.TIPPRV = R146DET.TIPPRV                                     \
+                 AND R146PRV.TIPVAL = R146DET.TIPVAL                                     \
+                 AND R146PRV.NUMEMP = R044CAL.NUMEMP                                     \
+                 AND R146PRV.MESANO = R044CAL.PERREF                                     \
+                 AND R044CAL.PERREF >= :nPerRef                                          \
+                 AND R146PRV.PRVMES <> 0                                                 \
+                 AND R146PRV.NUMEMP = R038HFI.NUMEMP                                     \
+                 AND R146PRV.TIPCOL = R038HFI.TIPCOL                                     \
+                 AND R146PRV.NUMCAD = R038HFI.NUMCAD                                     \
+                 AND R146PRV.NUMEMP = R034FUN.NUMEMP                                     \
+                 AND R146PRV.TIPCOL = R034FUN.TIPCOL                                     \
+                 AND R146PRV.NUMCAD = R034FUN.NUMCAD                                     \
+                 AND R044CAL.TIPCAL = 11                                                 \                 
+                 AND R038HFI.DATALT = (SELECT MAX(R038HFI.DATALT)                        \                       
+                                              FROM R038HFI                               \          
+                                             WHERE R038HFI.NUMEMP = R146PRV.NUMEMP       \                  
+                                               AND R038HFI.TIPCOL = R146PRV.TIPCOL       \                  
+                                               AND R038HFI.NUMCAD = R146PRV.NUMCAD       \                  
+                                               AND R038HFI.DATALT <= R044CAL.FIMCMP)     \
+                 AND R146PRV.NUMEMP = R038HCC.NUMEMP                                     \
+                 AND R146PRV.TIPCOL = R038HCC.TIPCOL                                     \
+                 AND R146PRV.NUMCAD = R038HCC.NUMCAD                                     \
+                 AND R038HCC.DATALT = (SELECT MAX(R038HCC.DATALT)                        \
+                                              FROM R038HCC                               \         
+                                             WHERE R038HCC.NUMEMP = R146PRV.NUMEMP       \                  
+                                               AND R038HCC.TIPCOL = R146PRV.TIPCOL       \                  
+                                               AND R038HCC.NUMCAD = R146PRV.NUMCAD       \                  
+                                               AND R038HCC.DATALT <= R044CAL.FIMCMP)     \                   
+                 AND R146PRV.NUMEMP = :nNumEmp                                           \
+                 AND R146PRV.TIPCOL = :nTipCol                                           \
+                 AND R146PRV.NUMCAD = :nNumCad";
+    C_R146PRV.AbrirCursor();
+
+    Enquanto(C_R146PRV.Achou){
+      @Monta chave para buscar@
+      IntParaAlfa(C_R146PRV.TipPrv,aAux);
+      aEvento = aAux;
+      IntParaAlfa(C_R146PRV.TipVal,aAux);   
+      aEvento = aEvento + aAux + "1000";
+      AlfaParaInt (aEvento, nEvento);
+      vLista.SetarChave();
+      vLista.Evento = nEvento;
+      Se (vLista.VaiParaChave()){
+        nGrade = vLista.Grade;
+        IntParaAlfa(nGrade,aGrade);
+        aGrade = "gradeMovel" + aGrade;
+        nColuna = vLista.Coluna;
+        nValEve = C_R146PRV.PrvMes;
+        ConverteMascara(2,nValEve,aAux,"ZZZ.ZZZ.ZZ9,99");
+        AdicionaDadosGrade(aGrade, nLinha, nColuna, aAux);
+      } 
+      C_R146PRV.Proximo();            
+    }
+    C_R146PRV.FecharCursor();
+    
+    @DADOS DA GRID FIXA@
+    IntParaAlfa(C_R046VER.NumCad,aAux);
+    AdicionaDadosGrade("gradeFixa",  nLinha, 1, aAux);
+    AdicionaDadosGrade("gradeFixa",  nLinha, 2, C_R046VER.NomFun); 
+    AdicionaDadosGrade("gradeFixa",  nLinha, 3, C_R046VER.TitRed);
+    AdicionaDadosGrade("gradeFixa",  nLinha, 4, C_R046VER.NomCcu);
+    ConverteMascara(3,C_R046VER.PerRef,aAux,"MM/YYYY");
+    AdicionaDadosGrade("gradeFixa",  nLinha, 5, aAux);
+    IntParaAlfa(nRegAtu,aMsg);
+    aMsg = "Gerando resumo do registro: " + aMsg + ".";
+    AtualizaBarraProgresso("Gerando resumo da folha...",aMsg,"SIM",3);
+    nRegAtu++;
+  }
+  vLista.SetarChave();
+  vLista.Evento = C_R046VER.CodEve;
+  Se (vLista.VaiParaChave()){
+    nGrade = vLista.Grade;
+    IntParaAlfa(nGrade,aGrade);
+    aGrade = "gradeMovel" + aGrade;
+    nColuna = vLista.Coluna;
+    ConverteMascara(2,C_R046VER.ValEve,aAux,"ZZZ.ZZZ.ZZ9,99");
+    AdicionaDadosGrade(aGrade, nLinha, nColuna, aAux);    
+  }
+  
+  nNumEmpAnt = C_R046VER.NumEmp;
+  nNumTipCol = C_R046VER.TipCol;
+  nNumCadAnt = C_R046VER.NumCad;
+  nPerRef = C_R046VER.PerRef;
+  
+  C_R046VER.Proximo();
+}
+Se(nTotReg > 0)
+  FinalizaBarraProgresso();
+@lista último@
+ListaSecao("Adicional_1");                 
+C_R046VER.FecharCursor();
+
+Funcao gravaGrade();
+Inicio
+  nColGer++;
+  nColuna++;
+  Se((nColGer = 51) ou (nColGer = 101) ou (nColGer = 151))
+    nColuna = 1;
+
+  Se(nColGer <= 50){
+    nGrade = 1;
+    AdicionaDadosGrade("gradeMovel1",  1, nColuna, aAux);
+  } Senao Se(nColGer <= 100){ 
+    nGrade = 2;
+    AdicionaDadosGrade("gradeMovel2",  1, nColuna, aAux); 
+  } Senao Se(nColGer <= 150){ 
+    nGrade = 3;
+    AdicionaDadosGrade("gradeMovel3",  1, nColuna, aAux); 
+  } Senao Se(nColGer <= 200){ 
+    nGrade = 4;
+    AdicionaDadosGrade("gradeMovel4",  1, nColuna, aAux);
+  }   
+Fim;
+
+
+
+    
+                     
+                     

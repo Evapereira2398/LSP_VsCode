@@ -38,6 +38,7 @@ dDatHoj = DatSis -1;
 MontaData (31, 12, 1900, dDatExt);
 
 
+
 @ --------------- Requisição para obter o token --------------- @
 HttpObjeto(vHTTP);
 HttpHabilitaSNI(vHTTP);
@@ -59,6 +60,7 @@ xJson = xJson + "IjoiYmVlLXV0aWxpdHktYXV0aGVudGljYXRpb24iLCJhdWQiOiJiZWUtY2xpZW5
 xJson = xJson +"}";
 xURL = "https://apiplusauth.4bee.com.br/api/Security/Authenticate";
 HttpPost(vHTTP, xURL, xJson, xReturn_Token);
+
 
 
 @ --------------- Requisição para autenticação na plataforma 4Bee --------------- @
@@ -271,24 +273,6 @@ Se ((xReturn_Token <> "") e (xReturn_Token <> " ")) {
     nTipCol = C_R034Usu.TipCol;
     nNumCad = C_R034Usu.NumCad; 
     nUserID = C_R034Usu.Usu_ID4BeeEmp;
-    
-    /*@ CH - 225043 - @
-    @ Foi solicitado para remover a integração de usuários que tiverem o e-mail com dominio diferente de IBMP @  
-    aEmaPar = C_R034Usu.EmaPar; 
-    aEmaCom = C_R034Usu.EmaCom; 
-
-    Se(aEmaPar <> ""){
-      aEmaCol = aEmaPar;
-    }
-    Senao {
-      aEmaCol = aEmaCom;
-    }
-
-    PosicaoAlfa("@ibmp",aEmaCol, xRetMail);
-
-    Se(xRetMail = 0){
-      Cancel(1); 
-    }  */  
     
     PosicaoAlfa ("", xNomFun, nPosStr); 
     

@@ -82,6 +82,7 @@ nMes = 0;
 nAno = 0;
 dFimPer = 0;
 
+
 @ -------------- Calcula somente se não for Calculo de Provisão -------------- @
 Se(TipCal <> 55) 
 Inicio
@@ -302,7 +303,6 @@ Inicio
   Fim
 Fim
 
-@@@@@@@@@@@@@@@@@@@@@@@@@ Cálculo Provisão de Férias @@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 Se (TipCal = 55)  @ -- Cálculo de Provisão de Férias -- @
 Vapara Final;

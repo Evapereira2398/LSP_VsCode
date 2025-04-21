@@ -1,0 +1,127 @@
+Definir Alfa CUR_R038HPO;
+Definir Alfa aMsgRet;
+Definir Alfa aSqlAux;
+Definir Alfa aPosTra;
+Definir Alfa aObsHpo;
+Definir Alfa aFUNESO;
+
+Definir Data dAltIni;
+Definir Data dAltFin;
+Definir Data dIniAtu;
+Definir Data dDatDis;
+Definir Data dTerAtu;
+
+aMsgRet = "OK";
+aSqlAux = "";
+
+dAltIni = historicoPosto.AltIni;
+dAltFin = historicoPosto.AltFin;
+
+Se(dAltIni = 0)
+{
+  aMsgRet = "Informar a Data Inicial de Afastamento através do parâmetro altIni.";
+  
+  VaPara FinalRegra;
+}
+Senao Se(dAltFin = 0)
+{
+  aMsgRet = "Informar a Data Final de Afastamento através do parâmetro altFin.";
+  
+  VaPara FinalRegra;
+}
+Senao Se(dAltIni > dAltFin)
+{
+  aMsgRet = "Data Inicial não pode ser maior que a Data Final.";
+  
+  VaPara FinalRegra;
+}
+
+aSqlAux = "SELECT NUMEMP, TIPCOL, NUMCAD, INIATU, SEQHIS, \                                                
+                  CODTAP, MOTALT, ESTPOS, POSTRA, TERATU, \                                               
+                  OBSHPO, STAHIS, TIPSBS, CADSBS, PERADI, \
+                  FUNESO, CODUSU                          \
+             FROM R038HPO                                 \                                               
+            WHERE INIATU >= :dAltIni                      \                                              
+              AND INIATU <= :dAltFin                      \
+            ORDER BY NUMEMP, TIPCOL, NUMCAD, INIATU";
+
+SQL_Criar(CUR_R038HPO);
+SQL_UsarSQLSenior2(CUR_R038HPO, 0);
+SQL_UsarAbrangencia(CUR_R038HPO, 0);
+SQL_DefinirComando(CUR_R038HPO, aSqlAux); 
+
+SQL_DefinirData(CUR_R038HPO, "dAltIni", dAltIni);
+SQL_DefinirData(CUR_R038HPO, "dAltFin", dAltFin);
+
+SQL_AbrirCursor(CUR_R038HPO);
+Enquanto(SQL_EOF(CUR_R038HPO) = 0)
+{ 
+  dDatAlt = 0;
+  dDatDis = 0;
+      
+  nNumEmp = 0;
+  nTipCol = 0;
+  nNumCad = 0;
+  dIniAtu = 0;
+  nSeqHis = 0;
+  nCodTap = 0;
+  nMotAlt = 0;
+  nEstPos = 0;
+  dTerAtu = 0;
+  nStaHis = 0;
+  nTipSbs = 0;
+  nCadSbs = 0;
+  nPerAdi = 0;
+  nCodUsu = 0;
+    
+  aPosTra = "";
+  aObsHpo = "";
+  aFunEso = "";
+
+    
+  SQL_RetornarInteiro(CUR_R038HPO, "numemp", nNumEmp);
+  SQL_RetornarInteiro(CUR_R038HPO, "tipcol", nTipCol);
+  SQL_RetornarInteiro(CUR_R038HPO, "numcad", nNumCad);
+  SQL_RetornarData(CUR_R038HPO, "IniAtu", dIniAtu);
+  SQL_RetornarInteiro(CUR_R038HPO, "seqhis", nSeqHis);
+  SQL_RetornarInteiro(CUR_R038HPO, "codTap", nCodTap);
+  SQL_RetornarInteiro(CUR_R038HPO, "motAlt", nMotAlt);
+  SQL_RetornarInteiro(CUR_R038HPO, "estpos", nEstPos);
+  SQL_RetornarAlfa(CUR_R038HPO, "posTra", aPosTra);
+  SQL_RetornarData(CUR_R038HPO, "TerAtu", dTerAtu);
+  SQL_RetornarAlfa(CUR_R038HPO, "obsHpo", aObsHpo);
+  SQL_RetornarInteiro(CUR_R038HPO, "staHis", nStaHis);
+  SQL_RetornarInteiro(CUR_R038HPO, "tipSbs", nTipSbs);
+  SQL_RetornarInteiro(CUR_R038HPO, "cadSbs", nCadSbs);
+  SQL_RetornarFlutuante(CUR_R038HPO, "perADi", nPerAdi);
+  SQL_RetornarAlfa(CUR_R038HPO, "funeso", aFunEso);
+  SQL_RetornarInteiro(CUR_R038HPO, "codUsu", nCodUsu);
+  
+
+  historicoPosto.retorno.CriarLinha();
+  historicoPosto.retorno.NumEmp = nNumEmp; 
+  historicoPosto.retorno.TipCol = nTipCol; 
+  historicoPosto.retorno.NumCad = nNumCad; 
+  historicoPosto.retorno.IniAtu = dIniAtu; 
+  historicoPosto.retorno.SeqHis = nSeqHis; 
+  historicoPosto.retorno.CodTap = nCodTap; 
+  historicoPosto.retorno.MotAlt = nMotAlt; 
+  historicoPosto.retorno.EstPos = nEstPos; 
+  historicoPosto.retorno.PosTra = aPosTra; 
+  historicoPosto.retorno.TerAtu = dTerAtu; 
+  historicoPosto.retorno.OBSHPO = aOBSHPO; 
+  historicoPosto.retorno.StaHis = nStaHis; 
+  historicoPosto.retorno.TipSbs = nTipSbs; 
+  historicoPosto.retorno.CadSbs = nCadSbs; 
+  historicoPosto.retorno.PERADI = NPERADI; 
+  historicoPosto.retorno.FunEso = aFunEso; 
+  historicoPosto.retorno.CodUsu = nCodUsu; 
+
+  SQL_Proximo(CUR_R038HPO);  
+}
+SQL_FecharCursor(CUR_R038HPO);
+SQL_Destruir(CUR_R038HPO);  
+
+FinalRegra:
+
+historicoPosto.execucao = aMsgRet;

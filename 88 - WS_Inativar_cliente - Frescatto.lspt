@@ -1,0 +1,26 @@
+Definir Alfa aNomCli;
+Definir Alfa aSitCli;
+Definir Alfa aMsgRet;
+Definir Alfa aCodCli; 
+Definir Cursor C85CLI;
+nCodCli = inativar_cadastro_cliente.codcli;
+
+C85CLI.SQL"SELECT NOMCLI, SITCLI FROM E085CLI WHERE CODCLI = :nCodCli";
+C85CLI.AbrirCursor()
+Se(C85CLI.Achou){
+  aNomCli = C85CLI.NomCli; @ Nome do cliente @ 
+  aSitCli = C85CLI.SitCli; @ Situação atual  @   
+}
+C85CLI.FecharCursor(); 
+  
+IntParaAlfa(nCodCli, aCodCli);
+ 
+Se(aSitCli = "A"){
+  ExecSql"UPDATE E085CLI SET SITCLI = 'I' WHERE CODCLI = :nCodCli";
+  aMsgRet = "Cliente: " + aCodCli + aNomCli + " inativado com sucesso!";
+} 
+Senao {
+  aMsgRet = "Favor verificar, cliente: " + aCodCli + aNomCli + ", já está inativado";  
+}
+  
+inativar_cadastro_cliente.retorno =  aMsgRet;

@@ -1,0 +1,37 @@
+@ ============================================================================ @
+@ Evanderson Pereira - CH - 234831 - 21/02/2025 @
+@ Finalização do posto @
+
+@ Verifica as informações referente ao afastamento + Posto do colaborador @
+Definir Cursor C34FUN;
+Definir Alfa aExtPos; 
+Definir Alfa aPosTra;  
+nNumEmp = R042RCM.NumEmp;
+nTipCol = R042RCM.TipCol;
+nNumCad = R042RCM.NumCad;
+nCauDem = R042RCM.CauDem;
+
+C34FUN.SQL"SELECT R034FUN.ESTPOS, R034FUN.POSTRA,      \
+                  R042CAU.DESDEM, R042CAU.USU_EXTPOS   \  
+                FROM R034FUN,R042CAU                   \
+               WHERE R034FUN.NUMEMP =:nNumEmp          \
+                 AND R034FUN.TIPCOL =:nTipCol          \
+                 AND R034FUN.NUMCAD =:nNumCad          \
+                 and R042CAU.CAUDEM =:nCauDem";
+                 
+C34FUN.AbrirCursor();
+Se(C34FUN.Achou){
+  nEstPos = C34FUN.EstPos;
+  aPosTra = C34FUN.PosTra; 
+  aExtPos = C34FUN.USU_ExtPos;   
+  aCauDem = C34FUN.DesDem;
+  ConverteMascara (3,R038AFA.DatAfa,aDatAfa,"DD/MM/YYYY");
+}
+C34FUN.FecharCursor();
+
+@ Verifica se o campo USU_ExtPos, na causa da demissão está assinalado como "S" @
+Se(aExtPos = "S"){
+  
+  @ Realiza o UPDATE na R017POS, inserindo a data de extinção no posto @
+  ExecSql "UPDATE R017POS SET DATEXT = :dDatAfa WHERE ESTPOS = :nEstPos AND POSTRA = :nPosTra"; 
+}

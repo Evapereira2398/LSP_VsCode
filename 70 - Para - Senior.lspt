@@ -1,0 +1,17 @@
+@ --- Verifica quantos domingos tem no mês --- @
+    Para (dDatPro = dDatIni; dDatPro <= dDatFim; dDatPro ++) {
+      DiaSem = dDatPro;
+      Se (DiaSem = 0)
+        nQtdDsr = nQtdDsr + 1;
+      }
+
+
+
+@ Tratamento - Descrição do tipo de contrato @
+  @ Formata o nTipCon como string @
+  xTipCon = Formatar(nTipCon,"%0.0f");
+  DescItemLista("LTipCon",xTipCon,aTipCon);
+  
+  Se(aTipCon = ""){
+    aTipCon = " ";
+  } 

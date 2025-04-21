@@ -174,10 +174,12 @@ Se(aDesPro = "AssistÃªncia MÃ©dica (Consultas)") {
 @ definição competência se zerada @
 Se(dCmpRef = dDatZer) {
   DesMontaData(dDatDes, xDia, xMes, xAno);
-  Se(xDia < 20)
+  Se(xDia < 20){
     MontaData(01, xMes, xAno, dCmpRef);
-  Senao
+  }
+  Senao {
     MontaData(01, xMes+1, xAno, dCmpRef);
+  }
 }                         
   
 @ busca definições plano e calcula valor reembolso @
@@ -204,21 +206,24 @@ cPlano.FecharCursor();
 
 
 Se(aDesPro = "Terapia") {
-    Se(xNumPar = 0)
+    Se(xNumPar = 0){
       xNumPar = 1;
+    }
     xValTot = xValTot / xNumPar;
 }
 
 Se(xCodDep = 0) {
   xValRee = xValTot * (xPerCol/100);
-  Se((xValRee > xTetCol) e (xTetCol > 0))
+  Se((xValRee > xTetCol) e (xTetCol > 0)){
     xValRee = xTetCol;
+  }
   xValCol = xValTot - xValRee;
 
 } Senao {
   xValRee = xValTot * (xPerDep/100);
-  Se((xValRee > xTetDep) e (xTetDep > 0))
+  Se((xValRee > xTetDep) e (xTetDep > 0)){
     xValRee = xTetDep;
+  }
   xValCol = xValTot - xValRee;
 } 
 
@@ -255,10 +260,12 @@ Se((xNumPar > 1) e (aDesPro <> "Terapia")) {
     }                    
   cContaBanco.FecharCursor();
   
-  Se((xModPag = "O") ou (xModPag = "R"))
+  Se((xModPag = "O") ou (xModPag = "R")) {
     xPgtChe = "N";
-  Senao
+  }
+  Senao {
     xPgtChe = "S";
+  }
   
   @ Busca sequência do empréstimo e contrato @
   Definir Cursor cEmprestimo;
@@ -275,8 +282,9 @@ Se((xNumPar > 1) e (aDesPro <> "Terapia")) {
                     AND USU_DatSol = :dCmpRef";                      
   
   cEmprestimo.AbrirCursor();  
-    Se(cEmprestimo.Achou)
-      xSeqEmp = cEmprestimo.USU_SeqSol + 1;      
+    Se(cEmprestimo.Achou) {
+      xSeqEmp = cEmprestimo.USU_SeqSol + 1;
+    }      
   cEmprestimo.FecharCursor();
   
   cContrato.Sql "SELECT USU_NumCon FROM USU_T012EMP \
@@ -285,8 +293,9 @@ Se((xNumPar > 1) e (aDesPro <> "Terapia")) {
                   SELECT MAX(USU_NumCon) FROM USU_T012EMP";                
   
   cContrato.Abrircursor();
-    Se(cContrato.achou)
+    Se(cContrato.achou){
       xSeqCon = cContrato.USU_NumCon + 1;
+    }
   cContrato.FecharCursor();
 
   @ Calcula juros @

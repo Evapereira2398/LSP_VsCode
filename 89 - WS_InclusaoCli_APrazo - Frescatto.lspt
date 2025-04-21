@@ -1,0 +1,892 @@
+@-- Definir web services internos --@
+Definir interno.com.senior.g5.co.ger.cad.clientes.GravarClientes_5 wsGravaCli;
+Definir Alfa aRetEnd;
+Definir Alfa aTipCli;
+Definir Alfa aTipMer;
+Definir Alfa aCgcCpf;
+Definir Alfa aApeCli;
+Definir Alfa aNomCli;
+Definir Alfa aCepCli;
+Definir Alfa aEndCli;
+Definir Alfa aNEndCli;
+Definir Alfa aCplEnd;
+Definir Alfa aBaiCli;
+Definir Alfa aCidCli;                  
+Definir Alfa aSigUfs;
+Definir Alfa aCodPai;
+Definir Alfa aFonCli;
+Definir Alfa aFonCli2;
+Definir Alfa aFonCli3;
+Definir Alfa aCodRai;
+Definir Alfa aInsEnt;
+Definir Alfa aCodTr;
+Definir Alfa aZipCod;
+Definir Alfa aIndNif;
+Definir Alfa aNumIdf;
+Definir Alfa aCodRam;
+Definir Alfa aCliPrx;
+Definir Alfa aCodRoe;
+Definir Alfa aCodSro;
+Definir Alfa aSeqRoe;
+Definir Alfa aIntNet;
+Definir Alfa aIntNet2;
+Definir Alfa aEmaNfe;
+Definir Alfa aCodRep;
+Definir Alfa aCodVen;
+Definir Alfa aCepEnt;
+Definir Alfa aIniEnt;
+Definir Alfa aEmaEnt;
+Definir Alfa aSeqEnt;
+Definir Alfa aNomEnt;
+Definir Alfa aEndEnt;
+Definir Alfa aCplEnt;
+Definir Alfa aPrxEnt;
+Definir Alfa aCidEnt;
+Definir Alfa aEstEnt;
+Definir Alfa aCodPcg;
+Definir Alfa aCodFpg;
+Definir Alfa aDatLim;
+Definir Alfa aVlrLim;
+Definir Alfa aLimApr;
+Definir Alfa aUsuRisser;
+Definir Alfa aUsuCodVen;
+Definir Alfa aUsuCodSub;
+Definir Alfa aAcePar;
+Definir Alfa aRecTjr;
+Definir Alfa aCatCli;
+Definir Alfa aIndPre;
+Definir Alfa aRecJmm;
+Definir Alfa aInsEst;
+Definir Alfa aCodRtr;
+Definir Alfa aTipPes;
+Definir Alfa aNenCli;
+Definir Alfa aCliCon;
+Definir Alfa aConFin;
+Definir Alfa aCodRoeEnt;
+Definir Alfa aSeqRoeEnt;
+Definir Alfa aCodSroEnt;
+Definir Alfa aMensagemwsGravaCli;
+Definir Alfa aDia;
+Definir Alfa aMes;
+Definir Alfa aAno;
+Definir Alfa aSeqEnv;
+Definir Alfa aSitReg;
+Definir Alfa aNomCli;
+Definir Alfa aSitCli;
+Definir Alfa aMsgRet;
+Definir Alfa aCodCli;
+Definir Alfa aCodSuf;
+Definir Alfa aDatSuf;
+
+Definir Data dDatSuf;
+
+
+@ Recebe do WS @
+nCodCli = inserir_cadastro_cliente_prazo.codcli;
+aAcePar = inserir_cadastro_cliente_prazo.acepar; 
+aRecTjr = inserir_cadastro_cliente_prazo.recTjr; 
+aCatCli = inserir_cadastro_cliente_prazo.catCli; 
+aIndPre = inserir_cadastro_cliente_prazo.indPre; 
+aRecJmm = inserir_cadastro_cliente_prazo.recJmm; 
+aSeqEnv = inserir_cadastro_cliente_prazo.seqEnv; 
+aSitReg = inserir_cadastro_cliente_prazo.sitReg; 
+aTipCli = inserir_cadastro_cliente_prazo.tipcli;  
+aInsEst = inserir_cadastro_cliente_prazo.insest;  
+aCodRtr = inserir_cadastro_cliente_prazo.codrtr;  
+aTipMer = inserir_cadastro_cliente_prazo.tipmer;  
+aCgcCpf = inserir_cadastro_cliente_prazo.cgccpf;  
+aApeCli = inserir_cadastro_cliente_prazo.apecli;  
+aNomCli = inserir_cadastro_cliente_prazo.nomcli;  
+aCepCli = inserir_cadastro_cliente_prazo.cepcli;  
+aEndCli = inserir_cadastro_cliente_prazo.endcli;  
+aNenCli = inserir_cadastro_cliente_prazo.nencli;  
+aCplEnd = inserir_cadastro_cliente_prazo.cplend;  
+aBaiCli = inserir_cadastro_cliente_prazo.baicli;  
+aCidCli = inserir_cadastro_cliente_prazo.cidcli;  
+aSigUfs = inserir_cadastro_cliente_prazo.sigufs;  
+aFonCli = inserir_cadastro_cliente_prazo.fonCli;   
+aFonCli2 = inserir_cadastro_cliente_prazo.fonCl2;  
+aFonCli3 = inserir_cadastro_cliente_prazo.fonCl3;  
+aCodRai = inserir_cadastro_cliente_prazo.codrai;   
+aInsEnt = inserir_cadastro_cliente_prazo.insent;   
+aZipCod = inserir_cadastro_cliente_prazo.zipcod;   
+aIndNif = inserir_cadastro_cliente_prazo.indnif;   
+aCodRam = inserir_cadastro_cliente_prazo.codram;   
+nCodEmp = inserir_cadastro_cliente_prazo.codemp;   
+nCodFil = inserir_cadastro_cliente_prazo.codfil;   
+aCliPrx = inserir_cadastro_cliente_prazo.cliprx;   
+aCodRoe = inserir_cadastro_cliente_prazo.codroe;
+aSeqRoe = inserir_cadastro_cliente_prazo.seqroe;   
+aCodSro = inserir_cadastro_cliente_prazo.codsro;   
+aEmaNfe = inserir_cadastro_cliente_prazo.emanfe; 
+aCodRep = inserir_cadastro_cliente_prazo.codrep; 
+aCodVen = inserir_cadastro_cliente_prazo.codven; 
+aCepEnt = inserir_cadastro_cliente_prazo.cepent; 
+aIniEnt = inserir_cadastro_cliente_prazo.inient; 
+aEmaEnt = inserir_cadastro_cliente_prazo.emaent; 
+aSeqEnt = inserir_cadastro_cliente_prazo.seqent; 
+aNomEnt = inserir_cadastro_cliente_prazo.endent;
+aCodRoeEnt = inserir_cadastro_cliente_prazo.codroent; 
+aSeqRoeEnt = inserir_cadastro_cliente_prazo.seqroent;
+aCodSroEnt = inserir_cadastro_cliente_prazo.codsroent; 
+aCodFpg = inserir_cadastro_cliente_prazo.codfpg;     
+aDatLim = inserir_cadastro_cliente_prazo.datlim;     
+nVlrLim = inserir_cadastro_cliente_prazo.vlrlim;     
+aLimApr = inserir_cadastro_cliente_prazo.limapr;     
+aUsuRisser = inserir_cadastro_cliente_prazo.usu_risser;
+aUsuCodVen = inserir_cadastro_cliente_prazo.usu_codven2;
+aUsuCodSub = inserir_cadastro_cliente_prazo.usu_codsub2;   
+aCodPai = inserir_cadastro_cliente_prazo.codpai;
+
+RetiraCaracteresEspeciais(aCgcCpf);
+aNumIdf = aIndNif;  @alterar@
+
+
+
+@aEndEnt = inserir_cadastro_cliente_prazo.endent; todas as info de endereço veem no aNomEnt @ 
+@aCplEnt = inserir_cadastro_cliente_prazo.cplent;@ 
+@aPrxEnt = inserir_cadastro_cliente_prazo.prxent;@ 
+@aCidEnt = inserir_cadastro_cliente_prazo.cident;@ 
+@aEstEnt = inserir_cadastro_cliente_prazo.estent;@ 
+@aNomEnt = inserir_cadastro_cliente_prazo.noment;@
+@aCodPcg = inserir_cadastro_cliente_prazo.codpcg;@
+
+
+/*  Alterações Matheus
+aNovCidCli
+aNovSigUfs
+aNovCodRai
+ 
+Se (aNovCidCli = "")
+    wsGravaCli.dadosGeraisCliente.cidcli = aCidCli;
+  Se (aNovCidCli <> "")
+    wsGravaCli.dadosGeraisCliente.cidcli = aNovCidCli;
+  Se (aNovSigUfs = "")
+    wsGravaCli.dadosGeraisCliente.sigufs = aSigUfs;
+  Se (aNovSigUfs <> "")
+    wsGravaCli.dadosGeraisCliente.sigufs = aNovSigUfs; 
+aCodRai = inserir_cadastro_cliente_vista.codrai;
+aNovCodRai = inserir_cadastro_cliente_vista.novcodrai;
+ 
+AlfaParaInt(aNovCodRai,nNovCodRai);
+ 
+Se (nNovCodRai = 0)
+  wsGravaCli.dadosGeraisCliente.cadastroCEP.codrai = nCodRai;
+Se (nNovCodRai <> 0)
+  wsGravaCli.dadosGeraisCliente.cadastroCEP.codrai = nNovCodRai;
+ 
+Se (aNovCidCli = "")
+  wsGravaCli.dadosGeraisCliente.cadastroCEP.nomCid = aCidCli;
+Se (aNovCidCli <> "")
+  wsGravaCli.dadosGeraisCliente.cadastroCEP.nomCid = aNovCidCli;
+ 
+ 
+limapr
+S ? Sim
+ 
+ 
+USU_RamoFiscal
+ 
+aUsuRamFis = inserir_cadastro_cliente_vista.usu_ramfis;  @campo de usuario Ramo Fiscal (USU_RamoFiscal)@
+PosicaoAlfa("A", aUsuRamFis, nPos);
+Se(nPos > 0){
+  aUsuRamFis = "A";
+}
+PosicaoAlfa("V", aUsuRamFis, nPos);
+Se(nPos > 0){
+  aUsuRamFis = "V";
+}
+PosicaoAlfa("N", aUsuRamFis, nPos);
+Se(nPos > 0){
+  aUsuRamFis = "N";
+}  
+ 
+wsGravaCli.dadosGeraisCliente.CamposUsuario.CriarLinha();
+  wsGravaCli.dadosGeraisCliente.CamposUsuario.Campo = "USU_RamoFiscal";
+  wsGravaCli.dadosGeraisCliente.CamposUsuario.valor = aUsuRamFis;
+ 
+ 
+aCodFpg = inserir_cadastro_cliente_vista.codfpg;
+Se (aCodFpg = "12 - DEPOSITO C/C ANTECIPADO")
+  aCodFpg = "12";
+ 
+aCodCpg = inserir_cadastro_cliente_vista.codcpg;
+Se (aCodCpg = "AV - A VISTA")
+  aCodCpg = "AV";
+ 
+wsGravaCli.dadosGeraisCliente.definicoesCliente.codfpg = nCodFpg;
+  wsGravaCli.dadosGeraisCliente.definicoesCliente.codcpg = aCodCpg;
+ 
+USU_EmiteBol
+ 
+aUsuEmiteBol
+ 
+aUsuEmiteBol = inserir_cadastro_cliente_vista.usu_emitebol;
+PosicaoAlfa("N", aUsuEmiteBol, nPos);
+Se(nPos > 0){
+  aUsuEmiteBol = "N";
+}
+Senao 
+aUsuEmiteBol = "S";
+ 
+wsGravaCli.dadosGeraisCliente.definicoesCliente.CamposUsuario.CriarLinha();
+  wsGravaCli.dadosGeraisCliente.definicoesCliente.CamposUsuario.Campo = "USU_EmiteBol";
+  wsGravaCli.dadosGeraisCliente.definicoesCliente.CamposUsuario.valor = aUsuEmiteBol;
+ 
+*/
+
+LimpaEspacos(aApeCli);
+Se(aApeCli = ""){
+  aApeCli = aNomCli;
+}
+
+@ === Sigla do estado do cliente === @
+Se(aSigUfs = "EX - EXTERIOR"){
+  aSigUfs = "EX";
+}
+
+@ == Código do País == @ 
+Se(aCodPai = "1058 - Brasil"){
+  aCodPai = "1058";
+}
+
+@ == Validação dos e-mails (Caso algum esteja vazio) == @
+aIntNet = inserir_cadastro_cliente_prazo.intnet;    
+aIntNet2 = inserir_cadastro_cliente_prazo.intnet2;
+
+LimpaEspacos(aIntNet);
+LimpaEspacos(aIntNet2);
+
+Se((aIntNet <> "") e (aIntNet2 = "")){
+  aIntNet = aIntNet; 
+}
+Se((aIntNet2 <> "") e (aIntNet = "")){
+  aIntNet = aIntNet2;
+} 
+Se((aIntNet <> "") e (aIntNet2 <> "")){
+  aIntNet = aIntNet+";"+aIntNet2;
+}
+
+@ === Indicativo se o limite de crédito do cliente esta ou não aprovado - Lista: S = Sim, N = Não === @
+PosicaoAlfa(aLimApr,"S", nPos);
+Se(nPos > 0){
+  aLimApr = "S";
+}
+Senao {
+  aLimApr = "N";
+}  
+
+@ == Data da última atualização do limite de crédito do cliente == @
+Se(aDatLim <> ""){
+  aAno = aDatLim;
+  CopiarAlfa(aAno, 1, 4);
+  aMes = aDatLim;
+  CopiarAlfa(aMes, 6, 2);
+  aDia = aDatLim;
+  CopiarAlfa(aDia, 9, 2);
+  aDatLim = aDia + "/" + aMes + "/" + aAno;
+}  
+
+@ ==== Risco Serasa ====@ 
+Se(aUsuRisser = "1-Mínimo"){ 
+  aUsuRisser = "1"; 
+}
+Senao Se(aUsuRisser = "2-Muito Baixo"){ 
+  aUsuRisser = "2"; 
+}
+Senao Se(aUsuRisser = "3-Médio"){ 
+  aUsuRisser = "3"; 
+}
+Senao Se(aUsuRisser = "4-Relevante"){ 
+  aUsuRisser = "4"; 
+}
+Senao Se(aUsuRisser = "5-Baixo"){
+  aUsuRisser = "5"; 
+}
+Senao Se(aUsuRisser = "6-Iminente"){ 
+  aUsuRisser = "6"; 
+}
+Senao Se(aUsuRisser = "7-Default"){ 
+  aUsuRisser = "7"; 
+}
+Senao Se(aUsuRisser = "8-Considerável"){ 
+  aUsuRisser = "8"; 
+}
+
+@ == Percentual de juros de mora mês para o contas a receber == @
+Se((aRecJmm <> "") e (aRecJmm <> " ")){   
+  AlfaParaDecimal(aRecJmm, nRecJmm);
+}
+
+@ ==== Inscrição estadual do cliente ==== @
+Se((aInsEst <> " ") e (aInsEst <> "") ou (aInsEst <> "ISENTO")){
+  aCliCon = "S";
+}  
+Se((aInsEst = "") ou (aInsEst = "ISENTO")){
+  aInsEst = "ISENTO";
+  aCliCon = "N";
+}
+
+@ == Código do Regime Tributário / 1 = Simples Nacional, 2 = Simples Nacional - excesso de sublimite de receita bruta, 3 = Regime Normal == @
+Se((aCodRtr = "1-Simples Nacional") ou (aCodRtr = "Simples Nacional")){
+  nCodRtr = 1;
+}
+Senao Se((aCodRtr = "2-Simples Nacional - excesso de sublimite de receita bruta") ou (aCodRtr = "Simples Nacional - excesso de sublimite de receita bruta")){
+  nCodRtr = 2;
+}
+Senao Se((aCodRtr = "3-Regime Normal") ou (aCodRtr = "Regime Normal")){
+  nCodRtr = 3;
+}
+Senao Se((aCodRtr = "4-Simples Nacional - Microempreendedor Individual - MEI") ou (aCodRtr = "Simples Nacional - Microempreendedor Individual - MEI")){
+  nCodRtr = 4;
+}
+
+@ == Tipo do cliente - Lista : J= Jurídica, F = Física == @
+Se((aTipCli = "Pessoa Jurídica") ou (aTipCli = "J-Pessoa Jurídica")){
+  aTipCli = "J";
+}  
+Se ((aTipCli = "Pessoa Física") ou (aTipCli = "F-Pessoa Física")){
+  aTipCli = "F";
+}
+Se((aTipCli = "F") ou ((aTipCli = "J") e (aInsEst = "ISENTO"))){
+  aConFin = "S";
+}
+Se((aTipCli = "J") e (((aInsEst <> "ISENTO") e (aInsEst <> "")) ou (nCodRtr = 4))){
+  aConFin = "N";
+}
+
+@ == Tipo de mercado do cliente / I = Interno (Nacional), E = Externo (Internacional), P = Prospect.) == @
+Se((aTipMer = "I-Interno (Nacional)") ou (aTipMer = "Interno (Nacional)")){
+  aTipMer = "I";
+}
+Se((aTipMer = "E-Externo (Exterior)") ou (aTipMer = "Externo (Exterior)")){
+  aTipMer = "E";
+  aCodRep = "9999";
+}
+  
+AlfaParaInt(aCatCli,nCatCli);
+AlfaParaInt(aIndNif,nIndNif);
+AlfaParaInt(aCodRep,nCodrep);
+AlfaParaInt(aCodVen,nCodVen);
+AlfaParaInt(aSeqEnt,nSeqEnt);
+AlfaParaInt(aSeqRoe,nSeqRoe);
+AlfaParaInt(aSeqRoeEnt,nSeqRoeEnt);
+AlfaParaInt(aCodRai,nCodRai);
+AlfaParaInt(aCodFpg,nCodFpg);
+@ ===== Fim Trata Condições ===== @
+
+
+
+wsGravaCli.dadosGeraisCliente.CriarLinha();
+wsGravaCli.dadosGeraisCliente.definicoesCliente.CriarLinha();
+@ ===== Campos Fixos ===== @
+@ == Tipo de mercado do cliente - Lista: I = Interno (Nacional), E = Externo (Internacional), P = Prospect.) == @
+Se(aTipMer = "I"){ 
+  wsGravaCli.dadosGeraisCliente.seqRoe = nSeqRoe;                      
+  wsGravaCli.dadosGeraisCliente.definicoesCliente.codCrp = "02";       
+  wsGravaCli.dadosGeraisCliente.definicoesCliente.acePar = aAcePar;    
+  wsGravaCli.dadosGeraisCliente.definicoesCliente.recJmm = nRecJmm;    
+  wsGravaCli.dadosGeraisCliente.definicoesCliente.recTjr = aRecTjr;    
+  wsGravaCli.dadosGeraisCliente.definicoesCliente.catCli = nCatCli;    
+  wsGravaCli.dadosGeraisCliente.definicoesCliente.indPre = aIndPre;    
+  wsGravaCli.dadosGeraisCliente.definicoesCliente.codRve = aSigUfs;    
+  wsGravaCli.dadosGeraisCliente.definicoesCliente.CamposUsuario.Campo = "USU_CBTBAN"; 
+  wsGravaCli.dadosGeraisCliente.definicoesCliente.CamposUsuario.valor = "N";          
+} 
+Senao {
+  wsGravaCli.dadosGeraisCliente.definicoesCliente.codCrp = "01"; 
+} 
+
+@--Campos BPM --@
+@--Obrigatórios--@
+Se(nCodCli <> 0) {
+  wsGravaCli.dadosGeraisCliente.codCli = nCodCli;
+}
+  
+@ Erro ao processar cliente: "Informe o codigo de Suframa" @
+aCodSuf = "1";
+dDatSuf = DatSis;
+ConverteMascara(3, dDatSuf, aDatSuf, "DD/MM/YYYY");
+wsGravaCli.dadosGeraisCliente.codSuf = aCodSuf;
+wsGravaCli.dadosGeraisCliente.datSuf = aDatSuf;
+wsGravaCli.dadosGeraisCliente.codram = aCodRam;
+wsGravaCli.dadosGeraisCliente.cliprx = aCliPrx;
+wsGravaCli.dadosGeraisCliente.intnet = aIntNet;
+wsGravaCli.dadosGeraisCliente.emanfe = aEmaNfe;
+
+
+@ Tratativa do Código da Rota ou Localidade @
+Se(aCodRoe <> "0"){
+  wsGravaCli.dadosGeraisCliente.codRoe = aCodRoe;   
+}
+Se(aCodSro <> "0"){ @ Código da Sub Rota @
+  wsGravaCli.dadosGeraisCliente.codSro = aCodSro;
+}
+
+
+wsGravaCli.dadosGeraisCliente.seqroe = nSeqRoe;
+wsGravaCli.dadosGeraisCliente.nomCli = aNomCli;
+wsGravaCli.dadosGeraisCliente.apeCli = aApeCli;
+wsGravaCli.dadosGeraisCliente.tipCli = aTipCli;
+wsGravaCli.dadosGeraisCliente.tipMer = aTipMer;
+wsGravaCli.dadosGeraisCliente.cliCon = aCliCon;
+wsGravaCli.dadosGeraisCliente.sitCli = "A";
+wsGravaCli.dadosGeraisCliente.insEst = aInsEst;
+wsGravaCli.dadosGeraisCliente.cgcCpf = aCgcCpf;
+wsGravaCli.dadosGeraisCliente.cepCli = aCepCli;
+wsGravaCli.dadosGeraisCliente.endCli = aEndCli;
+wsGravaCli.dadosGeraisCliente.nenCli = aNenCli;
+wsGravaCli.dadosGeraisCliente.cplend = aCplEnd;
+wsGravaCli.dadosGeraisCliente.baicli = aBaiCli;
+wsGravaCli.dadosGeraisCliente.cidcli = aCidCli;
+wsGravaCli.dadosGeraisCliente.sigufs = aSigUfs;
+wsGravaCli.dadosGeraisCliente.codpai = aCodPai;
+wsGravaCli.dadosGeraisCliente.fonCli = aFonCli;
+wsGravaCli.dadosGeraisCliente.fonCl2 = aFonCli2;
+wsGravaCli.dadosGeraisCliente.fonCl3 = aFonCli3;
+wsGravaCli.dadosGeraisCliente.insent = aInsEnt;
+wsGravaCli.dadosGeraisCliente.codrtr = nCodRtr;
+wsGravaCli.dadosGeraisCliente.zipcod = aZipCod;
+wsGravaCli.dadosGeraisCliente.numIdf = aNumIdf;
+
+
+wsGravaCli.dadosGeraisCliente.definicoesCliente.CamposUsuario.CriarLinha();
+wsGravaCli.dadosGeraisCliente.definicoesCliente.CamposUsuario.Campo = "USU_RISSER";
+wsGravaCli.dadosGeraisCliente.definicoesCliente.CamposUsuario.valor = aUsuRisser;
+wsGravaCli.dadosGeraisCliente.definicoesCliente.CamposUsuario.CriarLinha();
+wsGravaCli.dadosGeraisCliente.definicoesCliente.CamposUsuario.Campo = "USU_CODVEN2";
+wsGravaCli.dadosGeraisCliente.definicoesCliente.CamposUsuario.valor = aUsuCodVen;
+wsGravaCli.dadosGeraisCliente.definicoesCliente.CamposUsuario.CriarLinha();
+wsGravaCli.dadosGeraisCliente.definicoesCliente.CamposUsuario.Campo = "USU_CODSUB";
+wsGravaCli.dadosGeraisCliente.definicoesCliente.CamposUsuario.valor = aUsuCodSub;
+
+wsGravaCli.dadosGeraisCliente.definicoesCliente.codEmp = nCodEmp;
+wsGravaCli.dadosGeraisCliente.definicoesCliente.codFil = nCodFil;
+wsGravaCli.dadosGeraisCliente.definicoesCliente.exiLcp = "N";     @Verificar S ou N Exige ligação de cliente X produto/derivação@
+wsGravaCli.dadosGeraisCliente.definicoesCliente.codven = nCodVen; @int@
+wsGravaCli.dadosGeraisCliente.definicoesCliente.codrep = nCodRep; @int@
+wsGravaCli.dadosGeraisCliente.definicoesCliente.seqEnt = nSeqEnt; @int@
+wsGravaCli.dadosGeraisCliente.definicoesCliente.codfpg = nCodFpg;
+wsGravaCli.dadosGeraisCliente.definicoesCliente.datlim = aDatLim; @Data Limite do credito@
+wsGravaCli.dadosGeraisCliente.definicoesCliente.vlrlim = nVlrLim; @double@
+wsGravaCli.dadosGeraisCliente.definicoesCliente.limapr = aLimApr; @double@
+wsGravaCli.dadosGeraisCliente.definicoesCliente.conFin = aConFin;
+
+
+
+@ ============== Edereço de Entrega =============== @
+Se(aSitReg = "S"){
+  @wsGravaCli.dadosGeraisCliente.enderecosEntrega.seqenv = "1"; @
+  wsGravaCli.dadosGeraisCliente.enderecosEntrega.sitReg = "I";
+}
+
+
+
+/** 
+ * Processamento de endereços de entrega para cadastro via WebService
+ * Extrai dados da estrutura FlowList e prepara para envio
+ */
+
+
+@ Para cada Fluxo o FLOWLIST acaba tendo uma sequencia diferente dos campos @
+@ Nesse caso a varrdura do Array será realizada individual para cada fluxo  @
+@ respeitando a sequencia do fluxo @
+
+@ FlowList para Fluxo de 'Inclusão de Cliente - Venda À Prazo' @
+/*
+
+FlowList with data: [
+                      FlowObject with data: {
+                        endereco_de_entrega_proximidade=proximidade 1, 
+                        endereco_de_entrega_nome_do_cliente=nome do cliente entrega, 
+                        line=1.0, 
+                        endereco_de_entrega_celular=(41)99999-9999,
+                        endereco_de_entrega_numero=1,
+                        endereco_de_entrega_cnpj=47192447000173,
+                        endereco_de_entrega_cep_entrega=83900-000,
+                        endereco_de_entrega_f_codsubrota_entrega=303, ****** Nome diferente
+                        endereco_de_entrega_f_cod_rota_entrega=03,    ****** Nome diferente
+                        endereco_de_entrega_sub_rota=303 - CENTRO/ILHA,
+                        endereco_de_entrega_endereco=rua entrega 1,
+                        endereco_de_entrega_complemento=complemento 1,
+                        endereco_de_entrega_rota=03 - CENTRO,
+                        endereco_de_entrega_bairro=bairro 1,
+                        endereco_de_entrega_cidade=São Mateus do Sul,
+                        endereco_de_entrega_estado=PR
+                      },
+                      
+                      FlowObject with data: {
+                        endereco_de_entrega_proximidade=proximidade 2,
+                        endereco_de_entrega_nome_do_cliente=nome do cliente entrega 2,
+                        line=2.0, 
+                        endereco_de_entrega_celular=(41)98888-8888,
+                        endereco_de_entrega_numero=2,
+                        endereco_de_entrega_cnpj=47192447000173,
+                        endereco_de_entrega_cep_entrega=83900-000,
+                        endereco_de_entrega_f_codsubrota_entrega=304, ****** Nome diferente
+                        endereco_de_entrega_f_cod_rota_entrega=03,    ****** Nome diferente
+                        endereco_de_entrega_sub_rota=304 - CENTRO/ZONA SUL,
+                        endereco_de_entrega_endereco=rua entrega 2,
+                        endereco_de_entrega_complemento=complemento 2,
+                        endereco_de_entrega_rota=03 - CENTRO,
+                        endereco_de_entrega_bairro=bairro 2,
+                        endereco_de_entrega_cidade=São Mateus do Sul,
+                        endereco_de_entrega_estado=PR
+                      }
+                    ]
+*/
+Se (aNomEnt <> "") {
+
+    @ Declaração de variáveis @
+    Definir Alfa aEnderecosAux;
+    Definir Alfa aEnderecosAuxCopy;
+    Definir Alfa aSearchStr;
+    Definir Alfa aNomCliEnt;
+    Definir Alfa aCodSroEnt;
+    Definir Alfa aCelEnt;
+    Definir Alfa aNumEnt;
+    Definir Alfa aCepEnt;
+    Definir Alfa aCgcEnt;
+    Definir Alfa aSubRota;
+    Definir Alfa aEndEnt;
+    Definir Alfa aCplEnt;
+    Definir Alfa aRota;
+    Definir Alfa aBaiEnt;
+    Definir Alfa aCidEnt;             
+    Definir Alfa aEstEnt;
+    
+    
+    @ Consulta última sequência cadastrada para o cliente, para caadstrar a proxima sequncia @
+    Definir Cursor C85CLI;
+    C85CLI.SQL"SELECT SEQENT FROM E085ENT WHERE CODCLI = :nCodCli ORDER BY SEQENT DESC";
+    C85CLI.AbrirCursor();
+    Se (C85CLI.Achou) {
+        nSeqEnt = C85CLI.SEQENT + 1;
+    } Senao {
+        nSeqEnt = 1;
+    }
+    C85CLI.FecharCursor();
+    
+    @ Envia para o WS @
+    @wsGravaCli.dadosGeraisCliente.enderecosEntrega.seqEnt = nSeqEnt; @
+    
+    
+    @ Inicialização das variaveis @
+    aEnderecosAux = aNomEnt;
+    nPosicao = 1;
+    nContadorEnderecos = 0;
+    
+    @ Limpa espaços da string principal antes do processamento @
+    LimpaEspacos(aEnderecosAux);
+    
+    @ Processamento dos endereços @
+    Enquanto (nPosicao <> 0) {
+      @ Localiza o início de um endereço @
+      aSearchStr = "FlowObject with data: {";
+      PosicaoAlfa(aSearchStr, aEnderecosAux, nPosicao);
+        
+      Se(nPosicao <> 0) {
+        nContadorEnderecos = nContadorEnderecos + 1;
+        @ Avança para depois do marcador @
+        nPosicao = nPosicao + 22; @ Tamanho de "FlowObject with data: {" @
+        DeletarAlfa(aEnderecosAux, 1, nPosicao);
+        
+
+        @ Extrai PROXIMIDADE DO ENDEREÇO DE ENTREGA @
+        aSearchStr = "endereco_de_entrega_proximidade=";
+        PosicaoAlfa(aSearchStr, aEnderecosAux, nPosicao);
+        Se (nPosicao <> 0) {
+          nPosicao = nPosicao + 31;
+          DeletarAlfa(aEnderecosAux, 1, nPosicao);
+          PosicaoAlfa(",", aEnderecosAux, nPosicao);
+          aEnderecosAuxCopy = aEnderecosAux;
+          CopiarAlfa(aEnderecosAuxCopy, 1, nPosicao - 1);
+          LimpaEspacos(aEnderecosAuxCopy);
+          aPrxEnt = aEnderecosAuxCopy;
+        }
+
+
+        @ Extrai NOME DO CLIENTE @
+        aSearchStr = "endereco_de_entrega_nome_do_cliente=";
+        PosicaoAlfa(aSearchStr, aEnderecosAux, nPosicao);
+        Se (nPosicao <> 0) {
+          nPosicao = nPosicao + 35;
+          DeletarAlfa(aEnderecosAux, 1, nPosicao);
+          PosicaoAlfa(",", aEnderecosAux, nPosicao);
+          aEnderecosAuxCopy = aEnderecosAux;
+          CopiarAlfa(aEnderecosAuxCopy, 1, nPosicao - 1);
+          LimpaEspacos(aEnderecosAuxCopy);
+          aNomCliEnt = aEnderecosAuxCopy;
+        }
+        
+
+        @ Extrai CELULAR @
+        aSearchStr = "endereco_de_entrega_celular=";
+        PosicaoAlfa(aSearchStr, aEnderecosAux, nPosicao);
+        Se (nPosicao <> 0) {
+          nPosicao = nPosicao + 27;
+          DeletarAlfa(aEnderecosAux, 1, nPosicao);
+          PosicaoAlfa(",", aEnderecosAux, nPosicao);
+          aEnderecosAuxCopy = aEnderecosAux;
+          CopiarAlfa(aEnderecosAuxCopy, 1, nPosicao - 1);
+          LimpaEspacos(aEnderecosAuxCopy);
+          aCelEnt = aEnderecosAuxCopy;
+        }
+
+
+        @ Extrai NÚMERO DO ENDEREÇO DE ENTREGA@
+        aSearchStr = "endereco_de_entrega_numero=";
+        PosicaoAlfa(aSearchStr, aEnderecosAux, nPosicao);
+        Se (nPosicao <> 0) {
+          nPosicao = nPosicao + 26;
+          DeletarAlfa(aEnderecosAux, 1, nPosicao);
+          PosicaoAlfa(",", aEnderecosAux, nPosicao);
+          aEnderecosAuxCopy = aEnderecosAux;
+          CopiarAlfa(aEnderecosAuxCopy, 1, nPosicao - 1);
+          LimpaEspacos(aEnderecosAuxCopy);
+          aNumEnt = aEnderecosAuxCopy;          
+        }
+
+
+        @ Extrai CNPJ/CPF @
+        @ Alterado nPosicao de 27, para 24 @
+        aSearchStr = "endereco_de_entrega_cnpj=";
+        PosicaoAlfa(aSearchStr, aEnderecosAux, nPosicao);
+        Se(nPosicao <> 0) {
+          nPosicao = nPosicao + 24;
+          DeletarAlfa(aEnderecosAux, 1, nPosicao);
+          PosicaoAlfa(",", aEnderecosAux, nPosicao);
+          aEnderecosAuxCopy = aEnderecosAux;
+          CopiarAlfa(aEnderecosAuxCopy, 1, nPosicao - 1);
+          LimpaEspacos(aEnderecosAuxCopy);
+          aCgcEnt = aEnderecosAuxCopy;
+        }
+        
+
+        @ Extrai CEP DO ENDEREÇO DE ENTREGA @
+        aSearchStr = "endereco_de_entrega_cep_entrega=";
+        PosicaoAlfa(aSearchStr, aEnderecosAux, nPosicao);
+        Se (nPosicao <> 0) {
+          nPosicao = nPosicao + 31;
+          DeletarAlfa(aEnderecosAux, 1, nPosicao);
+          PosicaoAlfa(",", aEnderecosAux, nPosicao);
+          aEnderecosAuxCopy = aEnderecosAux;
+          CopiarAlfa(aEnderecosAuxCopy, 1, nPosicao - 1);
+          LimpaEspacos(aEnderecosAuxCopy);
+          aCepEnt = aEnderecosAuxCopy;
+          TrocaString(aCepEnt, "-", "", aCepEnt); 
+        }
+
+
+        @ Extrai CÓDIGO SUBROTA ENTREGA @
+        @ Alterado posição 38 para 40 @
+        aSearchStr = "endereco_de_entrega_f_codsubrota_entrega=";
+        PosicaoAlfa(aSearchStr, aEnderecosAux, nPosicao);
+        Se (nPosicao <> 0) {
+          nPosicao = nPosicao + 40;
+          DeletarAlfa(aEnderecosAux, 1, nPosicao);
+          PosicaoAlfa(",", aEnderecosAux, nPosicao);
+          aEnderecosAuxCopy = aEnderecosAux;
+          CopiarAlfa(aEnderecosAuxCopy, 1, nPosicao - 1);
+          LimpaEspacos(aEnderecosAuxCopy);
+          aCodSroEnt = aEnderecosAuxCopy;
+        } 
+        Senao {
+          aCodSroEnt = "";
+        }
+
+
+        @ Extrai CÓDIGO ROTA ENTREGA @
+        @ Alterado posição 36 para 38 @
+        aSearchStr = "endereco_de_entrega_f_cod_rota_entrega=";
+        PosicaoAlfa(aSearchStr, aEnderecosAux, nPosicao);
+        Se (nPosicao <> 0) {
+          nPosicao = nPosicao + 38;
+          DeletarAlfa(aEnderecosAux, 1, nPosicao);
+          PosicaoAlfa(",", aEnderecosAux, nPosicao);
+          aEnderecosAuxCopy = aEnderecosAux;
+          CopiarAlfa(aEnderecosAuxCopy, 1, nPosicao - 1);
+          LimpaEspacos(aEnderecosAuxCopy);
+          aCodRoeEnt = aEnderecosAuxCopy;
+        } 
+        Senao {
+          aCodRoeEnt = "";
+        }
+
+
+        @ Extrai SUB ROTA @
+        aSearchStr = "endereco_de_entrega_sub_rota=";
+        PosicaoAlfa(aSearchStr, aEnderecosAux, nPosicao);
+        Se(nPosicao <> 0) {
+          nPosicao = nPosicao + 28;
+          DeletarAlfa(aEnderecosAux, 1, nPosicao);
+          PosicaoAlfa(",", aEnderecosAux, nPosicao);
+          aEnderecosAuxCopy = aEnderecosAux;
+          CopiarAlfa(aEnderecosAuxCopy, 1, nPosicao - 1);
+          LimpaEspacos(aEnderecosAuxCopy);
+          @aCodSroEnt = aEnderecosAuxCopy; estava sobrescrevendo o codigo@
+        }
+
+
+        @ Extrai ENDEREÇO DE ENTREGA @
+        aSearchStr = "endereco_de_entrega_endereco=";
+        PosicaoAlfa(aSearchStr, aEnderecosAux, nPosicao);
+        Se (nPosicao <> 0) {
+          nPosicao = nPosicao + 28;
+          DeletarAlfa(aEnderecosAux, 1, nPosicao);
+          PosicaoAlfa(",", aEnderecosAux, nPosicao);
+          aEnderecosAuxCopy = aEnderecosAux;
+          CopiarAlfa(aEnderecosAuxCopy, 1, nPosicao - 1);
+          LimpaEspacos(aEnderecosAuxCopy);
+          aEndEnt = aEnderecosAuxCopy;
+        }
+
+
+        @ Extrai COMPLEMENTO DO ENDEREÇO DE ENTREGA @
+        aSearchStr = "endereco_de_entrega_complemento=";
+        PosicaoAlfa(aSearchStr, aEnderecosAux, nPosicao);
+        Se(nPosicao <> 0) {
+          nPosicao = nPosicao + 31;
+          DeletarAlfa(aEnderecosAux, 1, nPosicao);
+          PosicaoAlfa(",", aEnderecosAux, nPosicao);
+          aEnderecosAuxCopy = aEnderecosAux;
+          CopiarAlfa(aEnderecosAuxCopy, 1, nPosicao - 1);
+          LimpaEspacos(aEnderecosAuxCopy);
+          aCplEnt = aEnderecosAuxCopy;
+        }
+
+
+        @ Extrai ROTA DO ENDEREÇO DE ENTREGA @
+        aSearchStr = "endereco_de_entrega_rota=";
+        PosicaoAlfa(aSearchStr, aEnderecosAux, nPosicao);
+        Se(nPosicao <> 0) {
+          nPosicao = nPosicao + 25;
+          DeletarAlfa(aEnderecosAux, 1, nPosicao);
+          PosicaoAlfa(",", aEnderecosAux, nPosicao);
+          aEnderecosAuxCopy = aEnderecosAux;
+          CopiarAlfa(aEnderecosAuxCopy, 1, nPosicao - 1);
+          LimpaEspacos(aEnderecosAuxCopy);
+          @aCodRoeEnt = aEnderecosAuxCopy;estava alterando o codigo da rota@
+        }
+
+
+        @ Extrai BAIRRO DO ENDEREÇO DE ENTREGA @
+        aSearchStr = "endereco_de_entrega_bairro=";
+        PosicaoAlfa(aSearchStr, aEnderecosAux, nPosicao);
+        Se(nPosicao <> 0) {
+          nPosicao = nPosicao + 26;
+          DeletarAlfa(aEnderecosAux, 1, nPosicao);
+          PosicaoAlfa(",", aEnderecosAux, nPosicao);
+          aEnderecosAuxCopy = aEnderecosAux;
+          CopiarAlfa(aEnderecosAuxCopy, 1, nPosicao - 1);
+          LimpaEspacos(aEnderecosAuxCopy);
+          aBaiEnt = aEnderecosAuxCopy;
+        }
+          
+
+        @ Extrai CIDADE DO ENDEREÇO DE ENTREGA @
+        aSearchStr = "endereco_de_entrega_cidade=";
+        PosicaoAlfa(aSearchStr, aEnderecosAux, nPosicao);
+        Se(nPosicao <> 0) {
+          nPosicao = nPosicao + 26;
+          DeletarAlfa(aEnderecosAux, 1, nPosicao);
+          PosicaoAlfa(",", aEnderecosAux, nPosicao);
+          aEnderecosAuxCopy = aEnderecosAux;
+          CopiarAlfa(aEnderecosAuxCopy, 1, nPosicao - 1);
+          LimpaEspacos(aEnderecosAuxCopy);
+          aCidEnt = aEnderecosAuxCopy;
+        }
+          
+
+        @ Extrai ESTADO DO ENDEREÇO DE ENTREGA @
+        aSearchStr = "endereco_de_entrega_estado=";
+        PosicaoAlfa(aSearchStr, aEnderecosAux, nPosicao);
+        Se (nPosicao <> 0) {
+          nPosicao = nPosicao + 26;
+          DeletarAlfa(aEnderecosAux, 1, nPosicao);
+          PosicaoAlfa("}", aEnderecosAux, nPosicao);
+          aEnderecosAuxCopy = aEnderecosAux;
+          CopiarAlfa(aEnderecosAuxCopy, 1, nPosicao - 1);
+          LimpaEspacos(aEnderecosAuxCopy);
+          aEstEnt = aEnderecosAuxCopy;
+        }
+
+        
+        Se(x=0){
+          x=0;
+        }
+        
+
+        @Criação do endereço de entrega@
+        wsGravaCli.dadosGeraisCliente.enderecosEntrega.CriarLinha();
+        wsGravaCli.dadosGeraisCliente.enderecosEntrega.seqEnv = "1";
+        wsGravaCli.dadosGeraisCliente.enderecosEntrega.seqEnt = nSeqEnt;
+        wsGravaCli.dadosGeraisCliente.enderecosEntrega.prxent = aPrxEnt;
+        wsGravaCli.dadosGeraisCliente.enderecosEntrega.codsro = aCodSroEnt;
+        wsGravaCli.dadosGeraisCliente.enderecosEntrega.nomCli = aNomCliEnt;
+        wsGravaCli.dadosGeraisCliente.enderecosEntrega.celEnt = aCelEnt;
+        wsGravaCli.dadosGeraisCliente.enderecosEntrega.nenEnt = aNumEnt;
+        wsGravaCli.dadosGeraisCliente.enderecosEntrega.codroe = aCodRoeEnt;
+        wsGravaCli.dadosGeraisCliente.enderecosEntrega.cepent = aCepEnt;
+        wsGravaCli.dadosGeraisCliente.enderecosEntrega.cgcent = aCgcEnt;
+        wsGravaCli.dadosGeraisCliente.enderecosEntrega.endEnt = aEndEnt;
+        wsGravaCli.dadosGeraisCliente.enderecosEntrega.cplent = aCplEnt;
+        wsGravaCli.dadosGeraisCliente.enderecosEntrega.baiEnt = aBaiEnt;
+        wsGravaCli.dadosGeraisCliente.enderecosEntrega.cident = aCidEnt;
+        wsGravaCli.dadosGeraisCliente.enderecosEntrega.estent = aEstEnt;
+        wsGravaCli.dadosGeraisCliente.enderecosEntrega.paiEnt = "1058";
+        wsGravaCli.dadosGeraisCliente.enderecosEntrega.inient = aIniEnt; @Faixa inicial do CEP do endereço de entrega do cliente@
+        wsGravaCli.dadosGeraisCliente.enderecosEntrega.emaent = aEmaEnt; 
+                 
+        @ Prepara para buscar o próximo endereço @
+        aSearchStr = "FlowObject with data:";
+        PosicaoAlfa(aSearchStr, aEnderecosAux, nPosicao);
+        nSeqEnt++;
+      }
+    }
+    
+    
+    @ Rever @
+    @ wsGravaCli.dadosGeraisCliente.enderecosEntrega.seqenv = "1"; @@ Não tem descrição na documentação @
+    @ E-Mail de contato no endereço de entrega @        
+}
+@ ==================== FIM TRATAMENTO DOS ENDEREÇOS ========================== @
+
+
+@ ==== Cadastro CEP ==== @
+wsGravaCli.dadosGeraisCliente.cadastroCEP.cepIni = aCepCli;
+wsGravaCli.dadosGeraisCliente.cadastroCEP.cepFim = aCepCli;
+wsGravaCli.dadosGeraisCliente.cadastroCEP.codrai = nCodRai;
+wsGravaCli.dadosGeraisCliente.cadastroCEP.nomCid = aCidCli;
+
+@ Execução do WS @
+wsGravaCli.ModoExecucao = 1;
+wsGravaCli.Executar();
+
+
+@ ==== Retorno WS ===== @
+nTipRet = wsGravaCli.tipoRetorno; 
+aMensagemwsGravaCli = wsGravaCli.retornosClientes.retorno;
+
+@Valida Retorno WS@
+Se(aMensagemwsGravaCli <> ""){
+  aRetEnd = wsGravaCli.retornosEnderecosEntrega.retorno; 
+  aMensagemwsGravaCli = "Erro Cliente: " + aMensagemwsGravaCli;
+}
+
+Se((aRetEnd <> "") ou (aRetEnd <> "")){
+  aMensagemwsGravaCli = aMensagemwsGravaCli + "| Erro Endereço Entrega: " + aRetEnd;
+  aMsgRet = aMensagemwsGravaCli;
+  Vapara FimWs;
+}
+  
+Se(nTipRet <> 1){
+  aMsgRet = aMensagemwsGravaCli;
+  inserir_cadastro_cliente_prazo.erroExecucao = aMensagemwsGravaCli;
+} 
+Senao {
+  aMsgRet = "Cadastro realizado com sucesso!";
+}
+
+FimWs: 
+inserir_cadastro_cliente_prazo.retorno = aMsgRet;

@@ -78,7 +78,7 @@ HttpAlteraCabecalhoRequisicao(JSON, "Content-Type", "application/json");
 @ Desabilita a geração automática de erros de execução @
 HttpDesabilitaErroResposta(JSON);
 
-@ Executa uma requisição HTTP (inclusive HTTPS) de acordo com a URL passada como 
+@ Executa uma requisição HTTP (inclusive HTTPS) de acordo com a URL passada como @
 @ parâmetro e salva a resposta da requisição, por exemplo, uma página HTML, no parâmetro de retorno HTML @
 HttpGet(JSON, request_despesas, despesa_id);
 
@@ -89,7 +89,7 @@ getJSONArrayObj(despesa_id, "data", JSON_Data);
 getJSONArrayLength(JSON_Data, xretorno);
 
 
-@ Enquanto 0 for menor que xretorno
+@ Enquanto 0 for menor que xretorno @
 Enquanto (x < xretorno)
   Inicio
     

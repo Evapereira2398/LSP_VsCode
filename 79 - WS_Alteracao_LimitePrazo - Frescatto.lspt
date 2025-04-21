@@ -1,0 +1,387 @@
+@-- Definir web services internos --@
+Definir interno.com.senior.g5.co.ger.cad.clientes.GravarClientes_5 wsGravaCli;
+Definir Alfa aRetEnd;
+Definir alfa aTipCli;
+Definir alfa aTipMer;
+Definir alfa aCgcCpf;
+Definir alfa aApeCli;
+Definir alfa aNomCli;
+Definir alfa aCepCli;
+Definir alfa aEndCli;
+Definir alfa aNEndCli;
+Definir alfa aCplEnd;
+Definir alfa aBaiCli;
+Definir alfa aCidCli;                  
+Definir alfa aSigUfs;
+Definir alfa aCodPai;
+Definir alfa aFonCli;
+Definir alfa aFonCli2;
+Definir alfa aFonCli3;
+Definir alfa aCodRai;
+Definir alfa aInsEnt;
+Definir alfa aCodTr;
+Definir alfa aZipCod;
+Definir alfa aIndNif;
+Definir alfa aNumIdf;
+Definir alfa aCodRam;
+Definir alfa aCliPrx;
+Definir alfa aCodRoe;
+Definir alfa aCodSro;
+Definir alfa aSeqRoe;
+Definir alfa aIntNet;
+Definir alfa aIntNet2;
+Definir alfa aEmaNfe;
+Definir alfa aCodRep;
+Definir alfa aCodVen;
+Definir alfa aCepEnt;
+Definir alfa aIniEnt;
+Definir alfa aEmaEnt;
+Definir alfa aSeqEnt;
+Definir alfa aNomEnt;
+Definir alfa aEndEnt;
+Definir alfa aCplEnt;
+Definir alfa aPrxEnt;
+Definir alfa aCidEnt;
+Definir alfa aEstEnt;
+Definir alfa aCodPcg;
+Definir alfa aCodFpg;
+Definir alfa aDatLim;
+Definir alfa aVlrLim;
+Definir alfa aLimApr;
+Definir alfa aUsuRisser;
+Definir Alfa aUsuCodVen;
+Definir Alfa aUsuCodSub;
+Definir Alfa aAcePar;
+Definir Alfa aRecTjr;
+Definir Alfa aCatCli;
+Definir Alfa aIndPre;
+Definir Alfa aRecJmm;
+Definir Alfa aInsEst;
+Definir Alfa aCodRtr;
+Definir Alfa aTipPes;
+Definir alfa aNenCli;
+Definir Alfa aCliCon;
+Definir Alfa aConFin;
+Definir Alfa aCodRoeEnt;
+Definir Alfa aSeqRoeEnt;
+Definir Alfa aCodSroEnt;
+Definir Alfa aMensagemwsGravaCli;
+Definir Alfa aDia;
+Definir Alfa aMes;
+Definir Alfa aAno;
+Definir alfa aSeqEnv;
+Definir alfa aSitReg;
+Definir Alfa aNomCli;
+Definir Alfa aSitCli;
+Definir Alfa aMsgRet;
+Definir Alfa aCodCli;
+Definir Alfa aCodSuf;
+Definir Data dDatSuf;
+Definir Alfa aDatSuf;
+Definir Alfa aSeqEnt;
+Definir Alfa aCodCpg;
+
+nCodCli = alterar_cadastro_prazo.codcli;
+aAcePar = alterar_cadastro_prazo.acepar; 
+aRecTjr = alterar_cadastro_prazo.recTjr; 
+aCatCli = alterar_cadastro_prazo.catCli; 
+aIndPre = alterar_cadastro_prazo.indPre; 
+aRecJmm = alterar_cadastro_prazo.recJmm; 
+aSeqEnv = alterar_cadastro_prazo.seqEnv; 
+aSitReg = alterar_cadastro_prazo.sitReg; 
+aTipCli = alterar_cadastro_prazo.tipcli;  
+aInsEst = alterar_cadastro_prazo.insest;  
+aCodRtr = alterar_cadastro_prazo.codrtr;  
+aTipMer = alterar_cadastro_prazo.tipmer;  
+aCgcCpf = alterar_cadastro_prazo.cgccpf;  
+
+RetiraCaracteresEspeciais(aCgcCpf);
+aApeCli = alterar_cadastro_prazo.apecli;  
+aNomCli = alterar_cadastro_prazo.nomcli;  
+aCepCli = alterar_cadastro_prazo.cepcli;  
+aEndCli = alterar_cadastro_prazo.endcli;  
+aNenCli = alterar_cadastro_prazo.nencli;  
+aCplEnd = alterar_cadastro_prazo.cplend;  
+aBaiCli = alterar_cadastro_prazo.baicli;  
+aCidCli = alterar_cadastro_prazo.cidcli;  
+aSigUfs = alterar_cadastro_prazo.sigufs;  
+aFonCli = alterar_cadastro_prazo.fonCli;   
+aFonCli2 = alterar_cadastro_prazo.fonCl2;  
+aFonCli3 = alterar_cadastro_prazo.fonCl3;  
+aCodRai = alterar_cadastro_prazo.codrai;   
+aInsEnt = alterar_cadastro_prazo.insent;   
+aZipCod = alterar_cadastro_prazo.zipcod;   
+aIndNif = alterar_cadastro_prazo.indnif;   
+aNumIdf = aIndNif;  @alterar@
+aCodRam = alterar_cadastro_prazo.codram;   
+nCodEmp = alterar_cadastro_prazo.codemp;   
+nCodFil = alterar_cadastro_prazo.codfil;   
+aCliPrx = alterar_cadastro_prazo.cliprx;   
+aCodRoe = alterar_cadastro_prazo.codroe;
+aSeqRoe = alterar_cadastro_prazo.seqroe;   
+aCodSro = alterar_cadastro_prazo.codsro;   
+aEmaNfe = alterar_cadastro_prazo.emanfe; 
+aCodRep = alterar_cadastro_prazo.codrep; 
+aCodVen = alterar_cadastro_prazo.codven; 
+aCepEnt = alterar_cadastro_prazo.cepent; 
+aIniEnt = alterar_cadastro_prazo.inient; 
+aEmaEnt = alterar_cadastro_prazo.emaent; 
+aSeqEnt = alterar_cadastro_prazo.seqent; 
+@aNomEnt = alterar_cadastro_prazo.noment;@ 
+aNomEnt = alterar_cadastro_prazo.noment; 
+@aCplEnt = alterar_cadastro_prazo.cplent;@ 
+@aPrxEnt = alterar_cadastro_prazo.prxent;@ 
+@aCidEnt = alterar_cadastro_prazo.cident;@ 
+@aEstEnt = alterar_cadastro_prazo.estent;@ 
+
+aCodRoeEnt = alterar_cadastro_prazo.codroent; 
+aSeqRoeEnt = alterar_cadastro_prazo.seqroent;
+aCodSroEnt = alterar_cadastro_prazo.codsroent; 
+aCodFpg = alterar_cadastro_prazo.codfpg;
+aCodCpg = alterar_cadastro_prazo.codcpg;     
+aDatLim = alterar_cadastro_prazo.datlim;     
+nVlrLim = alterar_cadastro_prazo.vlrlim;     
+aLimApr = alterar_cadastro_prazo.limapr;     
+aUsuRisser = alterar_cadastro_prazo.usu_risser;
+aUsuCodVen = alterar_cadastro_prazo.usu_codven2;
+aUsuCodSub = alterar_cadastro_prazo.usu_codsub2;   
+aCodPai = alterar_cadastro_prazo.codpai;
+@aCodPcg = alterar_cadastro_prazo.codpcg;@
+
+LimpaEspacos(aApeCli);
+Se(aApeCli = ""){
+  aApeCli = aNomCli;
+}
+
+@ === Sigla do estado do cliente === @
+Se(aSigUfs = "EX - EXTERIOR"){
+  aSigUfs = "EX";
+}
+
+@ == Código do País == @ 
+Se(aCodPai = "1058 - Brasil"){
+  aCodPai = "1058";
+}
+
+@ == Validação dos e-mails (Caso algum esteja vazio) == @
+aIntNet = alterar_cadastro_prazo.intnet;    
+aIntNet2 = alterar_cadastro_prazo.intnet2;
+
+LimpaEspacos(aIntNet);
+LimpaEspacos(aIntNet2);
+
+Se((aIntNet <> "") e (aIntNet2 = "")){
+  aIntNet = aIntNet; 
+}
+Se((aIntNet2 <> "") e (aIntNet = "")){
+  aIntNet = aIntNet2;
+} 
+Se((aIntNet <> "") e (aIntNet2 <> "")){
+  aIntNet = aIntNet+";"+aIntNet2;
+}
+
+@ === Indicativo se o limite de crédito do cliente esta ou não aprovado - Lista: S = Sim, N = Não === @
+PosicaoAlfa(aLimApr,"S", nPos);
+Se(nPos > 0){
+  aLimApr = "S";
+}
+Senao {
+  aLimApr = "N";
+}  
+
+@ == Data da última atualização do limite de crédito do cliente == @
+Se(aDatLim <> ""){
+  aAno = aDatLim;
+  CopiarAlfa(aAno, 1, 4);
+  aMes = aDatLim;
+  CopiarAlfa(aMes, 6, 2);
+  aDia = aDatLim;
+  CopiarAlfa(aDia, 9, 2);
+  aDatLim = aDia + "/" + aMes + "/" + aAno;
+}  
+
+@ ==== Risco Serasa ====@ 
+Se(aUsuRisser = "1-Mínimo"){ 
+  aUsuRisser = "1"; 
+}
+Senao Se(aUsuRisser = "2-Muito Baixo"){ 
+  aUsuRisser = "2"; 
+}
+Senao Se(aUsuRisser = "3-Médio"){ 
+  aUsuRisser = "3"; 
+}
+Senao Se(aUsuRisser = "4-Relevante"){ 
+  aUsuRisser = "4"; 
+}
+Senao Se(aUsuRisser = "5-Baixo"){
+  aUsuRisser = "5"; 
+}
+Senao Se(aUsuRisser = "6-Iminente"){ 
+  aUsuRisser = "6"; 
+}
+Senao Se(aUsuRisser = "7-Default"){ 
+  aUsuRisser = "7"; 
+}
+Senao Se(aUsuRisser = "8-Considerável"){ 
+  aUsuRisser = "8"; 
+}
+
+@ == Percentual de juros de mora mês para o contas a receber == @
+Se((aRecJmm <> "") e (aRecJmm <> " ")){   
+  AlfaParaDecimal(aRecJmm, nRecJmm);
+}
+
+@ ==== Inscrição estadual do cliente ==== @
+Se((aInsEst <> " ") e (aInsEst <> "") ou (aInsEst <> "ISENTO")){
+  aCliCon = "S";
+}  
+Se((aInsEst = "") ou (aInsEst = "ISENTO")){
+  aInsEst = "ISENTO";
+  aCliCon = "N";
+}
+
+@ == Código do Regime Tributário / 1 = Simples Nacional, 2 = Simples Nacional - excesso de sublimite de receita bruta, 3 = Regime Normal == @
+Se((aCodRtr = "1-Simples Nacional") ou (aCodRtr = "Simples Nacional")){
+  nCodRtr = 1;
+}
+Senao Se((aCodRtr = "2-Simples Nacional - excesso de sublimite de receita bruta") ou (aCodRtr = "Simples Nacional - excesso de sublimite de receita bruta")){
+  nCodRtr = 2;
+}
+Senao Se((aCodRtr = "3-Regime Normal") ou (aCodRtr = "Regime Normal")){
+  nCodRtr = 3;
+}
+Senao Se((aCodRtr = "4-Simples Nacional - Microempreendedor Individual - MEI") ou (aCodRtr = "Simples Nacional - Microempreendedor Individual - MEI")){
+  nCodRtr = 4;
+}
+
+@ == Tipo do cliente - Lista : J= Jurídica, F = Física == @
+Se((aTipCli = "Pessoa Jurídica") ou (aTipCli = "J-Pessoa Jurídica")){
+  aTipCli = "J";
+}  
+Se ((aTipCli = "Pessoa Física") ou (aTipCli = "F-Pessoa Física")){
+  aTipCli = "F";
+}
+Se((aTipCli = "F") ou ((aTipCli = "J") e (aInsEst = "ISENTO"))){
+  aConFin = "S";
+}
+Se((aTipCli = "J") e (((aInsEst <> "ISENTO") e (aInsEst <> "")) ou (nCodRtr = 4))){
+  aConFin = "N";
+}
+
+@ == Tipo de mercado do cliente / I = Interno (Nacional), E = Externo (Internacional), P = Prospect.) == @
+Se((aTipMer = "I-Interno (Nacional)") ou (aTipMer = "Interno (Nacional)")){
+  aTipMer = "I";
+}
+Se((aTipMer = "E-Externo (Exterior)") ou (aTipMer = "Externo (Exterior)")){
+  aTipMer = "E";
+  aCodRep = "9999";
+}
+  
+AlfaParaInt(aCatCli,nCatCli);
+AlfaParaInt(aIndNif,nIndNif);
+AlfaParaInt(aCodRep,nCodrep);
+AlfaParaInt(aCodVen,nCodVen);
+AlfaParaInt(aSeqEnt,nSeqEnt);
+AlfaParaInt(aSeqRoe,nSeqRoe);
+AlfaParaInt(aSeqRoeEnt,nSeqRoeEnt);
+AlfaParaInt(aCodRai,nCodRai);
+AlfaParaInt(aCodFpg,nCodFpg);
+@ ===== Fim Trata Condições ===== @
+wsGravaCli.dadosGeraisCliente.CriarLinha();
+wsGravaCli.dadosGeraisCliente.codCli = nCodCli;
+  wsGravaCli.dadosGeraisCliente.nomCli = aNomCli;
+  wsGravaCli.dadosGeraisCliente.apeCli = aApeCli;
+  wsGravaCli.dadosGeraisCliente.tipCli = aTipCli;
+  wsGravaCli.dadosGeraisCliente.tipMer = aTipMer;
+  wsGravaCli.dadosGeraisCliente.cliCon = aCliCon;
+  wsGravaCli.dadosGeraisCliente.sitCli = "A";
+  wsGravaCli.dadosGeraisCliente.cgcCpf = aCgcCpf;
+  wsGravaCli.dadosGeraisCliente.definicoesCliente.codEmp = nCodEmp;
+  wsGravaCli.dadosGeraisCliente.definicoesCliente.codFil = nCodFil;
+  wsGravaCli.dadosGeraisCliente.definicoesCliente.codfpg = nCodFpg;
+  wsGravaCli.dadosGeraisCliente.definicoesCliente.datlim = aDatLim; @ Data Limite do credito @
+  wsGravaCli.dadosGeraisCliente.definicoesCliente.vlrlim = nVlrLim;@double@
+  wsGravaCli.dadosGeraisCliente.definicoesCliente.limapr = aLimApr;@double@
+  wsGravaCli.dadosGeraisCliente.definicoesCliente.conFin = aConFin;
+  
+    /*
+  wsGravaCli.dadosGeraisCliente.insEst = aInsEst;
+  
+  wsGravaCli.dadosGeraisCliente.cepCli = aCepCli;
+  wsGravaCli.dadosGeraisCliente.endCli = aEndCli;
+  wsGravaCli.dadosGeraisCliente.nenCli = aNenCli;
+  wsGravaCli.dadosGeraisCliente.cplend = aCplEnd;
+  wsGravaCli.dadosGeraisCliente.baicli = aBaiCli;
+  wsGravaCli.dadosGeraisCliente.cidcli = aCidCli;
+  wsGravaCli.dadosGeraisCliente.sigufs = aSigUfs;
+  wsGravaCli.dadosGeraisCliente.codpai = aCodPai;
+  wsGravaCli.dadosGeraisCliente.fonCli = aFonCli;
+  wsGravaCli.dadosGeraisCliente.fonCl2 = aFonCli2;
+  wsGravaCli.dadosGeraisCliente.fonCl3 = aFonCli3;
+  wsGravaCli.dadosGeraisCliente.insent = aInsEnt;
+  wsGravaCli.dadosGeraisCliente.codrtr = nCodRtr; @numérico@
+  wsGravaCli.dadosGeraisCliente.zipcod = aZipCod;
+  wsGravaCli.dadosGeraisCliente.numIdf = aNumIdf;  */
+  
+  
+/*  wsGravaCli.dadosGeraisCliente.definicoesCliente.CamposUsuario.CriarLinha();
+  wsGravaCli.dadosGeraisCliente.definicoesCliente.CamposUsuario.Campo = "USU_RISSER";
+  wsGravaCli.dadosGeraisCliente.definicoesCliente.CamposUsuario.valor = aUsuRisser;
+  wsGravaCli.dadosGeraisCliente.definicoesCliente.CamposUsuario.CriarLinha();
+  wsGravaCli.dadosGeraisCliente.definicoesCliente.CamposUsuario.Campo = "USU_CODVEN2";
+  wsGravaCli.dadosGeraisCliente.definicoesCliente.CamposUsuario.valor = aUsuCodVen;
+  wsGravaCli.dadosGeraisCliente.definicoesCliente.CamposUsuario.CriarLinha();
+  wsGravaCli.dadosGeraisCliente.definicoesCliente.CamposUsuario.Campo = "USU_CODSUB";
+  wsGravaCli.dadosGeraisCliente.definicoesCliente.CamposUsuario.valor = aUsuCodSub;
+
+
+
+  wsGravaCli.dadosGeraisCliente.definicoesCliente.codEmp = nCodEmp;
+  wsGravaCli.dadosGeraisCliente.definicoesCliente.codFil = nCodFil;
+  wsGravaCli.dadosGeraisCliente.definicoesCliente.exiLcp = "N";    @Verificar S ou N Exige ligação de cliente X produto/derivação@
+  wsGravaCli.dadosGeraisCliente.definicoesCliente.codven = nCodVen;@int@
+  wsGravaCli.dadosGeraisCliente.definicoesCliente.codrep = nCodRep;@int@
+  wsGravaCli.dadosGeraisCliente.definicoesCliente.seqEnt = nSeqEnt;@int@
+  wsGravaCli.dadosGeraisCliente.definicoesCliente.codfpg = nCodFpg;
+  wsGravaCli.dadosGeraisCliente.definicoesCliente.datlim = aDatLim; @ Data Limite do credito @
+  wsGravaCli.dadosGeraisCliente.definicoesCliente.vlrlim = nVlrLim;@double@
+  wsGravaCli.dadosGeraisCliente.definicoesCliente.limapr = aLimApr;@double@
+  wsGravaCli.dadosGeraisCliente.definicoesCliente.conFin = aConFin;   */
+
+@ ==== Cadastro CEP ==== @
+/*wsGravaCli.dadosGeraisCliente.cadastroCEP.cepIni = aCepCli;
+wsGravaCli.dadosGeraisCliente.cadastroCEP.cepFim = aCepCli;
+wsGravaCli.dadosGeraisCliente.cadastroCEP.codrai = nCodRai;
+wsGravaCli.dadosGeraisCliente.cadastroCEP.nomCid = aCidCli;   */
+
+@ Execução do WS @
+wsGravaCli.ModoExecucao = 1;
+wsGravaCli.Executar();
+
+
+@ ==== Retorno WS ===== @
+nTipRet = wsGravaCli.tipoRetorno; 
+aMensagemwsGravaCli = wsGravaCli.retornosClientes.retorno;
+
+@Valida Retorno WS@
+Se(aMensagemwsGravaCli <> ""){
+  aRetEnd = wsGravaCli.retornosEnderecosEntrega.retorno; 
+  aMensagemwsGravaCli = "Erro Cliente: " + aMensagemwsGravaCli;
+}
+
+Se((aRetEnd <> "") ou (aRetEnd <> "")){
+  aMensagemwsGravaCli = aMensagemwsGravaCli + "| Erro Endereço Entrega: " + aRetEnd;
+  aMsgRet = aMensagemwsGravaCli;
+  Vapara FimWs;
+}
+  
+Se(nTipRet <> 1){
+  aMsgRet = aMensagemwsGravaCli;
+  alterar_cadastro_prazo.erroExecucao = aMensagemwsGravaCli;
+} 
+Senao {
+  aMsgRet = "Cadastro realizado com sucesso!";
+}
+
+FimWs: 
+alterar_cadastro_prazo.retorno = aMsgRet;

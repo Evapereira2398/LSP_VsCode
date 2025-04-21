@@ -1,0 +1,139 @@
+/*
+Envio de relatório de término de contrato prorrogado.
+-------------------------------------------------------
+Desenvolvimento: 14/11/2024 
+Desenvolvedor: Evanderson Pereira 
+
+Descrição:
+Esta regra é executada diariamente por um processo automático. 
+O objetivo é identificar colaboradores cujo contrato prorrogado está 
+sendo encerrado com 5 dias de antecedência.
+
+Funcionamento:
+- Se a regra identificar contratos com término na data de execução, será 
+gerado o modelo FPDR116.COL e enviado aos emails cadastrados para o processo. 
+
+Informações adicionais:
+- Os endereços de e-mail para envio do relatório são configurados na 
+tela de Sindicato. (Cadastro do Sinticato 01).
+
+
+==================================================================
+==================================================================
+
+*/
+
+Definir Cursor C034CTR; 
+Definir Cursor C014SIN;
+Definir Cursor C034FUN;  
+Definir Data dDatTer;
+Definir Data dDatSis; 
+Definir Data dDatPag;
+Definir Data dDatEnv;
+Definir Data dDatEmi;  
+Definir Alfa aEntrada;
+Definir Alfa aDatSis;
+Definir Alfa aDatPag; 
+Definir Alfa aDatEnv;   
+Definir Alfa aDatTer;
+Definir Alfa aDatEmi; 
+Definir Alfa aEmaEnv;
+Definir Alfa aEmaEcc;
+Definir Alfa aNomFun;
+Definir Alfa aNumEmp;
+Definir Alfa aTipCol;
+Definir Alfa aNumCad;
+Definir Alfa aErro; 
+Definir Alfa aMsg;
+Definir Alfa aEmaDes; 
+Definir Alfa aAssEma;
+Definir Alfa aEmaOcu;  
+
+@ Cliente solicitou para que os relatorios fossem enviados com 5 dias de antecedencia @
+dDatEmi = DatSis + 5;
+dDatPag = dDatEnv + 10; @ Para data de pagamento (Tela de entrada do modelo FPDR116.COL) @
+nSitAfa = 0;
+   
+/*@ Apenas para validação @
+Definir Data dDatTes;
+Definir Alfa aDatTes;
+MontaData(15, 03, 2025, dDatTes);
+dDatTes = dDatTes + 5;
+ConverteMascara(3, dDatTes, aDatTes, "DD/MM/YYYY"); */
+
+@ Cursor para verificar os colaboradores que possuem contrato temporaio - Prorrogado @
+C034CTR.SQL"SELECT R034CTR.NUMEMP, R034CTR.TIPCOL, \
+                   R034CTR.NUMCAD, R034CTR.DATFIM, \
+                   R034FUN.SITAFA                  \
+              FROM R034CTR, R034FUN                \
+             WHERE R034CTR.NUMEMP = R034FUN.NUMEMP \
+               AND R034CTR.TIPCOL = R034FUN.TIPCOL \
+               AND R034CTR.NUMCAD = R034FUN.NUMCAD \
+               AND R034CTR.TIPCTR = 2              \
+               AND R034CTR.DATFIM = :dDatEmi       \
+               AND R034FUN.SITAFA <> 7";           
+C034CTR.AbrirCursor()
+Enquanto(C034CTR.Achou){ 
+  nNumEmp = C034CTR.NumEmp;
+  nTipCol = C034CTR.TipCol; 
+  nNumCad = C034CTR.NumCad; 
+  dDatTer = C034CTR.DatFim;
+  
+  IntParaAlfa(nNumEmp, aNumEmp);
+  IntParaAlfa(nTipCol, aTipCol);
+  IntParaAlfa(nNumCad, aNumCad);
+  
+  @ Busca o nome do colaborador @
+  C034FUN.SQL"SELECT NOMFUN FROM R034FUN WHERE NUMEMP = :nNumEmp AND TIPCOL = :nTipCol AND NUMCAD = :nNumCad "; 
+  C034FUN.AbrirCursor()
+  Se(C034FUN.Achou){
+    aNomFun = C034FUN.NomFun; 
+  }
+  C034FUN.FecharCursor();
+  
+  @Busca os e-mails definido no campo customizado R014SIN.USU_EmaTer, R014SIN.USU_EmaTercc @ 
+  C014SIN.SQL"SELECT USU_EmaTer, USU_EmaCcTer FROM R014SIN WHERE CODSIN = 1";
+  C014SIN.AbrirCursor()
+  Se(C014SIN.Achou){
+    aEmaEnv = C014SIN.USU_EmaTer;              
+    aEmaEcc = C014SIN.USU_EmaCcTer;        
+  }
+  C014SIN.FecharCursor();
+  
+  @ Mensagem que será enviada junto com o e-mail @
+  ConverteMascara(3, dDatTer, aDatTer, "DD/MM/YYYY");
+  aMsg = "Segue em anexo o término de contrato do colababorador(a): " + aNomFun + "," + " finalizando em: " + aDatTer;
+  
+  @ Define os restante das informações para envio do e-mail @
+  aEmaDes = "senior@rhnossa.com.br";            @ Destinattario @     
+  aAssEma = "Término do contrato prorrogado";   @ Assunto @
+  aEmaOcu = "evanderson.pereira@getjob.tec.br"; @ Copia Oculta @
+  
+  
+  @ Geração do relatorio @
+  SetaAlfaTelaEntrada("EAbrEmp", aNumEmp);
+  SetaAlfaTelaEntrada("EAbrTcl", aTipCol);
+  SetaAlfaTelaEntrada("EAbrCad", aNumCad);
+  SetaDataTelaEntrada("EDatEmi", dDatEmi);
+  SetaDataTelaEntrada("EDatPag", dDatPag); 
+ 
+  ExecutaRelatorio("FPDR116.COL", "N");                            
+  
+  @ Teste Envio @
+  /*EnviaEmail(aEmaDes, aEmaOcu, "", "", aAssEma, aMsg, "\\\\RHN-WAP-SRV01\\SeniorProd\\Vetorh\\Relatorios\\Term.ContratoProrrog.pdf", 0);*/
+  
+  EnviaEmail(aEmaDes, aEmaEnv, aEmaEcc, aEmaOcu, aAssEma, aMsg, "\\\\RHN-WAP-SRV01\\SeniorProd\\Vetorh\\Relatorios\\Term.ContratoProrrog.pdf", 0); 
+  Se(MsgErroEnviaEmail <> "") {
+  
+    @ Em caso de erros com a geração do modelo, vai ser disparado um e-mail com os dados do erro para o e-mail do responsavel @
+    Definir Alfa vMsgNEm;
+    vMsgNEm = "Erro: " + MsgErroEnviaEmail + ". Email não enviado.";
+    
+    Definir Alfa aEma1;
+    aEma1 = "evanderson.pereira@getjob.tec.br";  
+    EnviaEMail("senior@rhnossa.com.br",aEma1,"","","Erro processo - Termino do contrato prorrogado",vMsgNEm,"",0);
+  }                  
+          
+  C034CTR.Proximo();      
+}
+C034CTR.FecharCursor();

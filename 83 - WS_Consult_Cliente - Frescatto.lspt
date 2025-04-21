@@ -1,0 +1,273 @@
+Definir Cursor Cur_E085HCL;
+Definir Cursor Cur_E090REPVen;
+Definir Cursor Cur_E090REPRep;
+Definir Cursor Cur_E090Ven;
+Definir Cursor Cur_E090VenSub;
+Definir Cursor Cur_E026RAM;
+Definir Cursor Cur_E062ROE;
+Definir Cursor Cur_E062SRO;
+Definir Alfa vCursor;
+Definir Alfa aAux;
+Definir Alfa aSql;
+Definir Alfa aCodCli;
+Definir Alfa xNomCli;
+Definir Alfa aTipCli;
+Definir Alfa aDesCli;
+Definir Alfa aTipMer;
+Definir Alfa aDesMer;
+Definir Alfa aCgcCpf;
+Definir Alfa aNomCli;
+Definir Alfa aApeCli;
+Definir Alfa aEndCli;
+Definir Alfa aNenCli;
+Definir Alfa aCepCli;
+Definir Alfa aCplEnd;
+Definir Alfa aBaiCli;
+Definir Alfa aCidCli;
+Definir Alfa aSigUfs;
+Definir Alfa aCodPai;
+Definir Alfa aInsEst;
+Definir Alfa aFonCli;
+Definir Alfa aFonCl2;
+Definir Alfa aIntNet;
+Definir Alfa aEmaNfe;
+Definir Alfa aCliPrx;
+Definir Alfa aCodRam;
+Definir Alfa aDesRam;
+Definir Alfa aCodRoe;
+Definir Alfa aDesRoe;
+Definir Alfa aCodSro;
+Definir Alfa aDesSubRoe;
+Definir Alfa aZipEnt;
+Definir Alfa aNumIdf;
+Definir Alfa aNumCli;
+Definir Alfa aCodRtr;
+Definir Alfa aDesRtr;
+Definir Alfa aNomVen;
+Definir Alfa aNomRep;
+Definir Alfa aNomVen2;
+Definir Alfa aNomVenSub;
+Definir Alfa aUsu_RisSer;
+Definir Alfa aDescRisSer;
+Definir Alfa aUsu_EmiBol;
+Definir Alfa aDescEmiBol;
+Definir Data dDatSer;
+
+nCodCli = consult_clientes.codcli;
+IntParaAlfa(nCodCli, aCodCli);
+LimpaEspacos(aCodCli);
+Se(nCodCli <> 0){
+  aSql = aSql + " and E085Cli.CodCli = "+aCodCli;
+}
+  
+xNomCli = consult_clientes.nomcli;
+LimpaEspacos(xNomCli);
+ConverteParaMaiusculo (xNomCli);
+Se(xNomCli <> ""){
+  aSql = aSql + " and UPPER (E085Cli.NomCli) like '%"+xNomCli+"%'";
+}
+
+
+SQL_Criar(vCursor);
+SQL_UsarAbrangencia(vCursor, 1); @ 1 = Usa abrangência, 0 = Não usa abrangência. @
+
+aSql = "Select E085Cli.CodCli,E085Cli.TipCli,E085Cli.TipMer,E085Cli.CgcCpf,  \
+               E085Cli.NomCli,E085Cli.ApeCli,E085Cli.CepCli,E085Cli.EndCli,  \
+               E085Cli.NenCli,E085Cli.CplEnd,E085Cli.BaiCli,E085Cli.CidCli,  \
+               E085Cli.SigUfs,E085Cli.CodPai,E085Cli.InsEst,E085Cli.CodRtr,  \
+               E085Cli.FonCli,E085Cli.FonCl2,E085Cli.IntNet,E085Cli.EmaNfe,  \
+               E085Cli.cliPrx,E085Cli.codRam,E085Cli.codRoe,E085Cli.codSro,  \
+               E085Cli.zipEnt,E085Cli.numIdf                                 \
+          from E085Cli                                                       \
+         WHERE E085Cli.SitCli = 'A' "+aSql+" order by E085Cli.CodCli";
+
+SQL_DefinirComando(vCursor, aSql);    
+SQL_AbrirCursor(vCursor);
+nConLin = 0;
+Enquanto((SQL_EOF(vCursor) = 0) e (nConLin < 30)){
+
+  SQL_RetornarInteiro(vCursor, "CodCli", nNumCli);
+  SQL_Retornaralfa(vCursor, "TipCli", aTipCli);
+  SQL_Retornaralfa(vCursor, "TipMer", aTipMer);
+  SQL_Retornaralfa(vCursor, "CgcCpf", aCgcCpf);
+  SQL_Retornaralfa(vCursor, "NomCli", aNomCli);
+  SQL_Retornaralfa(vCursor, "ApeCli", aApeCli);
+  SQL_RetornarInteiro(vCursor, "CepCli", nCepCli);
+  SQL_Retornaralfa(vCursor, "EndCli", aEndCli);
+  SQL_Retornaralfa(vCursor, "NenCli", aNenCli);
+  SQL_Retornaralfa(vCursor, "CplEnd", aCplEnd);
+  SQL_Retornaralfa(vCursor, "BaiCli", aBaiCli);
+  SQL_Retornaralfa(vCursor, "CidCli", aCidCli);
+  SQL_Retornaralfa(vCursor, "SigUfs", aSigUfs);
+  SQL_Retornaralfa(vCursor, "CodPai", aCodPai);
+  SQL_Retornaralfa(vCursor, "InsEst", aInsEst);
+  SQL_RetornarInteiro(vCursor, "CodRtr", nCodRtr);
+  SQL_Retornaralfa(vCursor, "FonCli", aFonCli);
+  SQL_Retornaralfa(vCursor, "FonCl2", aFonCl2);
+  SQL_Retornaralfa(vCursor, "IntNet", aIntNet);
+  SQL_Retornaralfa(vCursor, "EmaNfe", aEmaNfe);
+  SQL_Retornaralfa(vCursor, "CliPrx", aCliPrx);
+  SQL_Retornaralfa(vCursor, "CodRam", aCodRam);
+  SQL_Retornaralfa(vCursor, "CodRoe", aCodRoe);
+  SQL_Retornaralfa(vCursor, "CodSro", aCodSro);
+  SQL_Retornaralfa(vCursor, "ZipEnt", aZipEnt);
+  SQL_Retornaralfa(vCursor, "NumIdf", aNumIdf);
+
+  IntParaAlfa(nNumCli, aNumCli); 
+  IntParaAlfa (nCodRtr, aCodRtr);
+  DesItemLista("LJurFis", aTipCli, aDesCli);
+  DesItemLista("LTipMe2", aTipMer, aDesMer);
+  DesItemLista("LCodCrt", aCodRtr, aDesRtr);
+  ConverteMascara(1, nCepCli, aCepCli, "99999-999");
+  DeixaNumeros(aFonCli);
+  DeixaNumeros(aFonCl2);
+  
+  @ Tratamento para numero de telefone @
+  Se ((aFonCli <> " ") ou (aFonCli <> "")){
+    ConverteMascara(5, 0, aFonCli, "(99)99999-9999");
+  }
+  
+  Se ((aFonCl2 <> " ") ou (aFonCl2 <> "")){
+    ConverteMascara(5, 0, aFonCl2, "(99)99999-9999");
+  } 
+  Senao {
+    aFonCl2 = "";  
+  } 
+
+  
+  nCodEmp = consult_clientes.codemp;
+  nCodFil = consult_clientes.codfil;
+  
+  @---Busca Vendedor e Representante---@
+  Cur_E085HCL.Sql"Select CodVen,CodRep,Usu_CodVen2,Usu_CodSub,Usu_RisSer,  \
+                         Usu_LimSer,Usu_DatSer,Usu_EmiteBol                  \
+                    FROM E085HCL               \
+                   WHERE CodCli = :nNumCli AND \
+                         CodEmp = :nCodEmp AND \
+                         CodFil = :nCodFil";
+  
+  Cur_E085HCL.AbrirCursor();
+  Se (Cur_E085HCL.Achou) {
+    nCodVen = Cur_E085HCL.CodVen;
+    nCodRep = Cur_E085HCL.CodRep;
+    nUsu_CodVen2 = Cur_E085HCL.Usu_CodVen2;
+    nUsu_CodSub = Cur_E085HCL.Usu_CodSub;
+    nUsu_RisSer = Cur_E085HCL.Usu_RisSer;
+    nUsu_LimSer = Cur_E085HCL.Usu_LimSer;
+    dUsu_DatSer = Cur_E085HCL.Usu_DatSer;
+    aUsu_EmiBol = Cur_E085HCL.Usu_EmiteBol;
+     
+    IntParaAlfa(nUsu_RisSer, aUsu_RisSer);
+    DesItemLista("USU_LRisSer", aUsu_RisSer, aDescRisSer);
+    DesItemLista("USU_EmiBole", aUsu_EmiBol, aDescEmiBol);
+     
+    
+    @ Busca Nome do vendedor @
+    Cur_E090REPVen.Sql"Select NomRep FROM E090REP WHERE CodRep = :nCodVen";
+    Cur_E090REPVen.AbrirCursor();
+    Se (Cur_E090REPVen.Achou){
+      aNomVen = Cur_E090REPVen.NomRep;
+    }
+    Cur_E090REPVen.FecharCursor();
+    
+    @ Busca Nome do Representante @
+    Cur_E090REPRep.Sql"Select NomRep FROM E090REP WHERE CodRep = :nCodRep";
+    Cur_E090REPRep.AbrirCursor();
+    Se (Cur_E090REPRep.Achou){
+      aNomRep = Cur_E090REPRep.NomRep;
+    }
+    Cur_E090REPRep.FecharCursor(); 
+    
+    @-Vendedor Trio-@
+    Cur_E090Ven.Sql"Select NomRep FROM E090REP WHERE CodRep = :nUsu_CodVen2";
+    Cur_E090Ven.AbrirCursor();
+    Se (Cur_E090Ven.Achou) {
+      aNomVen2 = " ";
+      aNomVen2 = Cur_E090Ven.NomRep;
+    }
+    Cur_E090Ven.FecharCursor();
+
+    @-Vendedor Sub-@
+    Cur_E090VenSub.Sql"Select NomRep FROM E090REP WHERE CodRep = :nUsu_CodSub";
+
+    Cur_E090VenSub.AbrirCursor();
+    Se (Cur_E090VenSub.Achou) {
+      aNomVenSub = " ";
+      aNomVenSub = Cur_E090VenSub.NomRep;
+    }
+    Cur_E090VenSub.FecharCursor();
+  }
+  Cur_E085HCL.FecharCursor();
+  
+
+  @---Busca Ramo Atividade---@
+  Cur_E026RAM.Sql"Select DesRam FROM E026RAM WHERE CodRam = :aCodRam"; 
+  Cur_E026RAM.AbrirCursor();
+  Se (Cur_E026RAM.Achou){
+    aDesRam = Cur_E026RAM.DesRam;
+  }
+  Cur_E026RAM.FecharCursor();
+  
+  @---Busca Rota---@
+  Cur_E062ROE.Sql"Select DesRoe FROM E062ROE WHERE CodRoe = :aCodRoe"; 
+  Cur_E062ROE.AbrirCursor();
+  Se (Cur_E062ROE.Achou) {
+    aDesRoe = Cur_E062ROE.DesRoe;
+  }
+  Cur_E062ROE.FecharCursor();
+  
+  @---Busca Sub Rota---@
+  Cur_E062SRO.Sql"Select DesRoe FROM E062SRO WHERE CodSro = :aCodSro"; 
+  Cur_E062SRO.AbrirCursor();
+  Se (Cur_E062SRO.Achou) {
+    aDesSubRoe = Cur_E062SRO.DesRoe;
+  }
+  Cur_E062SRO.FecharCursor(); 
+   
+  consult_clientes.grid.CriarLinha();
+  consult_clientes.grid.LinhaAtual = nConLin;
+  consult_clientes.grid.codcli = aNumCli;
+  consult_clientes.grid.tipcli = aDesCli;
+  consult_clientes.grid.tipmer = aDesMer;
+  consult_clientes.grid.cgccpf = aCgcCpf;
+  consult_clientes.grid.nomcli = aNomCli;
+  consult_clientes.grid.apecli = aApeCli;
+  consult_clientes.grid.cepcli = aCepCli;
+  consult_clientes.grid.endcli = aEndCli;
+  consult_clientes.grid.nencli = aNenCli;
+  consult_clientes.grid.cplend = aCplEnd;
+  consult_clientes.grid.baicli = aBaiCli;
+  consult_clientes.grid.cidcli = aCidCli;
+  consult_clientes.grid.sigufs = aSigUfs;
+  consult_clientes.grid.codpai = aCodPai;
+  consult_clientes.grid.insest = aInsEst;
+  consult_clientes.grid.codrtr = aDesRtr;
+  consult_clientes.grid.foncli = aFonCli;
+  consult_clientes.grid.foncl2 = aFonCl2;
+  consult_clientes.grid.intnet = aIntNet;
+  consult_clientes.grid.emanfe = aEmaNfe;
+  consult_clientes.grid.cliprx = aCliPrx;
+  consult_clientes.grid.codram = aCodRam;
+  consult_clientes.grid.desram = aDesRam;
+  consult_clientes.grid.codroe = aCodRoe;
+  consult_clientes.grid.desroe = aDesRoe;
+  consult_clientes.grid.codsro = aCodSro;
+  consult_clientes.grid.dessro = aDesSubRoe;
+  consult_clientes.grid.zipent = aZipEnt;
+  consult_clientes.grid.numidf = aNumIdf;
+  consult_clientes.grid.nomven = aNomVen;
+  consult_clientes.grid.codven = nCodVen;
+  consult_clientes.grid.nomrep = aNomRep;
+  consult_clientes.grid.codrep = ncodRep;
+  consult_clientes.grid.nomven2 = aNomVen2;
+  consult_clientes.grid.nomvensub = aNomVenSub;
+  consult_clientes.grid.risser = aDescRisSer;
+  consult_clientes.grid.limser = nUsu_LimSer;
+  consult_clientes.grid.datser = dDatSer;
+  consult_clientes.grid.emibol = aDescEmiBol;
+  
+  nConLin++;
+  SQL_Proximo(vCursor);   
+}
+SQL_FecharCursor(vCursor);
+SQL_Destruir(vCursor);
