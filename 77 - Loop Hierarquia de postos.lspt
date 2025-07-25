@@ -1,0 +1,95 @@
+@ O envio das informações abaixo, devem ser feitas subindo niveis da hierarquia @
+  @ dos postos. Retornando o nome do chefe de cada posto @
+  
+  /*
+    Vai ser verificado o campo USU_CodPos para conferir a hierarquia
+    Serão 6 niveis de Hierarquia
+    
+    CEO             | CODPOS = 1
+    VICE PRESIDENTE | CODPOS = 2
+    DIRETOR         | CODPOS = 3
+    GERENTE         | CODPOS = 4
+    COORDENADOR     | CODPOS = 5
+    SUPERVISOR      | CODPOS = 6
+  */
+  
+  Definir Alfa aNomChe;
+  Definir Alfa aPosTra;
+  Definir Alfa aPosPai;
+  Definir Alfa aPosPaiAux;
+  Definir Alfa aSql;
+  Definir Alfa CPOS;
+  Definir Alfa aEstPos;
+   
+  @ Recupera o posto do solicitante e verifica o chefe de primeiro nivel @
+  RetornaPostoColaborador(nNumEmp, nTipCol, xNumCad, DatSis, xEstPos, aPosTra, aDesPos);
+  RetornaPostoPai(aPosTra, xEstPos, 3, DatSis, aPosPai);
+  RetornaChefePosto(0, xEstPos, 3, DatSis, aPosPai, nEmpChe, nTclChe, nCadChe);
+  
+  @ Loop para varrer a hierarquia de postos @
+  nCont = 1;
+  Enquanto(nCont <= 6){
+    IntParaAlfa(xEstPos, aEstPos);
+    Se(nCont = 1){
+      aSql = "SELECT USU_CODPOS FROM R017POS WHERE ESTPOS = "+aEstPos+" AND POSTRA = '"+aPosPai+"'";
+    }
+    Se(nCont > 1){
+      aSql = "SELECT USU_CODPOS FROM R017POS WHERE ESTPOS = "+aEstPos+" AND POSTRA = '"+aPosPaiAux+"'";   
+    }
+   
+    @ Busca codigo da Hierarquia do Posto R017POS.USU_CodPos @
+    SQL_Criar(CPOS);
+    SQL_UsarAbrangencia(CPOS, 1);
+    SQL_DefinirComando(CPOS, aSql); 
+    SQL_AbrirCursor(CPOS);
+    Se (SQL_BOF(CPOS) = 0) {
+      SQL_RetornarInteiro(CPOS, "USU_CODPOS", nCodHie);
+    }
+    SQL_FecharCursor(CPOS);
+    SQL_Destruir(CPOS);
+    
+    @ Cursor para buscar o nome do Chefe do posto @
+    Definir Cursor cAux;
+    cAux.SQL"SELECT NOMFUN FROM R034FUN WHERE NUMEMP = :nEmpChe AND TIPCOL = :nTclChe AND NUMCAD = :nCadChe";
+    cAux.AbrirCursor()
+    Se(cAux.Achou){
+      aNomChe = cAux.NomFun;
+    }
+    cAux.FecharCursor();
+    
+    @ Verifica qual é o Nivel de Hierarquia para alimentar o campo correto e incrementa 'aDadosCol' @
+    Se(nCodHie = 1){
+      aDadosCol = aDadosCol + "Ceo: " + aNomChe + "." + aPulaLinha; 
+      
+      @ Se chegar no nivel de CEO, não é mais necessario subir niveis na hierarquia, @
+      @ neste caso pode sair do loop e continuar a regra @
+      Vapara SaiLoop;
+         
+    } 
+    Senao Se (nCodHie = 2){
+      aDadosCol = aDadosCol + "Vice Presidente: " + aNomChe + "." + aPulaLinha;  
+    }
+    Senao Se (nCodHie = 3){
+      aDadosCol = aDadosCol + "Diretor: " + aNomChe + "." + aPulaLinha;  
+    }
+    Senao Se (nCodHie = 4){
+      aDadosCol = aDadosCol + "Gerente: " + aNomChe + "." + aPulaLinha;  
+    }
+    Senao Se (nCodHie = 5){
+      aDadosCol = aDadosCol + "Coordenador: " + aNomChe + "." + aPulaLinha;  
+    }
+    Senao Se (nCodHie = 6){
+      aDadosCol = aDadosCol + "Supervisor: " + aNomChe + "." + aPulaLinha;  
+    }
+    
+    @ Sobe um nivel na hierarquia dos postos @
+    Se(nCont > 1){
+      aPosPai = aPosPaiAux;
+    }
+    RetornaPostoPai(aPosPai, xEstPos, 3, DatSis, aPosPaiAux);
+    RetornaChefePosto(0, xEstPos, 3, DatSis, aPosPaiAux, nEmpChe, nTclChe, nCadChe);
+    
+    nCont++; 
+  }
+  
+  SaiLoop: 

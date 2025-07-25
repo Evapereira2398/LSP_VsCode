@@ -1,0 +1,68 @@
+/*******************************************************************************
+  Regra revitalizada pelo consultor Eduardo Thomazini em 29/01/2014
+  Esta regra busca o Valor Geral cadastrado para cada Cargo abaixo e realiza a 
+  multiplicação do valor variável.
+  
+  O sistema calcula desta forma somente para os eventos nas condições abaixo e
+  sindicatos 14 e 19.
+  Solicitante: Regiane
+  Chamado: 21544 
+
+
+  Alterado por : ALine Pires em 27/12/2013
+  Foram comentadas as linhas em que o Valmov recebia o valor do proprio evento, 
+  pois para alguns eventos o valevt estava  vindo zerado.  Para alguns cargos já 
+  estava comentada esta linha.
+********************************************************************************/
+RefEvt = 0;
+ValEvt = 0;
+
+Se ((CodSinEmp = 14) ou (CodSinEmp = 19)){
+  
+  Se(R034FUN.CodCar = "040"){
+    Se((CodEvt = 607) ou (CodEvt = 613) ou (CodEvt = 615) ou (CodEvt = 616) ou (CodEvt = 617) ou 
+       (CodEvt = 788) ou (CodEvt = 789) ou (CodEvt = 790) ou (CodEvt = 791) ou (CodEvt = 792) ou 
+       (CodEvt = 793) ou (CodEvt = 818) ou (CodEvt = 819)){
+      ValEvt = AcuCal[9104] * ValMov / 1000;
+      RefEvt = ValMov;
+    }
+  }
+  
+  Se(R034FUN.CodCar = "112"){
+    Se((CodEvt = 607) ou (CodEvt = 613) ou (CodEvt = 615) ou (CodEvt = 616) ou (CodEvt = 617) ou 
+       (CodEvt = 788) ou (CodEvt = 789) ou (CodEvt = 790) ou (CodEvt = 791) ou (CodEvt = 792) ou 
+       (CodEvt = 793) ou (CodEvt = 818) ou (CodEvt = 819)){ 
+      ValEvt = AcuCal[9104] * ValMov / 1000;
+      RefEvt = ValMov;
+    }
+  }
+  
+  Se(R034FUN.CodCar = "110"){
+    Se((CodEvt = 607) ou (CodEvt = 613) ou (CodEvt = 615) ou (CodEvt = 616) ou (CodEvt = 617) ou 
+       (CodEvt = 788) ou (CodEvt = 789) ou (CodEvt = 790) ou (CodEvt = 791) ou (CodEvt = 792) ou 
+       (CodEvt = 793) ou (CodEvt = 818) ou (CodEvt = 819)){ 
+      ValEvt = AcuCal[9105] * ValMov / 1000;
+      RefEvt = ValMov;
+    }   
+  }
+
+
+  Se(R034FUN.CodCar = "352"){
+    Se((CodEvt = 607) ou (CodEvt = 613) ou (CodEvt = 615) ou (CodEvt = 616) ou (CodEvt = 617) ou 
+       (CodEvt = 788) ou (CodEvt = 789) ou (CodEvt = 790) ou (CodEvt = 791) ou (CodEvt = 792) ou 
+       (CodEvt = 793) ou (CodEvt = 818) ou (CodEvt = 819)){
+      ValEvt = AcuCal[9106] * ValMov / 1000;
+      RefEvt = ValMov;
+    }  
+  } 
+  
+  
+  Se(R034FUN.CodCar = "111"){
+    Se((CodEvt = 607) ou (CodEvt = 613) ou (CodEvt = 615) ou (CodEvt = 616) ou (CodEvt = 617) ou 
+       (CodEvt = 788) ou (CodEvt = 789) ou (CodEvt = 790) ou (CodEvt = 791) ou (CodEvt = 792) ou 
+       (CodEvt = 793) ou (CodEvt = 818) ou (CodEvt = 819)){
+      ValEvt = AcuCal[9107] * ValMov / 1000;
+      RefEvt = ValMov;
+    }   
+  } 
+}

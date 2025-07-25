@@ -1,0 +1,46 @@
+Definir Numero nValSalBpm;  @Valor vindo do BPM@
+Definir Numero nValSalAtu;  @Último valor do histórico@
+Definir Numero nPercTotal;  @Percentual total de aumento@
+Definir Numero nPercFracao; @Percentual fixo por parcela@
+Definir Numero nParcelas;   @Quantidade de parcelas@
+Definir Numero nAcumulado;  @Percentual acumulado@
+Definir Data dDatAlt;       @Data do último histórico@
+Definir Cursor c38HSA;
+
+@Cursor para buscar o último salário do histórico@
+c38HSA.sql = "SELECT valsal, datalt FROM r038hsa WHERE numemp = :nNumEmp AND tipcol = :nTipCol AND numcad = :nNumCad ORDER BY datalt DESC";
+c38HSA.AbrirCursor();
+Se (c38HSA.Achou) {
+    dDatAlt = c38HSA.datalt;
+    nValSalAtu = c38HSA.valsal;
+} 
+c38HSA.FecharCursor();
+
+@ Calcular percentual total de aumento @
+Se (nValSalAtu = 0) {
+    RetornarErro("Salário atual inválido.");
+}
+
+nPercTotal = ((nValSalBpm - nValSalAtu) / nValSalAtu) * 100;
+
+@ Verifica se há aumento @
+Se (nPercTotal <= 0) {
+    Retornar("Sem aumento salarial.");
+}
+
+@ Inicializa fracionamento @
+nPercFracao = 12.5;
+nParcelas = ArredondarParaCima(nPercTotal / nPercFracao);
+nAcumulado = 0;
+
+/*
+Escrever("Fracionamento do aumento salarial:");
+Para Definir Numero i = 1 Até nParcelas {
+    nAcumulado = nAcumulado + nPercFracao;
+
+    Se (nAcumulado > nPercTotal) {
+        nAcumulado = nPercTotal;
+    }
+
+    Escrever("Mês: " + (i * 3) + " - Percentual acumulado: " + nAcumulado + "%");
+}*/

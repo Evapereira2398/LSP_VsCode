@@ -1,0 +1,93 @@
+Definir Alfa aMsgMai;
+Definir Alfa aEmpresa;
+Definir Alfa aFilial;
+Definir Alfa aGestorSolicitante;
+Definir Alfa aGestorPosto;
+Definir Alfa aGestor;
+Definir Alfa aUsaCarro;
+Definir Alfa aNumSol;
+Definir Alfa aCargo;
+Definir Alfa aCcu;
+Definir Alfa aNomFun;
+Definir Alfa aNumCNH;
+Definir Alfa aCatCNH;
+Definir Alfa aDatVenCNH;
+
+
+@ Devido a complexidade do fluxo, caso a variavel aUsaCarro seja "Não", o envio do e-mail é cancelado @
+aUsaCarro = email_frotas_etapa2.usacarro;
+AlfaPuro(aUsaCarro, 1, 1);
+Se(aUsaCarro = "NAO"){
+  Vapara FimWs;
+}
+
+@ ==== Dados da Nova Admissão ==== @
+aEmpresa = email_frotas_etapa2.empresa;
+aFilial = email_frotas_etapa2.filial;
+aGestorSolicitante = email_frotas_etapa2.gestor;
+aGestorPosto = email_frotas_etapa2.gestorposto;
+
+
+nNumSol = email_frotas_etapa2.numsol;
+aCargo = email_frotas_etapa2.cargo;
+aCcu = email_frotas_etapa2.ccu; 
+aNomFun = email_frotas_etapa2.nomfun;
+aNumCNH = email_frotas_etapa2.numcnh;
+aCatCNH = email_frotas_etapa2.catcnh;
+dDatVenCNH = email_frotas_etapa2.datvencnh;
+
+
+ConverteParaMaiusculo(aCatCNH, aCatCNH);
+ConverteMascara(3, dDatVenCNH, aDatVenCNH, "DD/MM/YYYY");
+IntParaAlfa(nNumSol, aNumSol);
+
+
+Se(aGestorSolicitante = ""){
+  aGestor = aGestorPosto;
+}
+Senao { 
+  aGestor = aGestorSolicitante;
+}
+
+@ Definições para envio do e-mail @
+Definir Alfa aEmaEnv;
+Definir Alfa aDesEma;
+Definir Alfa aAssEma;
+Definir Alfa aEmaAcc;
+
+aEmaEnv = "rh.dp@lavoroagro.com";
+aDesEma = "evanderson.pereira@getwork.tec.br";
+/*aEmaAcc = "eduardo.duda@lavoroagro.com"*/                          
+aAssEma = "Solicitação de Veículo para Nova Posição – Solicitação nº " + aNumSol; 
+
+
+
+@--Montagem do E-mail--@
+aMsgMai = "<br> Ao time de Frotas,";
+aMsgMai = aMsgMai + "<br> ";
+aMsgMai = aMsgMai + "<br> Segue abaixo o detalhamento complementar referente à solicitação de veículo vinculada à posição nº " + aNumSol;
+aMsgMai = aMsgMai + "<br> ";
+aMsgMai = aMsgMai + "<br> Nome do Gestor: " + aGestor;
+aMsgMai = aMsgMai + "<br> Empresa: " + aEmpresa;
+aMsgMai = aMsgMai + "<br> Filial: " + aFilial;
+aMsgMai = aMsgMai + "<br> Centro de Custo: " + aCcu;
+aMsgMai = aMsgMai + "<br> Cargo da Posição: " + aCargo;
+aMsgMai = aMsgMai + "<br> Nome do Colaborador: " + aNomFun;
+aMsgMai = aMsgMai + "<br> CNH nº: " + aNumCNH;
+aMsgMai = aMsgMai + "<br> Categoria: " + aCatCNH;
+aMsgMai = aMsgMai + "<br> Data de Vencimento: " + aDatVenCNH;
+aMsgMai = aMsgMai + "<br> Necessidade de Veículo: " + aUsaCarro;
+aMsgMai = aMsgMai + "<br> ";
+aMsgMai = aMsgMai + "<br> Ficamos à disposição para quaisquer esclarecimentos.";
+aMsgMai = aMsgMai + "<br> ";
+aMsgMai = aMsgMai + "<br> ";
+aMsgMai = aMsgMai + "<br> Atenciosamente,";
+aMsgMai = aMsgMai + "<br> Recursos Humanos";
+
+@--Envio do E-mail--@
+EnviaEmailHTML (aEmaEnv,aDesEma,aEmaAcc,"",aAssEma,aMsgMai,"",0,0);
+
+
+FimWs: 
+x=0;
+      

@@ -1,0 +1,154 @@
+Definir Alfa xBody;
+Definir Alfa xUrl;
+Definir Alfa vHTTPSoap;
+Definir Alfa vHTMLSoap;
+Definir Alfa vHTMLSoapAux;
+Definir Alfa xFtp;
+Definir Alfa xErro;
+Definir Alfa xMsg;
+
+dDatSis = DatSis; 
+nHorSis = HorSis;   
+
+
+@ URL para gerar o relatorio na base da Opty @
+xUrl = "https://web12.senior.com.br:38901/g5-senior-services/rubi_Synccom_senior_g5_rh_fp_relatorios?wsdl";
+
+
+@ Corpo da requisição para geração do relatorio via WS (Nativo) @
+xBody = "<soapenv:Envelope xmlns:soapenv='http://schemas.xmlsoap.org/soap/envelope/' xmlns:ser='http://services.senior.com.br'> \
+   <soapenv:Header/>                                                                                                            \
+   <soapenv:Body>                                                                                                               \
+      <ser:Relatorios>                                                                                                          \
+         <user>forbiz_suporte2</user>                                                                                           \
+         <password>Opty@2023</password>                                                                                         \
+         <encryption>0</encryption>                                                                                             \
+         <parameters>                                                                                                           \
+            <prDir>C:\\</prDir>                                                                                                 \
+            <prEntranceIsXML>F</prEntranceIsXML>                                                                                \
+            <prExecFmt>tefFile</prExecFmt>                                                                                      \
+            <prFileName>SeniorHoracius.CSV</prFileName>                                                                         \
+            <prRelatorio>FPRE961.COL</prRelatorio>                                                                              \
+            <prSaveFormat>tsfCSV</prSaveFormat>                                                                                 \
+            <prFileExt>CSV</prFileExt>                                                                                          \
+		        <prEntrada><![CDATA[<ELisDem=N><EAbrTip=1><EAbrEmp=2-999><EDatRef=12/04/2023>]]></prEntrada>                    \
+         </parameters>                                                                                                          \
+      </ser:Relatorios>                                                                                                         \
+   </soapenv:Body>                                                                                                              \
+</soapenv:Envelope>";
+
+
+HttpObjeto(vHTTPSoap);
+HttpAlteraCabecalhoRequisicao(vHTTPSoap, "Content-Type", "text/xml");
+HttpAlteraCabecalhoRequisicao(vHTTPSoap, "SOAPAction", "#POST");
+HttpDesabilitaErroResposta(vHTTPSoap);                              
+HttpPost(vHTTPSoap, xUrl, xBody, vHTMLSoap);   @ Realiza o envio da requisição @                 
+vCodigo = 0;
+HttpLeCodigoResposta(vHTTPSoap, vCodigo); 
+
+Se(vCodigo = 200){ @ Codigo 200, deu certo a requisição @
+  ExecSQl"Delete Usu_topty"; @ Deleta tabela temporaria @
+ 
+  @ Requisição para WS customizado, verificando as informações que foram geradas na tabela "" (Definida na base do cliente)  @ 
+  xUrl = "https://web12.senior.com.br:38901/g5-senior-services/rubi_Synccom_opty_g5_rh_fp_consulta?wsdl";
+  
+  xBody = "<soapenv:Envelope xmlns:soapenv='http://schemas.xmlsoap.org/soap/envelope/' xmlns:ser='http://services.senior.com.br'> \
+     <soapenv:Header/>                                                                                                            \
+     <soapenv:Body>                                                                                                               \
+        <ser:Executar>                                                                                                            \
+           <user>forbiz_suporte2</user>                                                                                           \
+           <password>Opty@2023</password>                                                                                         \
+           <encryption>0</encryption>                                                                                             \             
+           <parameters>                                                                                                           \
+              <flowInstanceID>?</flowInstanceID>                                                                                  \
+              <flowName>?</flowName>                                                                                              \
+           </parameters>                                                                                                          \
+        </ser:Executar>                                                                                                           \
+     </soapenv:Body>                                                                                                              \
+  </soapenv:Envelope>";
+  
+  HttpObjeto(vHTTPSoap);
+  HttpAlteraCabecalhoRequisicao(vHTTPSoap, "Content-Type", "text/xml");
+  HttpAlteraCabecalhoRequisicao(vHTTPSoap, "SOAPAction", "#POST");
+  HttpAlteraCodifCaracPadrao(vHTTPSoap,"utf-8");  
+  HttpDesabilitaErroResposta(vHTTPSoap);
+  ConverteCodificacaoString(xBody, "utf-8", vHTMLSoap);     
+  HttpPost(vHTTPSoap, xUrl, xBody, vHTMLSoap); @ Envair requisição @
+  
+  vCodigo = 0;
+  HttpLeCodigoResposta(vHTTPSoap, vCodigo); 
+  
+  Se(vCodigo = 200) {
+    TrocaString(vHTMLSoap, "&amp;", "&", vHTMLSoap);
+    PosicaoAlfa ("</campo>", vHTMLSoap, nPosStr);
+    Enquanto (nPosStr > 0){
+      PosicaoAlfa ("<campo>", vHTMLSoap, nPosStrAux);
+      vHTMLSoapAux = vHTMLSoap;
+      CopiarAlfa (vHTMLSoapAux, nPosStrAux + 7, nPosStr - nPosStrAux - 7);
+      
+      @ Realiza o insert das informações recuperadas da requisição anterior, na tabela temporaria @
+      ExecSql"Insert Into Usu_topty (Usu_Texto) Values (:vHTMLSoapAux)";
+      TamanhoAlfa (vHTMLSoap, nTam);
+      CopiarAlfa (vHTMLSoap, nPosStr + 7, nTam - nPosStrAux - 7);
+      PosicaoAlfa ("</campo>", vHTMLSoap, nPosStr);
+    }
+    
+    ExecutaRelatorio("FPRE960.COL", "N"); @ Executa relatorio 960, aqui no LUA (Colaboradores > Ficha Cadastral > Relação de cadastro)@  
+    
+     
+    @ ===================================================== @
+    @ Realiza processo de envio e conexão ao FTP do cliente @
+    @ ===================================================== @
+    
+    @ Realiza a conexão FTP do cliente @
+    xRetCox = FtpConexao(xFtp, "web-ftp.grupohmaisbrasil.com.br", 21, "ftp.horacius", "p83s4VeKT84!RP39");
+    
+    @ Se der algum erro na execução, será gerado um arquivo de log @
+    Se (xRetCox = 0){
+       FtpUltimoErro(xErro);
+       xMsg = "Não foi possivel conectar no FTP. Erro: " + xErro;
+        
+       @ Gera arquivo de LOG @
+       SetaDataTelaEntrada("EDatSis", dDatSis);
+       SetaNumeroTelaEntrada("EDatSis", nHorSis);
+       SetaAlfaTelaEntrada("EMsgLog", xMsg);
+        
+       ExecutaRelatorio("EMsgLog", "N"); 
+    }
+    
+    @ Realiza UPLOAD do arquivo para o FTP do cliente @ 
+    xRetUpl = FtpUpload(xFtp, "C:\\Forbiz_Suporte\\temp\\relacao.csv","/arquivos", "SeniorHoracius.csv");
+    
+    @ Se der algum erro na execução, será gerado um arquivo de log @
+    Se(xRetUpl = 0){
+       FtpUltimoErro(xErro);
+       xMsg = "Não foi possível enviar o arquivo SeniorHoracius.csv || Erro: " + xErro;
+       
+       @ Gera arquivo de LOG @
+       SetaDataTelaEntrada("EDatSis", dDatSis);
+       SetaNumeroTelaEntrada("EDatSis", nHorSis);
+       SetaAlfaTelaEntrada("EMsgLog", xMsg);
+        
+       ExecutaRelatorio("FPGE990.GER", "N");
+    }
+  }
+  Senao {
+    xMsg = "Ocorreu um erro na requisição do WS customizado! Favor verificar o console do WS";
+    @ Gera arquivo de LOG @
+    SetaDataTelaEntrada("EDatSis", dDatSis);
+    SetaNumeroTelaEntrada("EDatSis", nHorSis);
+    SetaAlfaTelaEntrada("EMsgLog", xMsg);
+        
+    ExecutaRelatorio("FPGE990.GER", "N");
+  }
+} 
+
+Senao {
+  xMsg = "Ocorreu um erro na requisição para geração do modelo na base da H+. Favor verificar o console do WS";
+  @ Gera arquivo de LOG @
+  SetaDataTelaEntrada("EDatSis", dDatSis);
+  SetaNumeroTelaEntrada("EDatSis", nHorSis);
+  SetaAlfaTelaEntrada("EMsgLog", xMsg);
+        
+  ExecutaRelatorio("FPGE990.GER", "N");
+}

@@ -1,0 +1,79 @@
+Definir Cursor C_R017Pos;
+Definir Alfa vHTTP;
+Definir Alfa xUser;
+Definir Alfa xPass;
+Definir Alfa xJson;
+Definir Alfa xToken;
+Definir Alfa xPosTra;
+Definir Alfa xTraInt;
+Definir Alfa xDesPos;
+Definir Alfa xEstPos;
+Definir Alfa xJSonEmp;
+Definir Data dDatSis;
+Definir Alfa xUrl;
+Definir Alfa aAux;
+
+dDatSis = DatSis;
+
+xUser  = "admin@grupoacos-homolog.com.br";
+xPass = "2O7XM084e58s!";
+ 
+xJson = "{\"username\": \""+xUser+"\", \"password\": \""+xPass+"\"}";
+HttpObjeto(vHTTP);
+HttpDesabilitaErroResposta(vHTTP);
+HttpAlteraCabecalhoRequisicao(vHTTP, "Content-Type", "application/json");  
+HttpPost(vHTTP, "https://platform.senior.com.br/t/senior.com.br/bridge/1.0/rest/platform/authentication/actions/login", xJson, xToken);
+
+PosicaoAlfa("access_token", xToken, nPos);
+nPos = nPos + 17;
+CopiarAlfa(xToken, nPos, 32);
+xToken = "Bearer " + xToken;
+
+C_R017Pos.Sql"Select R017Pos.PosTra, R017Pos.DesRed, \    
+                     R017Pos.EstPos, R030Emp.Usu_RetCol \                     
+                From R017Pos, R030EMP, R030POS \                            
+               Where R030POS.EstPos = R017Pos.EstPos \
+                 AND R030POS.NumEmp = R030EMP.NumEmp \
+                 AND R030POS.DatAlt = (SELECT MAX(TAB.DatAlt) \ 
+                                         FROM R030POS TAB \
+                                        WHERE TAB.NumEmp = R030POS.NumEmp \
+                                          AND TAB.DatAlt <= :dDatSis) \                                         
+                 AND R030EMP.USU_IntCol = 'S' \ 
+                 AND ((R017Pos.Usu_IntCola Is Null) \     
+                  Or (R017Pos.Usu_IntCola = 'N') \        
+                  Or (R017Pos.Usu_IntCola = '') \         
+                  Or (R017Pos.Usu_IntCola = ' '))";                 
+                                
+C_R017Pos.AbrirCursor();
+Enquanto(C_R017Pos.Achou) {
+  xPosTra = C_R017Pos.PosTra;
+  xDesPos = C_R017Pos.DesRed;
+  nEstPos = C_R017Pos.EstPos;
+  IntParaAlfa(nEstPos, xEstPos);
+  xJSonEmp = C_R017Pos.Usu_RetCol;
+  xTraInt = xEstPos + "-" + xPosTra;  
+  
+  HttpAlteraCabecalhoRequisicao(vHTTP, "Authorization", xToken);   
+  @Verifica se há o código do posto já na base@ 
+  xUrl = "https://platform.senior.com.br/t/senior.com.br/bridge/1.0/rest/hcm/onboarding/entities/workstationGroup?filter=code='" + xTraInt + "'";  
+  HttpGet(vHTTP, xUrl, xJson); 
+
+    aAux = xJson;
+    CopiarAlfa(aAux,15,1) ;
+    Se(aAux = "0"){
+      xJson = "{\"company\":" + xJSonEmp + ",\"name\": \""+ xDesPos + "\",\"enabled\": \"ACTIVE\",\"code\":\"" + xTraInt + "\"}";  
+      HttpAlteraCabecalhoRequisicao(vHTTP, "Authorization", xToken); 
+      HttpAlteraCodifCaracPadrao(vHTTP, "utf-8");    
+      HttpPost(vHTTP, "https://platform.senior.com.br/t/senior.com.br/bridge/1.0/rest/hcm/onboarding/entities/workstationGroup", xJson, xJson); 
+      HttpLeCodigoResposta(vHTTP, nCodigo);
+      Se ((nCodigo >= 200) E (nCodigo < 300))
+        ExecSql"Update R017Pos Set Usu_IntCola = 'S' Where EstPos = :nEstPos And PosTra = :xPosTra";
+    } Senao {
+      ExecSql"Update R017Pos Set Usu_IntCola = 'S' Where EstPos = :nEstPos And PosTra = :xPosTra";   
+    }  
+
+  C_R017Pos.Proximo();
+}
+C_R017Pos.FecharCursor();
+
+n=n;

@@ -1,0 +1,834 @@
+Definir Alfa xDescVaga;
+Definir Cursor C_R024CAR;
+Definir Cursor C_R017HDI;
+Definir Alfa aAux;
+Definir Alfa aHTTP;
+Definir Alfa xJson;
+Definir Alfa xUsuario;
+Definir Alfa aDataHoje;
+Definir Alfa aSearchString;
+Definir Alfa aSearchStringAux;
+Definir Alfa aAuxDat;
+Definir Alfa aIdSequence;
+Definir alfa aVacancyId;
+Definir Alfa xUrl;
+Definir Alfa xIdFirstQuestion;
+Definir Alfa xIdSecondQuestion;
+Definir Alfa xIdThirdQuestion;
+Definir Alfa xVacancyTitle;
+Definir Alfa xIdQuestionnaire;
+Definir Alfa xWorkShift;
+Definir Alfa xQuery;
+Definir Alfa xCodEsc;
+
+@--- Autenticação ---@
+Definir Alfa xUser; 
+Definir Alfa xPass;
+Definir Alfa xToken;
+Definir Alfa xCompanyId;
+Definir Alfa xEmployeeId;
+Definir Alfa xEmployeeIdSol;
+Definir Alfa xEmployeeIdApr;
+Definir Alfa xEmployeeIdReplacement;
+Definir Alfa xWorkstationId;
+Definir Alfa xWorkstationIdCurrentUser;
+Definir Alfa xCostCenterId;
+Definir Alfa xDepartmentId;
+Definir Alfa xJobPositionId;
+Definir Alfa xBranchOfficeId;
+Definir Alfa xRequisitionId;
+Definir Alfa xIdSendToAprovation;
+
+
+
+@--- Requisição ---@
+Definir Alfa xPayload;
+Definir Alfa xPayloadAprov;
+Definir Alfa xPayloadAprovAux;
+Definir Data dDataHoje;
+Definir Alfa aDataHoje;
+Definir Alfa xHoraSis;
+Definir Alfa aMsgRet;
+
+
+
+@-- Numéricas --@
+Definir Numero nCodigo; @-- Recebe status do request html --@
+Definir Numero nEtapa; 
+Definir Numero nDataHoje;@-- Acompanha fluxo do processamento, utilizado para debug --@
+Definir Numero nTipFun;
+
+
+@-- Variáveis de entrada do web service --@
+@-- Numéricas --@
+Definir Numero nPcd;
+Definir Numero nPositions;
+Definir Numero nAchou;
+Definir Numero nTamanho;
+Definir Numero nNumEmp;
+Definir Numero nStartSalary;
+Definir Numero nEndSalary;
+Definir Numero nNumCadSubs;
+Definir Numero nNumCadSolOUApr;
+
+@-- Alfanuméricas --@
+Definir Alfa aCodEsc;
+Definir Alfa aNomEsc;  
+Definir Alfa atipRec;
+Definir Alfa atipCon;
+Definir Alfa aReason;
+Definir Alfa aPcd;
+Definir Alfa aPositions;
+Definir Alfa aReason;
+Definir Alfa aJustification;
+Definir Alfa aDescription;
+Definir Alfa aLocation;
+Definir Alfa aAdmissionDate;
+Definir Alfa aIdSendToAprovation;
+Definir Alfa aNumEmp;
+Definir Alfa aPosTrb;
+Definir Alfa aStartSalary;
+Definir Alfa aEndSalary;
+Definir Alfa aNumCadSubs;
+Definir Alfa aNomFunSubs;
+Definir Alfa aSolOUApr;
+Definir Alfa aNumCadSolOUApr;
+Definir Alfa xmsgret;
+  
+@-- Definir funções --@
+Definir Funcao fCorrigirData();
+Definir Funcao fLogin();
+Definir Funcao fGetEmployeeId();
+Definir Funcao fEmployeeIdSearch(Numero nTipFun);
+Definir Funcao fGetEmployeeIdReplacement();
+Definir Funcao fSearchCompany();
+Definir Funcao fApproveStaffRequisition();
+Definir Funcao fSearchCompanyv2();
+Definir Funcao fGetWorkstationIdCurrentUser();
+Definir Funcao fSearchWorkstationGroup();
+Definir Funcao fWorkstationCharacteristics();
+Definir Funcao fStaffRequisition();
+Definir Funcao fSendToAprovation();
+Definir Funcao getvaca();
+Definir Funcao fUpdateVacancyContractType();
+Definir Funcao fCreateQuestionsAndQuestionnaire();
+Definir Funcao fGetWorkShift();
+Definir Alfa aTreze;
+Definir Alfa aDez;
+Definir Alfa aPulaLinha;
+
+nErro = 0;
+nEtapa = staffRequisition.etapa;
+aIdSequence = staffRequisition.idreqSeq;
+xRequisitionId = staffRequisition.idrequisicao; 
+
+
+@Login@
+xUser = "matheus.forbiz@unimedpg.com.br"; @-- Usuário --@
+xPass = "03unimedforbiz04"; @-- Senha --@
+xJson = "{\"username\": \"" + xUser + "\", \"password\": \"" + xPass +"\"}";
+HttpObjeto(aHTTP);
+HttpDesabilitaErroResposta(aHTTP);
+HttpAlteraCabecalhoRequisicao(aHTTP, "Content-Type", "application/json");
+HttpPost(aHTTP, "https://platform.senior.com.br/t/senior.com.br/bridge/1.0/rest/platform/authentication/actions/login", xJson, xToken);
+HttpLeCodigoResposta(aHTTP, nCodigo);
+getJSONString(xToken, "jsonToken", xToken);
+getJSONString(xToken, "access_token", xToken);
+xToken = "Bearer " + xToken;
+@Login@
+
+
+
+xEmployeeId = "26A217FDC4F943EA90E86998DFBB592F";
+
+nPositions = staffRequisition.qtdPos;
+IntParaAlfa(nPositions, aPositions);
+aReason = staffRequisition.mot;
+ConverteParaMaiusculo(aReason, aReason);
+aJustification = staffRequisition.just;
+aDescription = staffRequisition.desc;
+aLocation = staffRequisition.local;
+aAdmissionDate = staffRequisition.datAdm;
+nStartSalary = staffRequisition.salIni;
+IntParaAlfa(nStartSalary, aStartSalary);
+nEndSalary = staffRequisition.salFim;
+IntParaAlfa(nEndSalary, aEndSalary);
+aTipCon = staffRequisition.tipCon;  
+
+HttpObjeto(aHTTP);
+HttpDesabilitaErroResposta(aHTTP);
+HttpAlteraCabecalhoRequisicao(aHTTP, "Content-Type", "application/json");
+HttpAlteraCabecalhoRequisicao(aHTTP, "Authorization", xToken);
+
+Se(nEtapa = 2){
+  @Valida se a requisição já foi aprovada@
+  xUrl = "https://platform.senior.com.br/t/senior.com.br/bridge/1.0/rest/hcm/recruitment/entities/staffRequisition/" + xRequisitionId; 
+                 
+  HttpGet(aHTTP, xUrl, xPayloadAprov);
+  HttpLeCodigoResposta(aHTTP, nCodigo);
+  
+  Se(nCodigo = 200) {
+    nAchou = 0;
+    getJSONString(xPayloadAprov, "status", xPayloadAprov);
+    Se(xPayloadAprov = "APPROVED"){
+      aMsgRet = "Vaga já aprovada.";
+      vapara terminar;
+    }   
+  }
+} 
+
+
+Se(aReason = "AUMENTO DE QUADRO"){
+  aReason = "STAFF_INCREASE";
+}
+
+Se(aReason = "SUBSTITUIÇÃO"){
+  aReason = "REPLACEMENT";
+  fGetEmployeeIdReplacement();
+}
+
+fEmployeeIdSearch(1);
+fEmployeeIdSearch(2);
+
+fSearchWorkstationGroup();
+Se (nErro = 1){
+  vapara terminar;
+} 
+  
+fWorkstationCharacteristics();
+Se (nErro = 1) {
+  vapara terminar;
+}
+
+
+@colocado etapa 2 dia 19/05, pois não estava enviando e-mail@
+Se((nEtapa = 1) ou (nEtapa = 0) ou (nEtapa = 2)) {
+  Se(aTipCon = "Efetivo"){
+    aTipCon = "EMPLOYEE"; 
+  } 
+  Senao Se(aTipCon = "Jovem Aprendiz"){
+    aTipCon = "APPRENTICE";  
+  }
+  Senao Se(aTipCon = "Estágio Remunerado"){
+    aTipCon = "TRAINEE"; 
+  }
+  Senao Se(aTipCon = "Prazo Determinado"){
+    aTipCon = "SPECIFIED_PERIOD";         
+  }        
+  Senao {
+    aTipCon = "EMPLOYEE";
+  }
+
+  fStaffRequisition();
+  Se (nErro = 1){
+    vapara terminar;
+  }
+} 
+
+Se((nEtapa = 2) ou (nEtapa = 0)){
+  fSendToAprovation();
+}    
+terminar: 
+staffRequisition.msgRet = aMsgRet;
+
+
+@-- Função para obter id do funcionário a ser substituído --@
+Funcao fGetEmployeeIdReplacement();
+{
+  aNomFunSubs = staffRequisition.nomFunSubs;
+  EstaNulo(aNomFunSubs, nNulo);
+  Se (nNulo = 0){
+    PosicaoAlfa("-", aNomFunSubs, nPos);
+    TamanhoAlfa(aNomFunSubs, nTamanho);
+    DeletarAlfa(aNomFunSubs, 1, nPos);
+    TiraEspacos (aNomFunSubs, aNomFunSubs);
+    nAchou = 0;
+    DeletarAlfa(xPayloadAprov, 1, nAchou + 7);
+    PosicaoAlfa(",", xPayloadAprov, nAchou);
+    CopiarAlfa(xPayloadAprov, 1, nAchou - 2); 
+    xPayload = "{\"valueSearch\": \"" + aNomFunSubs + "\"}";
+  }
+
+  HttpPost(aHTTP, "https://platform.senior.com.br/t/senior.com.br/bridge/1.0/rest/hcm/payroll/queries/autocompleteEmployee", xPayload, xPayloadAprov);
+  HttpLeCodigoResposta(aHTTP, nCodigo);
+
+  Se (nCodigo = 200){
+    nNumCadSubs = staffRequisition.numCadSubs;
+    IntParaAlfa(nNumCadSubs, aNumCadSubs);
+    aSearchString = "tableId\":\"";       
+    PosicaoAlfa(aSearchString, xPayloadAprov, nAchou);
+    TamanhoAlfa(aSearchString, nTamanho);
+    DeletarAlfa(xPayloadAprov, 1, nAchou + nTamanho -1);
+    PosicaoAlfa("\"", xPayloadAprov, nAchou);
+    TamanhoAlfa(xPayloadAprov, nTamanho);
+    DeletarAlfa(xPayloadAprov, nAchou, nTamanho - nAchou + 1 );
+    xEmployeeIdReplacement = xPayloadAprov; 
+  }
+}
+  
+
+@-- Função para obter id do grupo de workstation --@
+Funcao fSearchWorkstationGroup();
+{
+  aPosTrb = staffRequisition.posTrb;     
+  xPayload = "{\"activeEmployeeId\":\"26A217FDC4F943EA90E86998DFBB592F\", \
+                \"q\": \"" + aPosTrb +"\"}";             
+
+  HttpPost(aHTTP, "https://platform.senior.com.br/t/senior.com.br/bridge/1.0/rest/hcm/analytics/queries/searchDescendentsWorkstationGroup", xPayload, xPayloadAprov);
+  HttpLeCodigoResposta(aHTTP, nCodigo);
+  
+  Se(nCodigo = 200){
+  
+    xPayloadAprovAux = xPayloadAprov;
+    
+    aSearchString = "\"code\":\"" + aPosTrb + "\"";
+    PosicaoAlfa(aSearchString, xPayloadAprov, nAchou);
+    
+    Se(nAchou = 0){
+      xmsgret = "Posto não encontrado no módulo de Gestão de Recrutamento e Seleção, verifique o posto " + aPosTrb + ". Erro: "+ xPayloadAprov;
+      staffRequisition.erroExecucao = xmsgret ;
+      nErro = 1;  
+    } 
+    Senao {
+      TamanhoAlfa(aSearchString, nTamanho);
+      DeletarAlfa(xPayloadAprov, 1, nAchou + nTamanho);
+      nAchou = 0;
+      DeletarAlfa(xPayloadAprov, 1, nAchou + 6);
+      PosicaoAlfa(",", xPayloadAprov, nAchou);
+      CopiarAlfa(xPayloadAprov, 1, nAchou - 2);
+      xWorkstationId = xPayloadAprov;
+    }
+
+  } Senao {
+    xmsgret = "Erro ao chamar função searchDescendentsWorkstationGroup. Erro: "+ xPayloadAprov;
+    staffRequisition.erroExecucao = xmsgret ;
+    nErro = 1;   
+  }  
+}
+  
+
+Funcao fWorkstationCharacteristics();
+{
+  xPayload = "{\"workstationgroup\":\"" + xWorkstationId + "\"}";
+  
+  HttpPost(aHTTP, "https://platform.senior.com.br/t/senior.com.br/bridge/1.0/rest/hcm/analytics/queries/workstationGroupCharacteristics", xPayload, xPayloadAprov);
+  HttpLeCodigoResposta(aHTTP, nCodigo);
+  
+  Se (nCodigo = 200) {
+    xPayloadAprovAux = xPayloadAprov;
+    aSearchString = "\"costCenter\"";
+    PosicaoAlfa(aSearchString, xPayloadAprovAux, nAchou);
+    TamanhoAlfa(aSearchString, nTamanho);
+    DeletarAlfa(xPayloadAprovAux, 1, nAchou + nTamanho);
+    PosicaoAlfa("\"id\":", xPayloadAprovAux, nAchou);
+    DeletarAlfa(xPayloadAprovAux, 1, nAchou + 5);
+    PosicaoAlfa(",", xPayloadAprovAux, nAchou);
+    CopiarAlfa(xPayloadAprovAux, 1, nAchou - 3);
+    xCostCenterId = xPayloadAprovAux;
+
+    xPayloadAprovAux = xPayloadAprov;
+    aSearchString = "\"department\"";
+    PosicaoAlfa(aSearchString, xPayloadAprovAux, nAchou);
+    TamanhoAlfa(aSearchString, nTamanho);
+    DeletarAlfa(xPayloadAprovAux, 1, nAchou + nTamanho);
+    PosicaoAlfa("\"id\":", xPayloadAprovAux, nAchou);
+    DeletarAlfa(xPayloadAprovAux, 1, nAchou + 5);
+    PosicaoAlfa(",", xPayloadAprovAux, nAchou);
+    CopiarAlfa(xPayloadAprovAux, 1, nAchou - 3);
+    xDepartmentId = xPayloadAprovAux;
+    
+    xPayloadAprovAux = xPayloadAprov;
+    aSearchString = "\"department\"";
+    PosicaoAlfa(aSearchString, xPayloadAprovAux, nAchou);
+    TamanhoAlfa(aSearchString, nTamanho);
+    DeletarAlfa(xPayloadAprovAux, 1, nAchou + nTamanho);
+    PosicaoAlfa("\"name\":", xPayloadAprovAux, nAchou);
+    DeletarAlfa(xPayloadAprovAux, 1, nAchou + 7);
+    PosicaoAlfa(",", xPayloadAprovAux, nAchou);
+    CopiarAlfa(xPayloadAprovAux, 1, nAchou - 2);
+    Definir Alfa yDepartmentId;
+    yDepartmentId = xPayloadAprovAux;
+    
+
+    xPayloadAprovAux = xPayloadAprov;
+    aSearchString = "\"branchOffice\"";
+    PosicaoAlfa(aSearchString, xPayloadAprovAux, nAchou);
+    TamanhoAlfa(aSearchString, nTamanho);
+    DeletarAlfa(xPayloadAprovAux, 1, nAchou + nTamanho);
+    PosicaoAlfa("\"id\":", xPayloadAprovAux, nAchou);
+    DeletarAlfa(xPayloadAprovAux, 1, nAchou + 5);
+    PosicaoAlfa(",", xPayloadAprovAux, nAchou);
+    CopiarAlfa(xPayloadAprovAux, 1, nAchou - 2);
+    xBranchOfficeId = xPayloadAprovAux;
+
+    xPayloadAprovAux = xPayloadAprov;
+    aSearchString = "\"jobPositionStructureId\"";
+    PosicaoAlfa(aSearchString, xPayloadAprovAux, nAchou);
+    TamanhoAlfa(aSearchString, nTamanho);
+    DeletarAlfa(xPayloadAprovAux, 1, nAchou + nTamanho);
+    PosicaoAlfa("\"id\":", xPayloadAprovAux, nAchou);
+    DeletarAlfa(xPayloadAprovAux, 1, nAchou + 5);
+    PosicaoAlfa(",", xPayloadAprovAux, nAchou);
+    CopiarAlfa(xPayloadAprovAux, 1, nAchou - 2);
+    xJobPositionId = xPayloadAprovAux;
+  } 
+  Senao {
+    xmsgret = "Erro ao chamar função fWorkstationCharacteristics. Erro: "+ xPayloadAprov;
+    staffRequisition.erroExecucao = xmsgret ;
+    nErro = 1;  
+  } 
+}
+  
+  
+@-- Função de envio de requisição --@
+Funcao fStaffRequisition();
+{   
+  aSearchString = "PCD";
+  PosicaoAlfa(aSearchString, aDescription, nAchouPCD);
+  Se(nAchouPCD > 0) {
+    aPcd = "true";
+  } 
+  Senao {
+    aPcd = "false";
+  }
+
+  fGetWorkShift();
+  
+  xPayload = "{\"keywordTrajectorySession\":false,                            \
+                \"keywordProfessionalExperienceSession\":false,                \
+                \"keywordEducationSession\":false,                             \
+                \"keywordLanguageSession\":false,                              \
+                \"pcd\":" + aPcd + ",                                          \
+                \"reason\":\"" + aReason + "\",                                \
+                \"status\":\"IN_APPROVAL\",                                    \
+                \"location\":\"" + aLocation + "\",                            \
+                \"admissionDate\":\"" + aAdmissionDate + "\",                  \
+                \"positions\":" + aPositions + ",                              \
+                \"justification\":\"" + aJustification + "\",                  \
+                \"description\":\"" + aDescription + "\",                      \
+                \"workShiftId\":\""+xWorkShift+"\",          \
+                \"requesterId\":\"" + xEmployeeIdSol + "\",                    \
+                \"costCenterId\":\"" + xCostCenterId + "\",                    \
+                \"companyId\":\"" + xBranchOfficeId + "\",                     \
+                \"departmentId\":\"" + xDepartmentId + "\",                    \
+                \"jobPositionId\":\"" + xJobPositionId + "\",                  \
+                \"workstationGroupId\":\"" + xWorkstationId + "\",             \
+                \"createdByVacancyManagement\":true,                           \
+                \"startSalaryRange\":" + aStartSalary + ",                     \
+                \"endSalaryRange\":" + aEndSalary + ",                         \
+                \"typeContract\":\"" + aTipCon + "\",                          \
+                \"activeEmployeeId\":\"" + xEmployeeIdApr + "\"";
+  
+  Se (aReason = "REPLACEMENT"){
+    xPayload =  xPayload + ", \"replacedEmployeeId\":\"" + xEmployeeIdReplacement + "\"}";
+  } 
+  Senao {
+    xPayload = xPayload + "}"; 
+  }
+      
+  HttpPost(aHTTP, "https://platform.senior.com.br/t/senior.com.br/bridge/1.0/rest/hcm/recruitment/entities/staffRequisition", xPayload, xPayloadAprov);
+  HttpLeCodigoResposta(aHTTP, nCodigo);
+  
+  Se(nCodigo = 201){
+    getJSONString(xPayloadAprov,"sequenceStaffrequisitionVacancy", xPayloadAprovAux);
+    getJSONInteger(xPayloadAprovAux,"sequence", nIdSequence);
+    IntParaAlfa(nIdSequence,aIdSequence);
+    xPayloadAprovAux = xPayloadAprov;
+    PosicaoAlfa("\"id\":", xPayloadAprovAux, nAchou);
+    DeletarAlfa(xPayloadAprovAux, 1, nAchou + 5);
+    PosicaoAlfa(",", xPayloadAprovAux, nAchou);
+    CopiarAlfa(xPayloadAprovAux, 1, nAchou - 2);
+    xRequisitionId = xPayloadAprovAux;
+
+    staffRequisition.idreqSeq = aIdSequence;
+    staffRequisition.idrequisicao = xRequisitionId;
+  } 
+  Senao {
+    xmsgret = "Erro: "+ xPayloadAprov;
+    staffRequisition.erroExecucao = xmsgret ;
+    nErro = 1;  
+  }
+}
+  
+  
+@-- Função para enviar requisição para aprovação --@
+Funcao fSendToAprovation();
+{
+  DataHoje(dDataHoje);
+  ConverteMascara(3, dDataHoje, aDataHoje, "YYYY-MM-DD");
+
+  xPayload = "{\"id\":\"" + xRequisitionId + "\",          \
+                \"referenceDate\":\"" + aDataHoje + "\",    \
+                \"activeEmployeeId\":\"" + xEmployeeIdApr + "\"}";
+
+  HttpPost(aHTTP, "https://platform.senior.com.br/t/senior.com.br/bridge/1.0/rest/hcm/recruitment/actions/sendStaffRequisitionToAprovation", xPayload, xPayloadAprov);
+  HttpLeCodigoResposta(aHTTP, nCodigo);
+  
+  nAprov = 0;
+  PosicaoAlfa("not in definition", xPayloadAprov, nAprov); 
+  
+  Se ((nCodigo = 200) ou (nAprov > 0)){
+      fApproveStaffRequisition();
+  } 
+  Senao {
+    xmsgret = "Erro: "+ xPayloadAprov;
+    staffRequisition.erroExecucao = xmsgret ;
+    nErro = 1;  
+  }
+}
+  
+  
+@-- Função para aprovar requisição --@
+Funcao fApproveStaffRequisition();
+{
+  xPayload = "{ \"activeEmployeeId\":\"" + xEmployeeIdApr +"\",     \
+                \"status\":\"IN_PROGRESS\"}";
+
+  HttpPost(aHTTP, "https://platform.senior.com.br/t/senior.com.br/bridge/1.0/rest/hcm/recruitment/queries/listFlowProcessesOfCurrentUser", xPayload, xPayloadAprov);
+  HttpLeCodigoResposta(aHTTP, nCodigo);
+
+  Se (nCodigo = 200) {
+    aSearchString = "\"staffRequisitionId\":\"" + xRequisitionId + "\"";
+    PosicaoAlfa(aSearchString, xPayloadAprov, nAchou);
+    Se(nAchou > 0){
+      TamanhoAlfa(aSearchString, nTamanho);
+      nAchou = nAchou - 300;
+      DeletarAlfa(xPayloadAprov, 1, nAchou);
+      aSearchString = "\"actualFlowProcessHistoryId\":\"";
+      PosicaoAlfa(aSearchString, xPayloadAprov, nAchou);
+      TamanhoAlfa(aSearchString, nTamanho);
+      nTamanho = nTamanho -1;
+      DeletarAlfa(xPayloadAprov, 1, nAchou + nTamanho);
+      PosicaoAlfa(",", xPayloadAprov, nAchou);
+      CopiarAlfa(xPayloadAprov, 1, nAchou - 2);
+      xIdSendToAprovation = xPayloadAprov;
+
+      nDatSis = DatSis;
+      DataHora(nDatSis);
+      FormatarData(nDatSis, "yyyy-MM-dd'T'HH:mm:ss'-03:00'", xHoraSis);
+
+      xPayload = "{\"flowProcessHistoryId\":\"" + xIdSendToAprovation + "\",   \
+                    \"approved\":true,                                         \
+                    \"referenceDate\":\"" + aDataHoje + "\",                   \
+                    \"processType\":\"" + aReason + "\",                       \
+                    \"dateWhen\":\"" + xHoraSis + "\",                         \
+                    \"activeEmployeeId\":\"" + xEmployeeIdApr + "\"}";
+
+      HttpPost(aHTTP, "https://platform.senior.com.br/t/senior.com.br/bridge/1.0/rest/hcm/recruitment/queries/flowProcessHistoryApproval", xPayload, xPayloadAprov);
+      HttpLeCodigoResposta(aHTTP, nCodigo);
+    } 
+    Senao {
+      nCodigo = 200;
+    }
+    
+    Se (nCodigo = 200){
+      fUpdateVacancyContractType();
+      aMsgRet = "Requisição aprovada com sucesso!";
+      staffRequisition.MsgRet = aMsgRet;
+    } 
+    Senao {
+      staffRequisition.erroExecucao = "Erro ao aprovar requisição!";
+      nErro = 1;
+    }
+  }
+}
+
+   
+@-- Função para alterar o Tipo de Contrato --@
+Funcao fUpdateVacancyContractType();
+{
+  xUrl = "https://platform.senior.com.br/t/senior.com.br/bridge/1.0/rest/hcm/vacancymanagement/queries/listVacancies?activeEmployeeId="+xEmployeeIdApr+"&q="+aIdSequence;
+
+  HttpGet(aHTTP, xUrl, xPayloadAprov);
+  HttpLeCodigoResposta(aHTTP, nCodigo);
+
+  Se(nCodigo = 200) {
+    getJSONArrayObj(xPayloadAprov, "data", xPayloadAprov);
+    getItemJSONArrayStringByTag(xPayloadAprov, "id", 0, xPayloadAprovAux);
+    getItemJSONArrayStringByTag(xPayloadAprov, "title", 0, xVacancyTitle);@Para adicionar o questionário adiante@
+    @getJSONString(xPayloadAprov,"data", xPayloadAprovAux);@
+    
+    aVacancyId = xPayloadAprovAux; 
+    xUrl = "https://platform.senior.com.br/t/senior.com.br/bridge/1.0/rest/hcm/vacancymanagement/queries/getVacancy?activeEmployeeId="+xEmployeeIdApr+"&vacancyId="+aVacancyId+"&context=HR&activeEmployeeId="+xEmployeeIdApr;
+
+    HttpGet(aHTTP, xUrl, xPayloadAprov);
+    HttpLeCodigoResposta(aHTTP, nCodigo);
+    Se(nCodigo = 200) {
+          
+      @Adiciona Tipo de Contrato de Trabalho@
+      Definir Alfa xPayloadVacancy;
+      xPayloadVacancy = xPayloadAprov;
+      addKeyAndStringValueInJSON(xPayloadVacancy, "typeContract",  aTipCon, xPayloadVacancy);
+      addKeyAndStringValueInJSON(xPayloadVacancy, "jobModel",  "IN_PERSON", xPayloadVacancy); @Fomato Presencial@
+      addKeyAndStringValueInJSON(xPayloadVacancy, "locationCity",  "Ponta Grossa", xPayloadVacancy); @Fomato Presencial@
+      addKeyAndStringValueInJSON(xPayloadVacancy, "locationCountry",  "Brasil", xPayloadVacancy); @Fomato Presencial@
+      addKeyAndStringValueInJSON(xPayloadVacancy, "locationFederativeUnit",  "PR", xPayloadVacancy); @Fomato Presencial@
+
+      atipRec = staffRequisition.tipRec;
+      Se(atipRec <> "Externo"){
+        fCreateQuestionsAndQuestionnaire();
+        addKeyAndStringValueInJSON(xPayloadVacancy, "questionnaire",  xIdQuestionnaire, xPayloadVacancy);
+      }  
+            
+      xUrl = "https://platform.senior.com.br/t/senior.com.br/bridge/1.0/rest/hcm/vacancymanagement/entities/vacancy/"+aVacancyId+"?activeEmployeeId="+xEmployeeIdApr+"&context=HR&activeEmployeeId="+xEmployeeIdApr;
+
+      HttpPut(aHTTP, xUrl,xPayloadVacancy,xPayloadAprovAux);
+      HttpLeCodigoResposta(aHTTP, nCodigo);
+      Se (nCodigo = 200){  
+        
+        @ Antes de encerrar, enviar notificação @
+        Definir Alfa aAssEma;
+        Definir Alfa aTxtEma; 
+        
+        /*
+        Msg Anterior:
+        aTxtEma = "Olá, a integração da Solicitação de Contratação, [FILIAL DA VAGA] - [SETOR DA VAGA] - [CARGO DA VAGA] \
+        foi concluída em [DATA DA INTEGRAÇÃO] às [HORA DA INTEGRAÇÃO]. O processo foi registrado sob o nº [CÓDIGO DA VAGA NA REMUNERAÇÃO] \
+        em Gestão de Recrutamento e Seleção / Gerenciar Vagas da Empresa.";   
+
+        @ Nova mensagem solicitada pelo Marlon - Evanderson Pereira - 25/05/2025 @
+        "Olá, a integração da Solicitação de Contratação, [NOME FILIAL DA VAGA] - [CÓDIGO DO CCU]:[NOME DO CCU] - [SETOR DA VAGA] \
+        [CARGO DA VAGA] foi concluída em [DATA DA INTEGRAÇÃO] às [HORA DA INTEGRAÇÃO]. O processo foi registrado sob o nº [CÓDIGO DA VAGA NA REMUNERAÇÃO] \
+        em Gestão de Recrutamento e Seleção / Gerenciar Vagas da Empresa.";
+        */
+        
+        aTxtEma = "Olá, a integração da Solicitação de Contratação, [NOME FILIAL DA VAGA] - [CÓDIGO DO CCU]:[NOME DO CCU] - [SETOR DA VAGA] \
+        [CARGO DA VAGA] foi concluída em [DATA DA INTEGRAÇÃO] às [HORA DA INTEGRAÇÃO]. O processo foi registrado sob o nº [CÓDIGO DA VAGA NA REMUNERAÇÃO] \
+        em Gestão de Recrutamento e Seleção / Gerenciar Vagas da Empresa.";
+
+        @ Filial da Vaga @
+        getJSONString(xPayloadVacancy, "branchOffice", aAux);
+        @getJSONString(aAux, "name", aAux);@                    @Parametro "name" é o nome da Empresa@
+        getJSONString(aAux, "tradingName", aAux);               @Parametro "tradingName" é o nome da Filial @ 
+        TrocaString(aTxtEma, "[FILIAL DA VAGA]", aAux, aTxtEma);
+        
+        @ Código Centro de custo @
+        getJSONString(xPayloadVacancy, "costCenter", aAux);
+        getJSONString(aAux, "code", aAux);
+        TrocaString(aTxtEma, "[CÓDIGO DO CCU]", aAux, aTxtEma);
+        
+        @ Nome do Centro de custo @
+        getJSONString(xPayloadVacancy, "costCenter", aAux);
+        getJSONString(aAux, "name", aAux);
+        TrocaString(aTxtEma, "[NOME DO CCU]", aAux, aTxtEma);
+        
+        @ Setor da Vaga @
+        TrocaString(aTxtEma, "[SETOR DA VAGA]", yDepartmentId, aTxtEma);
+        
+        @ Nome Cargo @
+        getJSONString(xPayloadVacancy, "jobPosition", aAux);
+        getJSONString(aAux, "name", aAux); 
+        TrocaString(aTxtEma, "[CARGO DA VAGA]", aAux, aTxtEma);
+        
+        @ Data @
+        Definir Alfa aDatInt;
+        Definir Data dDatSis;
+        dDatSis = DatSis;
+        ConverteMascara (3, dDatSis, aDatInt, "DD/MM/YYYY");
+        TrocaString(aTxtEma, "[DATA DA INTEGRAÇÃO]", aDatInt, aTxtEma);
+        
+        @ Hora @
+        Definir Alfa aHorInt;
+        nHorSis = HorSis;
+        ConverteMascara (1, nHorSis, aHorInt, "HH:MM");
+        TrocaString(aTxtEma, "[HORA DA INTEGRAÇÃO]", aHorInt, aTxtEma);
+        
+        @ Código da Vaga @
+        TrocaString(aTxtEma, "[CÓDIGO DA VAGA NA REMUNERAÇÃO]", aIdSequence, aTxtEma);
+        
+        
+        aAssEma = "Nova Vaga Aprovada - " + aIdSequence;        
+        Se ((aReason = "AUMENTO DE QUADRO") ou (aReason = "STAFF_INCREASE")) {
+          EnviaEmail ("gp.admpessoal@unimedpg.com.br", "gp.selecao@unimedpg.com.br;gp.remuneracao@unimedpg.com.br","", "", aAssEma, aTxtEma, "", 0);      
+        } 
+        Senao {
+          EnviaEmail ("gp.admpessoal@unimedpg.com.br", "gp.selecao@unimedpg.com.br;gp.remuneracao@unimedpg.com.br","", "", aAssEma, aTxtEma, "", 0);            
+        }
+      }
+    }
+  }
+}
+
+    
+@-- Função para retornar Escala WorkShift--@
+Funcao fGetWorkShift();
+{
+  xWorkShift = "";
+  xQuery = staffRequisition.NomEsc;
+  PosicaoAlfa("-", xQuery, nAchou);
+  TamanhoAlfa (xQuery, nTam);
+  DeletarAlfa(xQuery, nAchou, nTam);
+  TiraEspacos (xQuery, xQuery);
+  xCodEsc = staffRequisition.CodEsc;
+  xUrl = "https://platform.senior.com.br/t/senior.com.br/bridge/1.0/rest/hcm/analytics/queries/searchWorkshifts?activeEmployeeId="+xEmployeeIdApr + "&context=HR&activeEmployeeId="+xEmployeeIdApr;
+  xPayload = "{\"q\": \""+xQuery+"\",\
+              \"workstationId\": \""+xWorkstationId+"\",\
+              \"company\": \""+xBranchOfficeId+"\",\
+              \"activeEmployeeId\": \""+xEmployeeIdApr+"\",\
+              \"context\": \"HR\"}";
+
+  HttpPost(aHTTP, xUrl,xPayload,xPayloadAprov);
+  HttpLeCodigoResposta(aHTTP, nCodigo);
+  Se (nCodigo = 200){     
+    getJSONArrayObj(xPayloadAprov, "result", xPayloadAprov);
+    getJSONArrayLength(xPayloadAprov, nTamArr);
+    
+    nItem = 0;
+    Enquanto(nItem < nTamArr){
+      getItemJSONArrayStringByTag(xPayloadAprov, "code", nItem, xWorkShift);
+      Se(xWorkShift = xCodEsc){
+        getItemJSONArrayStringByTag(xPayloadAprov, "id", nItem, xWorkShift);
+        nItem = nTamArr;
+      }    
+      nItem++;
+    }
+  }      
+}
+
+    
+@-- Função para criar Perguntas , criar Questionário e retornar ID --@
+Funcao fCreateQuestionsAndQuestionnaire();
+{
+  Definir Alfa xQuestions;
+  xQuestions = "";
+  xIdFirstQuestion = "";
+  xIdSecondQuestion = "";
+  xIdThirdQuestion = "";
+  
+  xUrl = "https://platform.senior.com.br/t/senior.com.br/bridge/1.0/rest/hcm/question_service/entities/question?activeEmployeeId="+xEmployeeIdApr+"&context=HR&activeEmployeeId="+xEmployeeIdApr;
+  xPayload = "{\"description\": \"Caso você seja candidato interno, já atualizou o seu Perfil Profissional e Acadêmico no Portal do Colaborador?  \
+                                  (É obrigatório, caso não tenha feito, clique em cancelar, atualize e depois retorne para se candidatar).\",     \  
+                \"type\": \"CHECKBOX\",                                                                                                           \
+                \"required\": false,                                                                                                              \
+                \"alternatives\": [                                                                                                               \
+                  {                                                                                                                               \
+                      \"description\": \"Sim\",                                                                                                   \
+                      \"sequence\": 1                                                                                                             \
+                  },                                                                                                                              \
+                  {                                                                                                                               \
+                      \"description\": \"Não\",                                                                                                   \
+                      \"sequence\": 2        },                                                                                                   \
+                  {                                                                                                                               \
+                      \"description\": \"Não sou candidato interno\",                                                                             \
+                      \"sequence\": 3                                                                                                             \
+                  }                                                                                                                               \ 
+                ],                                                                                                                                \
+                  \"sequence\": 1,                                                                                                                \
+                  \"activeEmployeeId\": \""+xEmployeeIdApr+"\",                                                                                   \
+                  \"context\": \"HR\"                                                                                                             \
+              }";       
+
+  HttpPost(aHTTP, xUrl,xPayload,xPayloadAprov);
+  HttpLeCodigoResposta(aHTTP, nCodigo);
+  Se (nCodigo = 201){  
+    xIdFirstQuestion = xPayloadAprov;
+    @getJSONString(xPayloadAprov,"id", xIdFirstQuestion);@
+  } 
+
+  xPayload = "{\
+               \"description\": \"Caso você seja candidato interno, possui férias programadas para o ano de 2025? Se sim, qual período? \
+                                (Caso não seja candidato interno, escreva no campo abaixo a seguinte frase: “Não sou candidato interno”)\",          \
+               \"type\": \"TEXT\",                                                                                                                   \
+               \"required\": false,                                                                                                                  \
+               \"sequence\": 2,                                                                                                                      \
+               \"activeEmployeeId\": \""+xEmployeeIdApr+"\",                                                                                         \
+               \"context\": \"HR\"                                                                                                                   \
+              }";      
+
+  HttpPost(aHTTP, xUrl,xPayload,xPayloadAprov);
+  HttpLeCodigoResposta(aHTTP, nCodigo);
+  Se (nCodigo = 201) {  
+      xIdSecondQuestion = xPayloadAprov;
+  }
+
+  xPayload = "{ \
+                \"description\": \"Caso você seja candidato interno, já comunicou ao seu líder/gestor sobre a sua participação neste processo seletivo interno?\", \    
+                \"type\": \"CHECKBOX\",                                                                                                                            \
+                \"required\": false,                                                                                                                               \
+                \"alternatives\":                                                                                                                                  \
+                [                                                                                                                                                  \
+                  {                                                                                                                                                \
+                    \"description\": \"Sim\",                                                                                                                      \
+                    \"sequence\": 1                                                                                                                                \
+                  },                                                                                                                                               \
+                  {                                                                                                                                                \
+                    \"description\": \"Não\",                                                                                                                      \
+                    \"sequence\": 2                                                                                                                                \
+                  },                                                                                                                                               \
+                  {                                                                                                                                                \
+                    \"description\": \"Não sou candidato interno\",                                                                                                \
+                    \"sequence\": 3                                                                                                                                \
+                  }                                                                                                                                                \
+                ],                                                                                                                                                 \
+                \"sequence\": 3,                                                                                                                                   \
+                \"activeEmployeeId\": \""+xEmployeeIdApr+"\",                                                                                                      \
+                \"context\": \"HR\"                                                                                                                                \
+              }";                                                                                                                                                         
+        
+  HttpPost(aHTTP, xUrl,xPayload,xPayloadAprov);
+  HttpLeCodigoResposta(aHTTP, nCodigo);
+  Se (nCodigo = 201) {  
+    xIdThirdQuestion = xPayloadAprov;
+    @getJSONString(xPayloadAprov,"id", xIdThirdQuestion);@
+  }
+
+  xUrl = "https://platform.senior.com.br/t/senior.com.br/bridge/1.0/rest/hcm/question_service/entities/questionnaire?activeEmployeeId=" + xEmployeeIdApr + "&context=HR&activeEmployeeId=" + xEmployeeIdApr;
+  xQuestions = xIdFirstQuestion + "," + xIdSecondQuestion + "," + xIdThirdQuestion;
+  @Gera o Questionário@                      
+  xPayload = "{ \"title\": \" " + xVacancyTitle + "\",       \
+                \"domainName\": \"hcm\",                     \
+                \"serviceName\": \"vacancymanagement\",      \
+                \"questions\": [ " + xQuestions + "],        \
+                \"activeEmployeeId\": \""+xEmployeeIdApr+"\",\
+                \"context\": \"HR\"}"; 
+         
+        
+  HttpPost(aHTTP, xUrl,xPayload,xPayloadAprov);
+  HttpLeCodigoResposta(aHTTP, nCodigo);
+  Se ((nCodigo = 200) ou (nCodigo = 201)) {  
+    @xIdQuestionnaire = xPayloadAprov;@
+    getJSONString(xPayloadAprov,"id", xIdQuestionnaire);
+  } 
+}
+  
+
+@-- Função para buscar id do funcionário --@
+Funcao fEmployeeIdSearch(Numero nTipFun);
+{
+  Se(nTipFun = 1) {
+    aSolOUApr = staffRequisition.nomFunSol;
+    nNumCadSolOUApr = staffRequisition.numCadSol;
+  }
+  Se(nTipFun = 2) {
+    aSolOUApr = staffRequisition.nomFunApr;
+    nNumCadSolOUApr = staffRequisition.numCadApr;
+  }
+
+  xPayload = "{\"q\":\"" + aSolOUApr + "\"}";
+  HttpPost(aHTTP, "https://platform.senior.com.br/t/senior.com.br/bridge/1.0/rest/hcm/recruitment/queries/searchEmployees", xPayload, xPayloadAprov);
+  HttpLeCodigoResposta(aHTTP, nCodigo);
+
+  Se (nCodigo = 200) {
+    IntParaAlfa(nNumCadSolOUApr, aNumCadSolOUApr);
+    aSearchString = "code\":" + aNumCadSolOUApr;
+    PosicaoAlfa(aSearchString, xPayloadAprov, nAchou);
+    TamanhoAlfa(aSearchString, nTamanho);
+    nAchou = nAchou - 1500;
+    DeletarAlfa(xPayloadAprov, 1, nAchou);
+    aSearchString = "\"id\":\"";
+    PosicaoAlfa(aSearchString, xPayloadAprov, nAchou);
+    TamanhoAlfa(aSearchString, nTamanho);
+    nTamanho = nTamanho -1;
+    DeletarAlfa(xPayloadAprov, 1, nAchou + nTamanho);
+    PosicaoAlfa(",", xPayloadAprov, nAchou);
+    CopiarAlfa(xPayloadAprov, 1, nAchou - 2);
+    xEmployeeId = xPayloadAprov;
+
+    Se (nTipFun = 1) {
+      xEmployeeIdSol = xEmployeeId;
+    }
+    Se (nTipFun = 2) {
+      xEmployeeIdApr = xEmployeeId;
+    }
+  }
+}

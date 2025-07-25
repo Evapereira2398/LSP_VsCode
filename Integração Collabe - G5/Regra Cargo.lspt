@@ -1,0 +1,77 @@
+Definir Cursor C_R024Car;
+Definir Alfa vHTTP;
+Definir Alfa xUser;
+Definir Alfa xPass;
+Definir Alfa xJson;
+Definir Alfa xToken;
+Definir Alfa xCodCar;
+Definir Alfa xCarInt;
+Definir Alfa xTitCar;
+Definir Alfa xEstrutura;
+Definir Data dDatSis;
+Definir Alfa xUrl;
+Definir Alfa aAux;
+
+dDatSis = DatSis;
+
+xUser  = "admin@grupoacos-homolog.com.br";
+xPass = "2O7XM084e58s!";
+ 
+xJson = "{\"username\": \""+xUser+"\", \"password\": \""+xPass+"\"}";
+HttpObjeto(vHTTP);
+HttpDesabilitaErroResposta(vHTTP);
+HttpAlteraCabecalhoRequisicao(vHTTP, "Content-Type", "application/json");  
+HttpPost(vHTTP, "https://platform.senior.com.br/t/senior.com.br/bridge/1.0/rest/platform/authentication/actions/login", xJson, xToken);
+
+PosicaoAlfa("access_token", xToken, nPos);
+nPos = nPos + 17;
+CopiarAlfa(xToken, nPos, 32);
+xToken = "Bearer " + xToken;
+
+C_R024Car.Sql"Select R024Car.CodCar, R024Car.TitCar,                      \    
+                     R024Car.EstCar                                       \                     
+                From R024Car, R030CAR, R030EMP                            \                            
+               Where R030CAR.EstCar = R024CAR.EstCar                      \
+                 AND R030CAR.NumEmp = R030EMP.NumEmp                      \
+                 AND R030CAR.DatAlt = (SELECT MAX(TAB.DatAlt)             \ 
+                                         FROM R030CAR TAB                 \
+                                        WHERE TAB.NumEmp = R030CAR.NumEmp \
+                                          AND TAB.DatAlt <= :dDatSis)     \
+                 AND R030EMP.USU_IntCol = 'S'                             \ 
+                 AND ((R024Car.Usu_IntCola Is Null)                       \     
+                  Or (R024Car.Usu_IntCola = 'N')                          \        
+                  Or (R024Car.Usu_IntCola = '')                           \         
+                  Or (R024Car.Usu_IntCola = ' '))";                 
+                                
+C_R024Car.AbrirCursor();
+Enquanto(C_R024Car.Achou) {
+  xCodCar = C_R024Car.CodCar;
+  xTitCar = C_R024Car.TitCar;
+  nEstCar = C_R024Car.EstCar;
+  IntParaAlfa(nEstCar, xEstrutura);
+  xCarInt = xEstrutura + "-" + xCodCar;  
+  
+  HttpAlteraCabecalhoRequisicao(vHTTP, "Authorization", xToken);   
+  @Verifica se há o código do cargo já na base@ 
+  xUrl = "https://platform.senior.com.br/t/senior.com.br/bridge/1.0/rest/hcm/onboarding/entities/jobPosition?filter=code='" + xCarInt + "'";  
+  HttpGet(vHTTP, xUrl, xJson); 
+
+    aAux = xJson;
+    CopiarAlfa(aAux,15,1) ;
+    Se(aAux = "0"){
+      xJson = "{\"name\": \""+ xTitCar + "\",\"enabled\": \"ACTIVE\",\"code\":\"" + xCarInt + "\"}";  
+      HttpAlteraCabecalhoRequisicao(vHTTP, "Authorization", xToken); 
+      HttpAlteraCodifCaracPadrao(vHTTP, "utf-8");    
+      HttpPost(vHTTP, "https://platform.senior.com.br/t/senior.com.br/bridge/1.0/rest/hcm/onboarding/entities/jobPosition", xJson, xJson); 
+      HttpLeCodigoResposta(vHTTP, nCodigo);
+      Se ((nCodigo >= 200) E (nCodigo < 300))
+        ExecSql"Update R024Car Set Usu_IntCola = 'S' Where EstCar = :nEstCar And CodCar = :xCodCar";
+    } Senao {
+      ExecSql"Update R024Car Set Usu_IntCola = 'S' Where EstCar = :nEstCar And CodCar = :xCodCar";   
+    }  
+
+  C_R024Car.Proximo();
+}
+C_R024Car.FecharCursor();
+
+n=n;

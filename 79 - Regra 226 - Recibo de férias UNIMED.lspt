@@ -1,0 +1,145 @@
+Definir Cursor Cur_R038afa;
+Definir Cursor cR038HSA;
+Definir Numero xTemFalta; 
+Definir Data dIniPer;
+Definir Data dFimPer;
+Definir Data dIniFer;
+Definir Data dDatAfa;
+Definir Data dDatTer; 
+
+Se(vExecucaoRegra = 0){
+  
+  xNumEmp = R040per.NumEmp;
+  xTipcol = R040per.TipCol;
+  xNumcad = R040per.Numcad;
+  dIniper = R040per.IniPer;
+  dFimper = R040per.FimPer;
+  dIniFer = R040FEM.IniFer;
+  
+  xTemFalta = 0;
+  xTemAtestado = 0;
+
+  @ Evento Fixo para geração @
+  CodEvt = 226;
+  nCodEve = CodEvt; 
+  
+  @ Valor deverá ser de acordo com histórico salarial considerando 12% do valor @
+  @ e sua proporcionalidade de dias @
+  cR038HSA.SQL"SELECT * FROM R038HSA     \
+                WHERE NUMEMP = :xNumEmp  \
+                  AND TIPCOL = :xTipCol  \
+                  AND NUMCAD = :xNumCad  \
+                  AND DATALT <= :dIniFer \
+                ORDER BY DATALT DESC";
+  cR038HSA.AbrirCursor();
+  Se(cR038HSA.Achou) {
+    RefEvt = R040FEM.DiaFer + R040FEM.DiaAbo;
+    ValEvt = ((((cR038HSA.ValSal) / 30) * RefEvt) / 100) * 12;
+  }
+  cR038HSA.FecharCursor();
+  
+  @ - Busca Histórico de afastamento com situação de FALTA e FALTA NOTURNA - @
+  Cur_R038afa.SQL "SELECT SITAFA             \
+                     FROM R038AFA            \
+                    WHERE NUMEMP = :xNumEmp  \
+                      AND TIPCOL = :xTipCol  \ 
+                      AND NUMCAD = :xNumCad  \
+                      AND DATAFA >= :dIniPer \
+                      AND DATTER <= :dFimPer \
+                      AND SITAFA IN (15,65)";
+  Cur_R038afa.AbrirCursor();
+  Se (Cur_R038afa.Achou){
+    xTemFalta = 1;
+  }
+  Cur_R038afa.FecharCursor();
+  
+  
+  @ - 224313 03/07/2024 - Considera 2 afastamentos de tolerancia e não paga para aux doença - @
+  nCont226 = 0;
+  nZera = 0;
+  Cur_R038AFA.SQL"SELECT *                   \
+                    FROM R038AFA             \
+                   WHERE NUMEMP = :xNumEmp   \
+                     AND TIPCOL = :xTipCol   \
+                     AND NUMCAD = :xNumCad   \
+                     AND SITAFA IN (14,61,3) \ 
+                     AND DATAFA >= :DINIPER  \
+                     AND DATTER <= :DFIMPER";
+  Cur_R038AFA.AbrirCursor();
+  Enquanto(Cur_R038AFA.Achou){   
+    nCont226++;
+     
+    Se(Cur_R038AFA.SitAfa = 3){
+      nZera = 1;
+    }
+    Se(Cur_R038AFA.CodSub = " "){
+      nZera = 1;   
+    }
+    Cur_R038AFA.Proximo();
+  }
+  Cur_R038AFA.FecharCursor();
+  
+  Se(nCont226 > 2){
+    xTemAtestado = 1;
+  }
+  
+  
+  @ - Se teve férias ou rescisão mês anterior zera o valor do evento - @
+  Se((CodEvt = 226) ou (CodEvt = 665)){
+    Definir Cursor cur;
+    Definir Data dPerRef;
+      
+    dPerRef = PerRef;
+    nCodCalAnt = 0;
+      
+    cur.SQL"SELECT CODCAL FROM R044CAL WHERE PERREF < :dPerRef AND TIPCAL = 11 ORDER BY CODCAL DESC";
+    cur.AbrirCursor();
+    Se(cur.Achou){
+      nCodCalAnt = cur.CodCal;
+    }
+    cur.FecharCursor();  
+      
+    Se(nCodCalAnt <> 0){
+      cur.SQL"SELECT * FROM R046VER        \
+               WHERE CodCal = :nCodCalAnt  \
+                 AND CodEve = 214          \
+                 AND NumEmp = :xNumEmp     \
+                 AND TipCol = :xTipCol     \
+                 AND NumCad = :xNumCad";
+      cur.AbrirCursor();
+      Se(cur.Achou){
+        RefEvt = 0;
+        ValEvt = 0;
+      }
+      cur.FecharCursor();
+    }
+      
+    Se((xTemFalta = 1) ou (xTemAtestado = 1) ou (nZera = 1)){
+      RefEvt = 0;
+      ValEvt = 0;
+    }
+     
+    @ ============================================================== @
+    @ Na rescisão, não é pago assiduidade para férias proporcionais. @
+    @ ============================================================== @
+    Se((Tipcal >= 75) e (Tipcal <= 79)){
+      Se(AvoFer < 12){
+        RefEvt = 0;
+        ValEvt = 0;
+      }
+    }
+  } 
+  
+  FimReg:
+  Se((dDatAfa = 0) e (dDatter = 0)){
+    RefEvt = 0;
+    ValEvt = 0;
+  }
+}
+
+
+
+
+
+
+          

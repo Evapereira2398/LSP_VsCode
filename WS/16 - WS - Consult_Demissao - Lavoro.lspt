@@ -1,0 +1,337 @@
+Definir Cursor Cur_USUTCadDir;
+Definir Cursor Cur_RetDadosPosto;
+Definir Cursor Cur_USUTCadGer;
+Definir Cursor Cur_USUTCadCoo;
+Definir Cursor Cur_USUTCadSup;
+Definir Cursor Cur_R038HEB;
+Definir Cursor Cur_USUTCadClu;
+Definir Cursor Cur_retornagestor;
+
+Definir Alfa vCursor;
+Definir Alfa aAux;
+Definir Alfa aSql;
+Definir Alfa aPulaLinha;
+Definir Alfa aNumCad;
+Definir Alfa xNomFun;
+Definir Alfa aNomFun;
+Definir Alfa aNumEmp;
+Definir Alfa aNomEmp;
+Definir Alfa aCodFil;
+Definir Alfa aNomFil;
+Definir Alfa aDadosCol;
+Definir Alfa aDadosEst;
+Definir Alfa aCodDir;
+Definir Alfa aDesDir;
+Definir Alfa aPosTra;
+Definir Alfa aDesPos;
+Definir Alfa aCodGer;
+Definir Alfa aDesGer;
+Definir Alfa aCodCoo;
+Definir Alfa aDesCoo;
+Definir Alfa aCodSup;
+Definir Alfa aDesSup;
+Definir Alfa aTipSal;
+Definir Alfa aNomSal;
+Definir Alfa aFimEtb;
+Definir Alfa xDesLis;
+Definir Alfa aDefFis;
+Definir Alfa aNomFis;
+Definir Alfa aPosPai;
+Definir Alfa aNomGes;
+Definir Alfa aCodCar;
+Definir Alfa aTitCar;
+Definir Alfa aCodCcu;
+Definir Alfa aNomCcu;
+Definir Alfa aNumLoc;
+Definir Alfa aNomLoc;
+Definir Alfa aNomChePriNiv;
+
+
+
+Definir Alfa aNumTel;
+Definir Alfa aDddTel;
+Definir Alfa aNomEmp;
+Definir Alfa aNomFil;
+Definir Alfa aTitCar; 
+Definir Alfa aNomCcu;
+Definir Alfa aNomLoc;
+Definir Alfa aNomPos;
+Definir Alfa aNumCpf;
+Definir Alfa aNumCad;
+Definir Alfa aSupervisor;
+Definir Alfa aCoordenador;
+Definir Alfa aGerente;
+Definir Alfa aDiretor;
+Definir Alfa aVicePresidente;
+Definir Alfa aCeo;
+
+
+RetornaAscII(13,aPulaLinha);
+
+nNumCad = consult_demissao.numcad;
+xNomFun = consult_demissao.nomfun;
+
+IntParaAlfa(nNumCad, aNumCad);
+Se(nNumCad <> 0){
+  aSql = aSql + " and R034FUN.NumCad = "+aNumCad;
+}
+  
+TiraEspacos (xNomFun, xNomFun);
+AlfaPuro(xNomFun, 0, 1);
+Se(xNomFun <> ""){
+  aSql = aSql + " and UPPER (R034FUN.NomFun) like '%"+xNomFun+"%'";
+}
+
+SQL_Criar(vCursor);
+SQL_UsarAbrangencia(vCursor, 0);
+
+aSql = "Select R034FUN.NumEmp,                                                         \
+               R034FUN.TipCol,                                                         \
+               R034FUN.NumCad,                                                         \
+               R034FUN.NomFun,                                                         \
+               R034FUN.CodFil,                                                         \
+               R034FUN.CodCar,                                                         \
+               R034FUN.NumLoc,                                                         \
+               R034FUN.NUMCPF,                                                         \
+               R034FUN.PosTra,                                                         \
+               R034FUN.TipSal,                                                         \
+               R034FUN.DefFis,                                                         \
+               R034FUN.USU_CodDir,                                                     \
+               R034CPL.NumTel,                                                         \
+               R034CPL.DddTel,                                                         \
+               R030EMP.NomEmp,                                                         \
+               R030FIL.NomFil,                                                         \
+               R018CCU.CodCcu,                                                         \
+               R018CCU.NomCcu,                                                         \
+               R016ORN.NomLoc,                                                         \
+               R024CAR.TitCar,                                                         \
+               R017POS.ESTPOS,                                                         \
+               R017POS.DesPos,                                                         \
+               R017POS.USU_CodVic,                                                     \
+               R017CAR.USU_CodGer,                                                     \
+               R017CAR.USU_CodCoo,                                                     \
+               R017CAR.USU_CodSup,                                                     \
+               R017CAR.USU_CodClu                                                      \
+          FROM R034FUN, R030EMP, R030FIL, R024CAR, R018CCU, R016ORN, R017POS, R017CAR, R034CPL \
+         WHERE R034FUN.SITAFA <> 7 AND R034FUN.SITAFA <> 8                             \
+           AND R034FUN.TIPCOL = 1                                                      \
+           AND R034FUN.NUMEMP = R030EMP.NUMEMP                                         \
+           AND R034FUN.NUMEMP = R030FIL.NUMEMP                                         \
+           AND R034FUN.NUMEMP = R017CAR.NUMEMP                                         \
+           AND R034FUN.NUMEMP = R018CCU.NUMEMP                                         \
+           AND R034FUN.CODFIL = R030FIL.CODFIL                                         \
+           AND R034FUN.CODFIL = R017CAR.CODFIL                                         \
+           AND R034FUN.ESTCAR = R024CAR.ESTCAR                                         \
+           AND R034FUN.CODCAR = R024CAR.CODCAR                                         \
+           AND R034FUN.CODCCU = R018CCU.CODCCU                                         \
+           AND R034FUN.TABORG = R016ORN.TABORG                                         \
+           AND R034FUN.NUMLOC = R016ORN.NUMLOC                                         \
+           AND R034FUN.EstPos = R017POS.EstPos                                         \
+           AND R034FUN.EstPos = R017CAR.EstPos                                         \
+           AND R034FUN.PosTra = R017POS.PosTra                                         \
+           AND R034FUN.PosTra = R017CAR.PosTra                                         \
+           AND R034FUN.NUMEMP = R034CPL.NUMEMP \
+           AND R034FUN.TIPCOL = R034CPL.TIPCOL \
+           AND R034FUN.NUMCAD = R034CPL.NUMCAD \
+           AND R017CAR.DatIni = (SELECT MAX(DATINI)                                    \
+                                   FROM R017CAR                                        \
+                                  WHERE R017POS.EstPos = R017CAR.EstPos                \
+                                    and R017POS.PosTra = R017CAR.PosTra)"+aSql+"       \  
+           ORDER BY R034FUN.NUMCAD";
+
+
+SQL_DefinirComando(vCursor, aSql); 
+SQL_AbrirCursor(vCursor);
+nConLin = 0;
+Enquanto((SQL_EOF(vCursor) = 0) e (nConLin < 20)){
+  
+  consult_demissao.grid.CriarLinha();
+  consult_demissao.grid.LinhaAtual = nConLin;  
+  
+  
+  SQL_RetornarInteiro(vCursor, "USU_CodVic", nCodVic);
+  SQL_RetornarInteiro(vCursor, "NumEmp", nNumEmp);
+  SQL_RetornarInteiro(vCursor, "TipCol", nTipCol);  
+  SQL_RetornarInteiro(vCursor, "CodFil", nCodFil);
+  SQL_RetornarInteiro(vCursor, "DddTel", nDddTel);
+  SQL_RetornarInteiro(vCursor, "NumCad", nNumCad);
+  SQL_RetornarInteiro(vCursor, "NumCpf", nNumCpf);
+  
+  SQL_RetornarAlfa(vCursor, "PosTra", aPosTra);
+  SQL_RetornarAlfa(vCursor, "DesPos", aDesPos);
+  SQL_RetornarAlfa(vCursor, "NomFun", aNomFun);
+  SQL_RetornarAlfa(vCursor, "NomEmp", aNomEmp);
+  SQL_RetornarAlfa(vCursor, "NomFil", aNomFil);
+  SQL_RetornarAlfa(vCursor, "CodCar", aCodCar);
+  SQL_RetornarAlfa(vCursor, "TitCar", aTitCar);
+  SQL_RetornarAlfa(vCursor, "CodCcu", aCodCcu); 
+  SQL_RetornarAlfa(vCursor, "NomCcu", aNomCcu);
+  SQL_RetornarAlfa(vCursor, "NumLoc", aNumLoc);
+  SQL_RetornarAlfa(vCursor, "NomLoc", aNomLoc);
+  SQL_RetornarAlfa(vCursor, "NumTel", aNumTel);
+  
+  
+  @ Conversões @
+  IntParaAlfa(nNumEmp, aNumEmp);
+  IntParaAlfa(nCodFil, aCodFil);
+  IntParaAlfa(nDddTel, aDddTel);
+  IntParaAlfa(nNumCad, aNumCad);
+  ConverteMascara(1, nNumCpf, aNumCpf, "999.999.999-99");
+  
+  aNomEmp = aNumEmp + " - " + aNomEmp;
+  aNomFil = aCodFil + " - " + aNomFil;
+  aNumTel = "("+aDddTel+")"  + aNumTel; 
+  aTitCar = aCodCar + " - " + aTitCar;
+  aNomCcu = aCodCcu + " - " + aNomCcu;
+  aNomLoc = aNumLoc + " - " + aNomLoc; 
+  aNomPos = aPosTra + " - " + aDesPos;
+  
+  @ Busca papeis da tela customizada - Gerenciamento dos papeis @
+  Definir Cursor cBuscaPapeis;
+  Definir Alfa aPapelBP;
+  Definir Alfa aPapelSup;
+  Definir Alfa aPapelRS;
+  Definir Alfa aPapelRemu;
+  
+  cBuscaPapeis.SQL"SELECT * FROM USU_TGERBPM    \
+                    WHERE USU_CODEMP = :nNumEmp \
+                      AND USU_CODFIL = :nCodFil \
+                      AND USU_CODVIC = :nCodVic";
+  cBuscaPapeis.AbrirCursor();
+  Se(cBuscaPapeis.Achou){
+    aPapelBP = cBuscaPapeis.USU_PAPEL_BP;
+    aPapelSup = cBuscaPapeis.USU_PAPEL_SUP; 
+    aPapelRS = cBuscaPapeis.USU_PAPEL_RS; 
+    aPapelRemu = cBuscaPapeis.USU_PAPEL_REMU;  
+  }
+  cBuscaPapeis.FecharCursor();
+  
+
+  @ O envio das informações abaixo, não devem ser feitas via campo, e sim subindo @
+  @ niveis da hierarquia dos postos retornando o nome do chefe de cada posto @
+  
+  /*
+    Vai ser verificado o campo USU_CodPos para conferir a hierarquia.
+    Serão 6 niveis de Hierarquia
+    
+    CEO             | CODPOS = 1
+    VICE PRESIDENTE | CODPOS = 2
+    DIRETOR         | CODPOS = 3
+    GERENTE         | CODPOS = 4
+    COORDENADOR     | CODPOS = 5
+    SUPERVISOR      | CODPOS = 6
+  */
+  
+  Definir Alfa aNomChe;
+  Definir Alfa aPosTra;
+  Definir Alfa aPosPai;
+  Definir Alfa aPosPaiAux;
+  Definir Alfa aSql;
+  Definir Alfa CPOS;
+  Definir Alfa aEstPos;
+   
+  @ Recupera o posto do solicitante e verifica o chefe de primeiro nival @
+  RetornaPostoColaborador(nNumEmp, nTipCol, nNumCad, DatSis, xEstPos, aPosTra, aDesPos);
+  RetornaPostoPai(aPosTra, xEstPos, 3, DatSis, aPosPai);
+  RetornaChefePosto(0, xEstPos, 3, DatSis, aPosPai, nEmpChe, nTclChe, nCadChe);
+  
+  @ Loop para varrer a hierarquia de postos @
+  nCont = 1;
+  Enquanto(nCont <= 6){
+    
+    IntParaAlfa(xEstPos, aEstPos);
+    
+    Se(nCont = 1){
+      aSql = "SELECT USU_CODPOS FROM R017POS WHERE ESTPOS = "+aEstPos+" AND POSTRA = '"+aPosPai+"'";
+    }
+    Se(nCont > 1){
+      aSql = "SELECT USU_CODPOS FROM R017POS WHERE ESTPOS = "+aEstPos+" AND POSTRA = '"+aPosPaiAux+"'";   
+    }
+   
+    @ Busca codigo da Hierarquia do Posto R017POS.USU_CodPos @
+    SQL_Criar(CPOS);
+    SQL_UsarAbrangencia(CPOS, 1);
+    SQL_DefinirComando(CPOS, aSql); 
+    SQL_AbrirCursor(CPOS);
+    Se (SQL_BOF(CPOS) = 0) {
+      SQL_RetornarInteiro(CPOS, "USU_CODPOS", nCodHie);
+    }
+    SQL_FecharCursor(CPOS);
+    SQL_Destruir(CPOS);
+    
+    @ Cursor para buscar o nome do Chefe do posto @
+    Definir Cursor cAux;
+    cAux.SQL"SELECT NOMFUN FROM R034FUN WHERE NUMEMP = :nEmpChe AND TIPCOL = :nTclChe AND NUMCAD = :nCadChe";
+    cAux.AbrirCursor()
+    Se(cAux.Achou){
+      aNomChe = cAux.NomFun;  
+    }
+    cAux.FecharCursor();
+    
+    @ Verifica qual é o Nivel de Hierarquia para alimentar o campo correto e incrementa 'aDadosCol' @
+    Se(nCodHie = 1){
+      aCeo = aNomChe;
+
+      @ Se chegar no nivel de CEO, não é mais necessario subir niveis na hierarquia, @
+      @ neste caso pode sair do loop e continuar a regra @
+      Vapara SaiLoop;   
+    } 
+    Senao Se (nCodHie = 2){
+      aVicePresidente = aNomChe;  
+    }
+    Senao Se (nCodHie = 3){
+      aDiretor = aNomChe;  
+    }
+    Senao Se (nCodHie = 4){
+      aGerente = aNomChe;  
+    }
+    Senao Se (nCodHie = 5){
+      aCoordenador = aNomChe;  
+    }
+    Senao Se (nCodHie = 6){
+      aSupervisor = aNomChe;  
+    }
+    
+    
+    @ Sobe um nivel na hierarquia dos postos @
+    Se(nCont > 1){
+      aPosPai = aPosPaiAux;
+    }
+    RetornaPostoPai(aPosPai, xEstPos, 3, DatSis, aPosPaiAux);
+    RetornaChefePosto(0, xEstPos, 3, DatSis, aPosPaiAux, nEmpChe, nTclChe, nCadChe);
+    
+    nCont++; 
+  }
+  
+  SaiLoop: 
+  
+  @ Retorna variavel para o WS @
+  consult_demissao.grid.nomfun = aNomFun;
+  consult_demissao.grid.numcad = aNumCad;
+  consult_demissao.grid.numcpf = aNumCpf;
+  consult_demissao.grid.numtel = aNumTel;
+  consult_demissao.grid.nomemp = aNomEmp;
+  consult_demissao.grid.nomfil = aNomFil;
+  consult_demissao.grid.titcar = aTitCar;
+  consult_demissao.grid.nomccu = aNomCcu;
+  consult_demissao.grid.nomloc = aNomLoc;
+  consult_demissao.grid.nompos = aNomPos;
+  consult_demissao.grid.papelbp = aPapelBP;
+  consult_demissao.grid.papelrs = aPapelSup;
+  consult_demissao.grid.papelrem = aPapelRS;
+  consult_demissao.grid.papelsup = aPapelRemu;
+  
+  @ Niveis de Hierarquia @
+  consult_demissao.grid.supervisor = aSupervisor;
+  consult_demissao.grid.coordenador = aCoordenador; 
+  consult_demissao.grid.gerente = aGerente;
+  consult_demissao.grid.diretor = aDiretor;
+  consult_demissao.grid.vicepresidente = aVicePresidente; 
+  consult_demissao.grid.ceo = aCeo; 
+         
+  nConLin++;      
+  SQL_Proximo(vCursor);   
+}
+
+SQL_FecharCursor(vCursor);
+SQL_Destruir(vCursor);

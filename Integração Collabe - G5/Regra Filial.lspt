@@ -1,0 +1,68 @@
+Definir Cursor C_R030Fil;
+Definir Alfa vHTTP;
+Definir Alfa xUser;
+Definir Alfa xPass;
+Definir Alfa xJson;
+Definir Alfa xToken;
+Definir Alfa xCodFil;
+Definir Alfa xRazSoc;
+Definir Alfa xNomFil;
+Definir Alfa aNumEmp;
+Definir Alfa xJSonEmp;
+
+xUser  = "admin@grupoacos-homolog.com.br";
+xPass = "2O7XM084e58s!";
+ 
+xJson = "{\"username\": \""+xUser+"\", \"password\": \""+xPass+"\"}";
+HttpObjeto(vHTTP);
+HttpDesabilitaErroResposta(vHTTP);
+HttpAlteraCabecalhoRequisicao(vHTTP, "Content-Type", "application/json");  
+HttpPost(vHTTP, "https://platform.senior.com.br/t/senior.com.br/bridge/1.0/rest/platform/authentication/actions/login", xJson, xToken);
+
+PosicaoAlfa("access_token", xToken, nPos);
+nPos = nPos + 17;
+CopiarAlfa(xToken, nPos, 32);
+xToken = "Bearer " + xToken;
+
+C_R030Fil.Sql"Select R030Fil.CodFil, R030Fil.RazSoc,    \ 
+                     R030Fil.NomFil, R030Emp.Usu_RetCol,\
+                     R030Fil.NumEmp                     \
+                From R030Fil, R030Emp                   \
+               Where R030Fil.NumEmp = R030Emp.NumEmp    \
+                 AND R030EMP.USU_IntCol = 'S' \                  
+                 And ((R030Fil.Usu_IntCola Is Null)     \
+                  Or (R030Fil.Usu_IntCola = 'N')        \
+                  Or (R030Fil.Usu_IntCola = '')         \
+                  Or (R030Fil.Usu_IntCola = ' '))       ";                
+                                 
+C_R030Fil.AbrirCursor();
+Enquanto(C_R030Fil.Achou) {
+  nNumEmp = C_R030Fil.NumEmp;
+  nCodFil = C_R030Fil.CodFil;
+  xRazSoc = C_R030Fil.RazSoc;
+  xNomFil = C_R030Fil.NomFil;  
+  xJSonEmp = C_R030Fil.Usu_RetCol;
+  IntParaAlfa(nCodFil, xCodFil);
+  IntParaAlfa(nNumEmp, aNumEmp);
+  xCodFil = aNumEmp + "-" + xCodFil;
+  
+  
+  xJson = "{\"company\":" + xJSonEmp + ",";
+  xJson = xJson + "\"branchOfficeName\": \"" + xRazSoc + "\",";
+  xJson = xJson + "\"tradingName\": \"" + xNomFil + "\",";
+  xJson = xJson + "\"enabled\": \"ACTIVE\",";
+  xJson = xJson + "\"code\": \"" + xCodFil + "\"}";
+  
+  HttpAlteraCabecalhoRequisicao(vHTTP, "Authorization", xToken); 
+  HttpAlteraCodifCaracPadrao(vHTTP, "utf-8");     
+  HttpPost(vHTTP, "https://platform.senior.com.br/t/senior.com.br/bridge/1.0/rest/hcm/onboarding/entities/branchOffice", xJson, xJson);  
+  HttpLeCodigoResposta(vHTTP, nCodigo);
+  
+  Se ((nCodigo >= 200) E (nCodigo < 300)){
+    ExecSql"Update R030Fil Set Usu_IntCola = 'S' Where NumEmp = :nNumEmp And CodFil = :nCodFil";
+  }
+  C_R030Fil.Proximo();
+}
+C_R030Fil.FecharCursor();     
+
+n = n;

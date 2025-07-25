@@ -1,0 +1,64 @@
+Definir Alfa aMsgMai;
+Definir ALfa aNomGesSol; 
+Definir Alfa aEmpresa;
+Definir Alfa aFilial;
+Definir Alfa aCcu;
+Definir Alfa aCargo;
+Definir Alfa aUsaEquip;
+Definir Alfa aEquipLoja;
+Definir Alfa aNumPat; 
+Definir Alfa aEmaEnv;
+Definir Alfa aDesEma;
+Definir Alfa aAssEma;
+Definir Alfa aEmaAcc;
+
+@--Dados da Posição--@
+aNomGesSol = email_ti_admissao.gessol;
+aEmpresa = email_ti_admissao.empresa;
+aFilial = email_ti_admissao.filial;
+aCcu = email_ti_admissao.ccu;
+aCargo = email_ti_admissao.cargo; 
+aUsaEquip = email_ti_admissao.usaequip;
+aEquipLoja = email_ti_admissao.equiploja;
+aNumPat = email_ti_admissao.numpat;
+
+@ Valida se é necessario o envio do e-mail @
+AlfaPuro(aUsaEquip, 1, 1);
+Se(aUsaEquip = "NAO"){
+  Vapara FimWs;
+}
+
+@ Definições para envio do e-mail @
+aEmaEnv = "rh.dp@lavoroagro.com";
+aDesEma = "evanderson.pereira@getwork.tec.br";
+/*aEmaAcc = "eduardo.duda@lavoroagro.com"*/                          
+aAssEma = "Solicitação de Equipamentos de Informática"; 
+
+
+@--Montagem do E-mail--@
+aMsgMai = "<br> Ao time de TI,";
+aMsgMai = aMsgMai + "<br> ";
+aMsgMai = aMsgMai + "<br> Segue abaixo as informações referentes à posição para a qual foi identificada a necessidade de equipamentos de informática.";
+aMsgMai = aMsgMai + "<br> ";
+aMsgMai = aMsgMai + "<br> Compartilhamos os dados necessários para o devido providenciamento:";
+aMsgMai = aMsgMai + "<br> Nome do Gestor: " + aNomGesSol;
+aMsgMai = aMsgMai + "<br> Empresa: " + aEmpresa;
+aMsgMai = aMsgMai + "<br> Filial: " + aFilial;
+aMsgMai = aMsgMai + "<br> Centro de Custo: " + aCcu;                                   
+aMsgMai = aMsgMai + "<br> Cargo da Posição: " + aCargo;
+aMsgMai = aMsgMai + "<br> Necessidade de Equipamentos de TI: " + aUsaEquip;
+aMsgMai = aMsgMai + "<br> Há Equipamentos na Nova Posição: " + aEquipLoja;
+aMsgMai = aMsgMai + "<br> Número do Patrimônio: " + aNumPat;
+aMsgMai = aMsgMai + "<br> ";
+aMsgMai = aMsgMai + "<br> Atenciosamente,";
+aMsgMai = aMsgMai + "<br> Recursos Humanos";
+aMsgMai = aMsgMai + "<br> ";
+aMsgMai = aMsgMai + "<br> ";
+aMsgMai = aMsgMai + "<br> *E-mail enviado automaticamente, não responda. Dúvidas, entre em contato com o gestor solicitante.";
+
+
+@--Envio do E-mail--@
+EnviaEmailHTML (aEmaEnv,aDesEma,aEmaAcc,"",aAssEma,aMsgMai,"",0,0); 
+
+FimWs: 
+x=0;

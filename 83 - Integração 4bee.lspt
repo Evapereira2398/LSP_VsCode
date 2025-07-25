@@ -1,0 +1,330 @@
+Definir Cursor C_R030Emp;
+Definir Cursor C_R016Orn;
+Definir Cursor C_R024Car;
+Definir Cursor C_R034Usu;
+Definir Alfa vHTTP;
+Definir Alfa vHTTPGet;
+Definir Alfa Retorno;
+Definir Alfa xURL;
+Definir Alfa xJson;
+Definir Alfa xReturn_Token;
+Definir Alfa xReturn_IdEmp;
+Definir Alfa xReturn_IdDepartment;
+Definir Alfa xReturn_IdCargo;
+Definir Alfa xNumEmpAux;
+Definir Alfa xNumLocAux;                                                   
+Definir Alfa xCodCar;
+Definir Alfa xRetCol;
+Definir Alfa xUserID;
+Definir Alfa xUserName;
+Definir Alfa xNomUsu;
+Definir Alfa xCargo;
+Definir Alfa xLocal;
+Definir Alfa xEmpresa;
+Definir Alfa xNumCpfAux;
+Definir Alfa xDatNas;
+Definir Alfa xJsonGet;
+Definir Alfa xJSON_Users;
+Definir Alfa xJSON_UsersAux;    
+Definir Data dDatExt;
+Definir Data dDatHoj;
+Definir Alfa xMsgSql;
+
+dDatHoj = DatSis - 1;
+MontaData (31, 12, 1900, dDatExt);
+
+
+
+@ =========================================================== @
+@ ==== Obtém o TOKEN de autenticação para as requisições ==== @
+@ =========================================================== @
+HttpObjeto(vHTTP);
+HttpHabilitaSNI(vHTTP);
+HttpAlteraCabecalhoRequisicao(vHTTP, "Accept", "application/json");
+HttpAlteraCabecalhoRequisicao(vHTTP, "Content-Type", "text/plain");
+HttpAlteraCabecalhoRequisicao(vHTTP, "Content-Type", "application/json");
+HttpAlteraCabecalhoRequisicao(vHTTP, "User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.61 Safari/537.36");
+HttpAlteraCabecalhoRequisicao(vHTTP, "Referer", "https://api-frisia.4bee.com.br");
+HttpDesabilitaErroResposta(vHTTP);
+xJson = "{";    
+xJson = xJson + "\"userName\": \"api-frisia\",";
+xJson = xJson + "\"password\": \"sWeJR!8Vjpyw\",";
+xJson = xJson + "\"deviceToken\": \"holy-smoke\",";
+xJson = xJson + "\"platform\": \"WebBrowser\",";
+xJson = xJson + "\"actionType\": \"Login\",";
+xJson = xJson + "\"token\" : \"03AGdBq27H2Qke7Vs0lq9zI4tnYwTKqxGAiiIjtCEOD9KZaClzofFnR8UzZljUwkY1Zor22OzNLky4SGF8rnHcq2jkRitXctfQutcd1LKKJNUdYnXaI36p4kXPSMbchI7h5pI4RvG8UnsT0hd3I2kQLOVQ3L1yxO7v-";
+xJson = xJson + "8e_BOdfaUz50oVo0kxSXDzJd6q_ZwAbsJFBK22CraEVzEWNjns0IXgVE-tWPN2tduNZ1idXEyyR9Lr3GlQlW9Sm7Vp5Uln7dkto78k-KmAUfiI7WMJGKxlGJCVbf7Um2UVkK1OUWMGfcERIgix1X9huJukyhRu8TpMR63F3_BZFR2";
+xJson = xJson + "AQiJKk7eWM5UtsxMvOpasbfIrrM_wsok6WhXKAv25X4B10qzNS4U4OZG-ddzEj\"";
+xJson = xJson +"}";
+xURL = "https://apiplusauth.4bee.com.br/api/Security/Authenticate";
+HttpPost(vHTTP, xURL, xJson, xReturn_Token);
+
+
+
+@ =========================================================== @
+@ ============== Realiza autenticação no 4bee =============== @
+@ =========================================================== @
+TrocaString(xReturn_Token, "\"", "", xReturn_Token);
+xReturn_Token = "Bearer " + xReturn_Token;
+HttpObjeto(vHTTP);
+HttpHabilitaSNI(vHTTP);
+HttpAlteraCabecalhoRequisicao(vHTTP, "Accept", "application/json");
+HttpAlteraCabecalhoRequisicao(vHTTP, "Authorization", xReturn_Token);
+HttpAlteraCabecalhoRequisicao(vHTTP, "Content-Type", "text/plain");
+HttpAlteraCabecalhoRequisicao(vHTTP, "Content-Type", "application/json");
+HttpAlteraCabecalhoRequisicao(vHTTP, "User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.61 Safari/537.36");
+HttpAlteraCabecalhoRequisicao(vHTTP, "Referer", "https://api-frisia.4bee.com.br");
+HttpDesabilitaErroResposta(vHTTP);
+xJson = "{";    
+xJson = xJson + "\"userName\": \"api-frisia\",";
+xJson = xJson + "\"password\": \"sWeJR!8Vjpyw\"";
+xJson = xJson +"}";
+xURL = "https://apiplusauth.4bee.com.br/api/Security/AuthenticateBusiness";
+HttpPost(vHTTP, xURL, xJson, xReturn_Token);    
+
+
+
+
+@ =========================================================== @
+@ ===================== Integra Empresa ===================== @
+@ =========================================================== @
+
+Se((xReturn_Token <> "") E (xReturn_Token <> " ")) {
+  TrocaString(xReturn_Token, "\"", "", xReturn_Token);
+  xReturn_Token = "Bearer " + xReturn_Token;
+  
+  @ Verifica na tabela de cadastro da empresa se o campo 'USU_Int4Bee' = N ou se é Null @
+  C_R030Emp.Sql"Select NumEmp, NomEmp From R030Emp Where (Usu_Int4Bee = 'N' Or Usu_Int4Bee Is Null)";
+  C_R030Emp.AbrirCursor();
+  Enquanto(C_R030Emp.Achou)  @ Se achar alguma empresa que esteja com o campo como 'N' @
+  {
+    nIdEmp4Bee = 0;
+    HttpObjeto(vHTTP);
+    HttpHabilitaSNI(vHTTP);
+    HttpAlteraCabecalhoRequisicao(vHTTP, "Accept", "application/json");
+    HttpAlteraCabecalhoRequisicao(vHTTP, "Authorization", xReturn_Token);
+    HttpAlteraCabecalhoRequisicao(vHTTP, "Content-Type", "application/json");
+    HttpAlteraCabecalhoRequisicao(vHTTP, "User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.61 Safari/537.36");
+    HttpAlteraCabecalhoRequisicao(vHTTP, "Referer", "https://api-frisia.4bee.com.br");
+    HttpDesabilitaErroResposta(vHTTP);
+    nNumEmp = C_R030Emp.NumEmp;
+    IntParaAlfa(nNumEmp, xNumEmpAux);
+    xJson = "{";    
+    xJson = xJson + "\"id\": " + xNumEmpAux + ",";
+    xJson = xJson + "\"name\": \"" + C_R030Emp.NomEmp + "\"";    
+    xJson = xJson +"}";
+    xURL = "https://apiplus.4bee.com.br/api/company/createCompany"; @ Realiza o envio da empresa para o 4Bee @
+    HttpPost(vHTTP, xURL, xJson, xReturn_IdEmp);
+    HttpLeCodigoResposta(vHTTP, nCodigo);
+    AlfaParaInt(xReturn_IdEmp, nIdEmp4Bee);
+    
+    @ Se o envio da empresa ocorrer com sucesso, o campo 'USU_Int4Bee' é preenchido com 'S' @
+    @ indicando que a empresa já está integrada no 4Bee @
+    Se ((nIdEmp4Bee > 0) e (nCodigo = 200)){
+      ExecSql"Update R030Emp Set Usu_Int4Bee = 'S', Usu_Id4Bee = :nIdEmp4Bee Where NumEmp = :nNumEmp ";
+    }
+    C_R030Emp.Proximo();
+  }
+  C_R030Emp.FecharCursor();
+  
+  
+  @ =========================================================== @
+  @ ============ Integra os locais de organograma ============= @
+  @ =========================================================== @
+
+  @ Verifica na tabela de locais de organograma se o campo 'USU_Int4Bee' = N ou se é Null @
+  C_R016Orn.Sql"Select TabOrg, NumLoc, NomLoc \
+                From R016Orn                \
+                Where (Usu_Int4Bee = 'N' Or Usu_Int4Bee Is Null) ";
+  C_R016Orn.AbrirCursor();
+  Enquanto(C_R016Orn.Achou) @ Se achar alguma local que esteja com o campo como 'N' @
+  {
+    HttpObjeto(vHTTP);
+    HttpHabilitaSNI(vHTTP);
+    HttpAlteraCabecalhoRequisicao(vHTTP, "Accept", "application/json");
+    HttpAlteraCabecalhoRequisicao(vHTTP, "Authorization", xReturn_Token);
+    HttpAlteraCabecalhoRequisicao(vHTTP, "Content-Type", "application/json");
+    HttpAlteraCabecalhoRequisicao(vHTTP, "User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.61 Safari/537.36");
+    HttpAlteraCabecalhoRequisicao(vHTTP, "Referer", "https://api-frisia.4bee.com.br");
+    HttpDesabilitaErroResposta(vHTTP);
+    nTaborg = C_R016Orn.TabOrg;
+    nNumLoc = C_R016Orn.NumLoc;
+    IntParaAlfa(nNumLoc, xNumLocAux);
+    xJson = "{";    
+    xJson = xJson + "\"id\": " + xNumLocAux + ",";
+    xJson = xJson + "\"name\": \"" + C_R016Orn.NomLoc + "\",";
+    xJson = xJson + "\"overview\": \"" + C_R016Orn.NomLoc + "\"";         
+    xJson = xJson +"}";
+    xURL = "https://apiplus.4bee.com.br/api/Department/createDepartment"; @ Realiza o envio da empresa para o 4Bee @
+    HttpPost(vHTTP, xURL, xJson, xReturn_IdDepartment);
+    HttpLeCodigoResposta(vHTTP, nCodigo);
+    AlfaParaInt(xReturn_IdDepartment, nIdDepartment4Bee);
+    Se ((nIdDepartment4Bee > 0) e (nCodigo = 200)) {
+      ExecSql"Update R016Orn Set Usu_Int4Bee = 'S', Usu_Id4BeeLoc = :nIdDepartment4Bee Where TabOrg = :nTaborg And NumLoc = :nNumLoc ";    
+    }
+    C_R016Orn.Proximo();
+  } 
+  C_R016Orn.FecharCursor();
+
+
+  @ =========================================================== @
+  @ ==================== Integra os cargos ==================== @
+  @ =========================================================== @
+  /* ==== Não integra novos cargos, somente os cargos que estiverem com uma data de extinção ==== */
+
+  @ Verifica cargos com data de extinção @
+  C_R024Car.Sql"Select EstCar, CodCar, TitRed, TitCar \
+                  From R024Car                        \
+                  Where DatExt = :dDatExt";                 
+  C_R024Car.AbrirCursor();
+  Enquanto(C_R024Car.Achou) 
+  {
+    HttpObjeto(vHTTP);
+    HttpHabilitaSNI(vHTTP);
+    HttpAlteraCabecalhoRequisicao(vHTTP, "Accept", "application/json");
+    HttpAlteraCabecalhoRequisicao(vHTTP, "Authorization", xReturn_Token);
+    HttpAlteraCabecalhoRequisicao(vHTTP, "Content-Type", "application/json");
+    HttpAlteraCabecalhoRequisicao(vHTTP, "User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.61 Safari/537.36");
+    HttpAlteraCabecalhoRequisicao(vHTTP, "Referer", "https://api-frisia.4bee.com.br");
+    HttpDesabilitaErroResposta(vHTTP);
+    nEstCar = C_R024Car.EstCar;
+    xCodCar = C_R024Car.CodCar; 
+    xJson = "{";    
+    xJson = xJson + "\"id\": " + C_R024Car.CodCar + ",";
+    xJson = xJson + "\"name\": \"" + C_R024Car.TitCar + "\",";
+    xJson = xJson + "\"overview\": \"" + C_R024Car.TitCar + "\"";         
+    xJson = xJson +"}";
+    xURL = "https://apiplus.4bee.com.br/api/Occupation/createOccupation";
+    HttpPost(vHTTP, xURL, xJson, xReturn_IdCargo);
+    HttpLeCodigoResposta(vHTTP, nCodigo);
+    AlfaParaInt(xReturn_IdCargo, nIdCargo4Bee);
+    Se ((nIdCargo4Bee > 0) e (nCodigo = 200))
+      ExecSql"Update R024Car Set Usu_Int4Bee = 'S', Usu_Id4BeeCar = :nIdCargo4Bee Where EstCar = :nEstCar And CodCar = :xCodCar ";        
+    C_R024Car.Proximo();
+  }
+  C_R024Car.FecharCursor();
+
+
+
+  @ =========================================================== @
+  @ ================ Integra os colaboradores ================= @
+  @ =========================================================== @
+  C_R034Usu.Sql"Select R034Fun.DatNas, R024Car.Usu_Id4BeeCar,       \
+                       R016Orn.Usu_Id4BeeLoc, R034Fun.TipSex,       \
+                       R034Fun.NumCpf, R999Usu.NomUsu,              \
+                       R030Emp.Usu_Id4Bee, R034Fun.NumEmp,          \         
+                       R034Fun.TipCol, R034Fun.NumCad,              \
+                       R034Fun.Usu_ID4BeeEmp                        \  
+                  From R034Fun, R024Car, R016Orn, R034Usu,          \
+                       R999Usu, R910Usu, R030Emp                    \
+                 Where R034Fun.NumEmp = R034Usu.NumEmp              \
+                   And R034Fun.TipCol = R034Usu.TipCol              \
+                   And R034Fun.NumCad = R034Usu.NumCad              \
+                   And R034Fun.EstCar = R024Car.EstCar              \
+                   And R034Fun.CodCar = R024Car.CodCar              \
+                   And R034Fun.TabOrg = R016Orn.TabOrg              \
+                   And R034Fun.NumLoc = R016Orn.NumLoc              \
+                   And R034Fun.NumEmp = R030Emp.NumEmp              \
+                   And R034Usu.CodUsu = R999Usu.CodUsu              \
+                   And R999Usu.CodUsu = R910Usu.CodEnt              \ 
+                   And R910Usu.ConHab = 1                           \
+                   And R034Fun.SitAfa <> 7";   
+  C_R034Usu.AbrirCursor();
+  Enquanto(C_R034Usu.Achou)
+  {
+    xNomUsu = C_R034Usu.NomUsu;
+    nEmpresa = C_R034Usu.Usu_Id4Bee;
+    nCargo = C_R034Usu.Usu_Id4BeeCar;
+    nLocal = C_R034Usu.Usu_Id4BeeLoc;    
+    dDatNas = C_R034Usu.DatNas;
+    nNumCpf = C_R034Usu.NumCpf; 
+    nNumEmp = C_R034Usu.NumEmp;
+    nTipCol = C_R034Usu.TipCol;
+    nNumCad = C_R034Usu.NumCad; 
+    nUserID = C_R034Usu.Usu_ID4BeeEmp;         
+    
+    IntParaAlfa(nCargo, xCargo);
+    IntParaAlfa(nLocal, xLocal);
+    IntParaAlfa(nEmpresa, xEmpresa);
+    ConverteMascara (1, nNumCpf, xNumCpfAux,"999.999.999-99");
+    ConverteMascara (3, dDatNas, xDatNas,"YYYY-MM-DD");    
+    xDatNas = xDatNas + "T00:00:00.000-02:00";               
+
+    Se(nUserID = 0){  @ Caso o colaborador ainda não tenha um ID do 4Bee cadastrado @
+
+      @ Busca o usuário no 4Bee @
+      HttpObjeto(vHTTPGet);
+      HttpHabilitaSNI(vHTTPGet);
+      HttpAlteraCabecalhoRequisicao(vHTTPGet, "Accept",  "*/*");
+      HttpAlteraCabecalhoRequisicao(vHTTPGet, "Authorization", xReturn_Token);
+      HttpAlteraCabecalhoRequisicao(vHTTPGet, "Content-Type", "application/x-www-form-urlencoded");
+      HttpAlteraCabecalhoRequisicao(vHTTPGet, "User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.61 Safari/537.36");
+      HttpAlteraCabecalhoRequisicao(vHTTPGet, "Referer", "https://api-frisia.4bee.com.br");
+      HttpDesabilitaErroResposta(vHTTPGet);
+      xURL = "https://apiplus.4bee.com.br/api/profile/getUser?networkId=78&deleted=false&pageNumber=1&pageSize=10000&userName="+ xNomUsu;
+      HttpGet(vHTTPGet, xURL, xRetCol);   
+      HttpLeCodigoResposta(vHTTPGet, nCodigo);
+      
+      Se(xRetCol <> ""){
+        PosicaoAlfa ("users", xRetCol, nPosStr);
+        Se(nPosStr > 0){
+          getJSONArrayObj(xRetCol, "users", xJSON_Users);
+          getJSONArrayLength(xJSON_Users, xRetorno);        
+          nReg = 0;      
+          Enquanto (nReg < xretorno) {
+            xUserName = "";    
+            xJSON_UsersAux = xJSON_Users;  
+            GetItemJSONArrayStringByTag(xJSON_UsersAux, "user", nReg, xJSON_UsersAux);
+            xJSON_UsersAux = "[" + xJSON_UsersAux + "]";
+            getItemJSONArrayStringByTag(xJSON_UsersAux, "userId", 0, xUserID);
+            GetItemJSONArrayStringByTag(xJSON_UsersAux, "userName", 0, xUserName);     
+            xNomUsu = xNomUsu + "@frisia.coop.br";   
+            
+            Se((xUserID <> "") E (xUserName = xNomUsu)) {
+              AlfaParaInt(xUserID, nUserID);
+              ExecSqlEx("Update R034Fun Set Usu_ID4BeeEmp = :nUserID Where NumEmp = :nNumEmp And TipCol = :nTipCol And NumCad = :nNumCad ", nErro, xMsgSql);
+              HttpObjeto(vHTTP);
+              HttpHabilitaSNI(vHTTP);   
+              HttpAlteraCabecalhoRequisicao(vHTTP, "Accept", "*/*");
+              HttpAlteraCabecalhoRequisicao(vHTTP, "Authorization", xReturn_Token);
+              HttpAlteraCabecalhoRequisicao(vHTTP, "Content-Type", "application/x-www-form-urlencoded");
+              HttpAlteraCabecalhoRequisicao(vHTTP, "User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.61 Safari/537.36");
+              HttpAlteraCabecalhoRequisicao(vHTTP, "Referer", "https://api-frisia.4bee.com.br");  
+              HttpDesabilitaErroResposta(vHTTP);
+              xJson = "userId=" + xUserID + "&CompanyId=" + xEmpresa + "&departmentId=" + xLocal + "&occupationId=" + xCargo + "&birthday=" + xDatNas;
+              xURL = "https://apiplus.4bee.com.br/api/account/updateUser?userID=" + xUserID;
+              HttpPut(vHTTP, xURL, xJson, xReturn_IdEmp);
+              HttpLeCodigoResposta(vHTTP, nCodigo);  
+            }
+            nReg++;
+          }
+        }   
+      }    
+    } 
+    
+    Senao { @ Caso o colaborador já tenha o ID do 4Bee preenchido no Senior @
+      IntParaAlfa(nUserID, xUserID);
+      ExecSqlEx("Update R034Fun Set Usu_ID4BeeEmp = :nUserID \
+                  Where NumEmp = :nNumEmp \
+                    And TipCol = :nTipCol \
+                    And NumCad = :nNumCad ", nErro, xMsgSql);
+      
+      HttpObjeto(vHTTP);
+      HttpHabilitaSNI(vHTTP);   
+      HttpAlteraCabecalhoRequisicao(vHTTP, "Accept", "*/*");
+      HttpAlteraCabecalhoRequisicao(vHTTP, "Authorization", xReturn_Token);
+      HttpAlteraCabecalhoRequisicao(vHTTP, "Content-Type", "application/x-www-form-urlencoded");
+      HttpAlteraCabecalhoRequisicao(vHTTP, "User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.61 Safari/537.36");
+      HttpAlteraCabecalhoRequisicao(vHTTP, "Referer", "https://api-frisia.4bee.com.br");  
+      HttpDesabilitaErroResposta(vHTTP);
+      xJson = "userId=" + xUserID + "&CompanyId=" + xEmpresa + "&departmentId=" + xLocal + "&occupationId=" + xCargo + "&birthday=" + xDatNas;
+      xURL = "https://apiplus.4bee.com.br/api/account/updateUser?userID=" + xUserID;
+      HttpPut(vHTTP, xURL, xJson, xReturn_IdEmp);
+      HttpLeCodigoResposta(vHTTP, nCodigo);  
+    }
+    C_R034Usu.Proximo();
+  }
+  C_R034Usu.FecharCursor();
+}
+
+n = n;

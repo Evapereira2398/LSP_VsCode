@@ -1,0 +1,77 @@
+@--- Declaração de variáveis ---@
+Definir Cursor Cur_R038AFA;
+Definir Cursor Cur_R014EST;
+Definir Cursor Cur_R040PRG;
+Definir Data dDatSis;
+Definir Data dDatBas;
+Definir Data dDatLim;
+Definir Data dPrgDat;
+
+Definir Alfa aPrgDat;
+Definir Alfa aMsg;
+
+
+
+dDatSis = DatSis;
+dDatBas = DatSis - 365;
+dDatLim = DatSis + 90;
+
+@ === Retorno do BPM === @
+nNumEmp = consult_estabilidade.numemp;
+nTipCol = consult_estabilidade.tipcol;
+nNumCad = consult_estabilidade.numcad;
+
+
+@ === Verifica afastamento === @
+Cur_R038AFA.Sql "SELECT SITAFA             \
+                   FROM R038AFA            \
+                  WHERE NUMEMP = :nNumEmp  \ 
+                    AND TIPCOL = :nTipCol  \ 
+                    AND NUMCAD = :nNumCad  \
+                    AND DATAFA >= :dDatBas \
+                    AND DATAFA <= :dDatSis";
+Cur_R038AFA.AbrirCursor();
+Se(Cur_R038AFA.Achou) {
+  nSitAfa = Cur_R038AFA.SITAFA;
+
+  @ === Obtém sindicato === @
+  RetSinEmp(nNumEmp, nTipCol, nNumCad, dDatSis);
+  nCodSin = CodSinEmp;
+
+
+  @ === Verifica estabilidade via sindicato === @
+  Cur_R014EST.Sql "SELECT * FROM R014EST WHERE CODSIN = :nCodSin AND CODSIT = :nSitAfa";
+  Cur_R014EST.AbrirCursor();
+
+  Se(Cur_R014EST.Achou) {
+    nGerEst = Cur_R014EST.GerEst;
+    aNomSol = Cur_R014EST.DiaEst;
+    nCodEtb = Cur_R014EST.CodEtb;
+    nNumMax = Cur_R014EST.NumMax;
+
+    Mensagem(Retorna, "Colaborador possui estabilidade conforme sindicato.");
+  } 
+  Cur_R014EST.FecharCursor();
+}
+Cur_R038AFA.FecharCursor();
+
+
+@ === Verifica programação de férias nos próximos 3 meses === @
+Cur_R040PRG.Sql "SELECT *                   \
+                   FROM R040PRG             \  
+                  WHERE NUMEMP = :nNumEmp   \ 
+                    AND TIPCOL = :nTipCol   \ 
+                    AND NUMCAD = :nNumCad   \
+                    AND PRGDAT >= :dDatSis  \
+                    AND PRGDAT <= :dDatLim";
+Cur_R040PRG.AbrirCursor();
+Se(Cur_R040PRG.Achou) {
+  dPrgDat = Cur_R040PRG.PrgDat;
+  ConverteMascara(3, dPrgDat, aPrgDat, "DD/MM/YYYY");
+  aMsg = "Colaborador possui estabilidade devido a uma programação de férias que inicia em: " + aPrgDat;
+  Mensagem(Retorna, aMsg);
+}
+
+Cur_R040PRG.FecharCursor();
+
+x=0;

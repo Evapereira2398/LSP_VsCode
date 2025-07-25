@@ -1,0 +1,260 @@
+@ Cursor para R034FUN @
+Definir Cursor c34FUN;
+c34FUN.SQL"SELECT * FROM R034FUN";
+c34FUN.AbrirCursor()
+Se(c34FUN.Achou){
+    
+}
+c34FUN.FecharCursor();
+
+@ Cursor para R034CPL @
+Definir Cursor c34CPL;
+c34CPL.SQL"SELECT * FROM R034CPL";
+c34CPL.AbrirCursor()
+Se(c34CPL.Achou){
+    
+}
+c34CPL.FecharCursor();
+
+@ Cursor para R018CCU @
+Definir Cursor c18CCU;
+c18CCU.SQL"SELECT * FROM R018CCU";
+c18CCU.AbrirCursor()
+Se(c18CCU.Achou){
+    
+}
+c18CCU.FecharCursor();
+
+@ Cursor para R024CAR @
+Definir Cursor c24CAR;
+c24CAR.SQL"SELECT * FROM R024CAR";
+c24CAR.AbrirCursor()
+Se(c24CAR.Achou){
+    
+}
+c24CAR.FecharCursor();
+
+@ Cursor para R030EMP @
+Definir Cursor c30EMP;
+c30EMP.SQL"SELECT * FROM R030EMP";
+c30EMP.AbrirCursor()
+Se(c30EMP.Achou){
+    
+}
+c30EMP.FecharCursor();
+
+@ Cursor para R030FIL @
+Definir Cursor c30FIL;
+c30FIL.SQL"SELECT * FROM R030FIL";
+c30FIL.AbrirCursor()
+Se(c30FIL.Achou){
+    
+}
+c30FIL.FecharCursor();
+
+@ Cursor para R008EVC @
+Definir Cursor c8EVC;
+c8EVC.SQL"SELECT * FROM R008EVC";
+c8EVC.AbrirCursor()
+Se(c8EVC.Achou){
+    
+}
+c8EVC.FecharCursor();
+
+@ Cursor para R004HOR @
+Definir Cursor c4HOR;
+c4HOR.SQL"SELECT * FROM R004HOR";
+c4HOR.AbrirCursor()
+Se(c4HOR.Achou){
+    
+}
+c4HOR.FecharCursor();
+
+@ Cursor para R006HOR @
+Definir Cursor c6HOR;
+c6HOR.SQL"SELECT * FROM R006HOR";
+c6HOR.AbrirCursor()
+Se(c6HOR.Achou){
+    
+}
+c6HOR.FecharCursor();
+
+@ Cursor para R010SIT @
+Definir Cursor c10SIT;
+c10SIT.SQL"SELECT * FROM R010SIT";
+c10SIT.AbrirCursor()
+Se(c10SIT.Achou){
+    
+}
+c10SIT.FecharCursor();
+
+@ Cursor para R008INC @
+Definir Cursor c8INC;
+c8INC.SQL"SELECT * FROM R008INC";
+c8INC.AbrirCursor()
+Se(c8INC.Achou){
+    
+}
+c8INC.FecharCursor();
+
+@ Cursor para R010ESO @
+Definir Cursor c10ESO;
+c10ESO.SQL"SELECT * FROM R010ESO";
+c10ESO.AbrirCursor()
+Se(c10ESO.Achou){
+    
+}
+c10ESO.FecharCursor();
+
+@ Cursor para R010ETN @
+Definir Cursor c10ETN;
+c10ETN.SQL"SELECT * FROM R010ETN";
+c10ETN.AbrirCursor()
+Se(c10ETN.Achou){
+    
+}
+c10ETN.FecharCursor();
+
+@ Cursor para R010MOT @
+Definir Cursor c10MOT;
+c10MOT.SQL"SELECT * FROM R010MOT";
+c10MOT.AbrirCursor()
+Se(c10MOT.Achou){
+    
+}
+c10MOT.FecharCursor();
+
+@ Cursor para R011LAN @
+Definir Cursor c11LAN;
+c11LAN.SQL"SELECT * FROM R011LAN";
+c11LAN.AbrirCursor()
+Se(c11LAN.Achou){
+    
+}
+c11LAN.FecharCursor();
+
+@ Cursor para R014SIN @
+Definir Cursor c14SIN;
+c14SIN.SQL"SELECT * FROM R014SIN";
+c14SIN.AbrirCursor()
+Se(c14SIN.Achou){
+    
+}
+c14SIN.FecharCursor();
+
+@ Cursor para R016ORN @
+Definir Cursor c16ORN;
+c16ORN.SQL"SELECT * FROM R016ORN";
+c16ORN.AbrirCursor()
+Se(c16ORN.Achou){
+    
+}
+c16ORN.FecharCursor();
+
+@ Cursor para R017POS @
+Definir Cursor c17POS;
+c17POS.SQL"SELECT * FROM R017POS";
+c17POS.AbrirCursor()
+Se(c17POS.Achou){
+    
+}
+c17POS.FecharCursor();
+
+@ Cursor para R017CAR @
+Definir Cursor c17CAR;
+c17CAR.SQL"SELECT * FROM R017CAR";
+c17CAR.AbrirCursor()
+Se(c17CAR.Achou){
+    
+}
+c17CAR.FecharCursor();
+
+@ Cursor para R022VIN @
+Definir Cursor c22VIN;
+c22VIN.SQL"SELECT * FROM R022VIN";
+c22VIN.AbrirCursor()
+Se(c22VIN.Achou){
+    
+}
+c22VIN.FecharCursor();
+
+@ Cursor para R024EST @
+Definir Cursor c24EST;
+c24EST.SQL"SELECT * FROM R024EST";
+c24EST.AbrirCursor()
+Se(c24EST.Achou){
+    
+}
+c24EST.FecharCursor();
+
+@ Cursor para R036DEP @
+Definir Cursor c36DEP;
+c36DEP.SQL"SELECT * FROM R036DEP";
+c36DEP.AbrirCursor()
+Se(c36DEP.Achou){
+    
+}
+c36DEP.FecharCursor();
+
+@ Cursor para R038HCA @
+Definir Cursor c38HCA;
+c38HCA.SQL"SELECT * FROM R038HCA";
+c38HCA.AbrirCursor()
+Se(c38HCA.Achou){
+    
+}
+c38HCA.FecharCursor();
+
+@ Cursor para R038HFI @
+Definir Cursor c38HFI;
+c38HFI.SQL"SELECT * FROM R038HFI";
+c38HFI.AbrirCursor()
+Se(c38HFI.Achou){
+    
+}
+c38HFI.FecharCursor();
+
+@ Cursor para R038HES @
+Definir Cursor c38HES;
+c38HES.SQL"SELECT * FROM R038HES";
+c38HES.AbrirCursor()
+Se(c38HES.Achou){
+    
+}
+c38HES.FecharCursor();
+
+@ Cursor para R038HSA @
+Definir Cursor c38HSA;
+c38HSA.SQL"SELECT * FROM R038HSA";
+c38HSA.AbrirCursor()
+Se(c38HSA.Achou){
+    
+}
+c38HSA.FecharCursor();
+
+@ Cursor para R038HCC @
+Definir Cursor c38HCC;
+c38HCC.SQL"SELECT * FROM R038HCC";
+c38HCC.AbrirCursor()
+Se(c38HCC.Achou){
+    
+}
+c38HCC.FecharCursor();
+
+@ Cursor para R038HEB @
+Definir Cursor c38HEB;
+c38HEB.SQL"SELECT * FROM R038HEB";
+c38HEB.AbrirCursor()
+Se(c38HEB.Achou){
+    
+}
+c38HEB.FecharCursor();
+
+@ Cursor para R038HLO @
+Definir Cursor c38HLO;
+c38HLO.SQL"SELECT * FROM R038HLO";
+c38HLO.AbrirCursor()
+Se(c38HLO.Achou){
+    
+}
+c38HLO.FecharCursor();

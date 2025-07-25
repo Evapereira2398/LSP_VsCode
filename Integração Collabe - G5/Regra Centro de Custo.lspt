@@ -1,0 +1,76 @@
+  Definir Cursor C_R018Ccu;
+  Definir Alfa vHTTP;
+  Definir Alfa xUser;
+  Definir Alfa xPass;
+  Definir Alfa xJson;
+  Definir Alfa xToken;
+  Definir Alfa xCodCcu;
+  Definir Alfa xCcuInt;
+  Definir Alfa xNomCcu;
+  Definir Alfa aNumEmp;
+  Definir Alfa xJSonEmp;
+  Definir Data dDatSis;
+  Definir Alfa xUrl;
+  Definir Alfa aAux;
+
+  dDatSis = DatSis;
+
+  xUser  = "admin@grupoacos-homolog.com.br";
+  xPass = "2O7XM084e58s!";
+  
+  xJson = "{\"username\": \""+xUser+"\", \"password\": \""+xPass+"\"}";
+  HttpObjeto(vHTTP);
+  HttpDesabilitaErroResposta(vHTTP);
+  HttpAlteraCabecalhoRequisicao(vHTTP, "Content-Type", "application/json");  
+  HttpPost(vHTTP, "https://platform.senior.com.br/t/senior.com.br/bridge/1.0/rest/platform/authentication/actions/login", xJson, xToken);
+
+  PosicaoAlfa("access_token", xToken, nPos);
+  nPos = nPos + 17;
+  CopiarAlfa(xToken, nPos, 32);
+  xToken = "Bearer " + xToken;
+
+  C_R018Ccu.Sql"Select R018Ccu.CodCcu, R018Ccu.NomCcu, \    
+                      R018Ccu.NumEmp, R030Emp.Usu_RetCol \                     
+                  From R018Ccu, R030EMP \                            
+                Where R018Ccu.NumEmp = R030EMP.NumEmp \                 
+                  AND R030EMP.USU_IntCol = 'S' \ 
+                  AND ((R018Ccu.Usu_IntCola Is Null) \     
+                    Or (R018Ccu.Usu_IntCola = 'N') \        
+                    Or (R018Ccu.Usu_IntCola = '') \         
+                    Or (R018Ccu.Usu_IntCola = ' '))";                 
+                                  
+  C_R018Ccu.AbrirCursor();
+  Enquanto(C_R018Ccu.Achou){
+    xCodCcu = C_R018Ccu.CodCcu;
+    xNomCcu = C_R018Ccu.NomCcu;
+    nNumEmp = C_R018Ccu.NumEmp;
+    IntParaAlfa(nNumEmp, aNumEmp);
+    xJSonEmp = C_R018Ccu.Usu_RetCol;
+    xCcuInt = aNumEmp + "-" + xCodCcu;  
+    
+    HttpAlteraCabecalhoRequisicao(vHTTP, "Authorization", xToken);   
+    
+    @Verifica se há o código do c.custo já na base@ 
+    xUrl = "https://platform.senior.com.br/t/senior.com.br/bridge/1.0/rest/hcm/onboarding/entities/costCenter?filter=code='" + xCcuInt + "'";  
+    HttpGet(vHTTP, xUrl, xJson); 
+
+      aAux = xJson;
+      CopiarAlfa(aAux,15,1) ;
+      Se(aAux = "0") {
+        xJson = "{\"company\":" + xJSonEmp + ",\"name\": \""+ xNomCcu + "\",\"enabled\": \"ACTIVE\",\"code\":\"" + xCcuInt + "\"}";  
+        HttpAlteraCabecalhoRequisicao(vHTTP, "Authorization", xToken);  
+        HttpAlteraCodifCaracPadrao(vHTTP, "utf-8");   
+        HttpPost(vHTTP, "https://platform.senior.com.br/t/senior.com.br/bridge/1.0/rest/hcm/onboarding/entities/costCenter", xJson, xJson); 
+        HttpLeCodigoResposta(vHTTP, nCodigo);
+        Se ((nCodigo >= 200) E (nCodigo < 300))
+          ExecSql"Update R018Ccu Set Usu_IntCola = 'S' Where NumEmp = :nNumEmp And CodCcu = :xCodCcu";
+      } 
+      Senao {
+        ExecSql"Update R018Ccu Set Usu_IntCola = 'S' Where NumEmp = :nNumEmp And CodCcu = :xCodCcu";   
+      }  
+
+    C_R018Ccu.Proximo();
+  }
+  C_R018Ccu.FecharCursor();
+
+  n=n;

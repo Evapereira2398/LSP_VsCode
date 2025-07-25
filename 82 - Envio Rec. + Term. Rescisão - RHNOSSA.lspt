@@ -1,0 +1,265 @@
+/*
+Envio do recibo de rescisão.
+-------------------------------------------------------
+Desenvolvimento: 14/11/2024 
+Desenvolvedor: Evanderson Pereira 
+
+Descrição:
+Esta regra é executada diariamente por um processo automático. 
+O objetivo é identificar os calculos de rescisão que foram efetuados no dia. 
+
+Funcionamento:
+- Se a regra identificar os calculos de rescisão na data de execução, será 
+acionado o Web Service nativo (Relatórios). 
+O Web Service gera e envia o recibo de férias por e-mail para os gestores responsáveis.
+                                 
+Informações adicionais:
+- Os endereços de e-mail para envio do relatório são configurados na 
+tela de Sindicato. (Sindicato 01).
+
+
+==================================================================
+=========================== IMPORTANTE =========================== 
+==================================================================
+
+/*
+A chamada do webservice interno (interno.com.senior.g5.rh.fp.relatorios.relatorios) 
+falhava em processos automáticos devido à necessidade de autenticação (usuário e senha), 
+que não pode ser passada diretamente em regras executadas via processo automatico.
+
+Para contornar o problema, foi criado um novo provedor de serviços chamado 
+"ProvRelFP" (Recursos > Implementação > Editor de WebServices) 
+no módulo Adm de Pessoal.
+ 
+Esse provedor importou todos os WebServices do módulo de Benefícios, incluindo o 
+WebService de relatórios, permitindo que a chamada fosse realizada corretamente.
+
+Detalhes da Implementação:
+- Provedor criado: "ProvRelFP"
+- Usuário de autenticação: epereira.forbiz
+- Senha de autenticação: #F0rb1z@EvaPer
+- WebService utilizado: com.senior.g5.rh.fp.relatorios.relatorios 
+(importado via provedor ProvRelFP)
+
+A chamada do WebService na regra foi atualizada para utilizar o provedor "ProvRelFP", 
+e os parâmetros de autenticação (usuário e senha) foram adicionados à execução. 
+Isso garantiu que o WebService fosse chamado com sucesso, mesmo em processos automáticos.
+
+Observação: Em caso de manutenção futura, verificar se o provedor "ProvRelFP" está ativo e 
+se as credenciais de autenticação ainda são válidas.
+
+@@@@@@@@@@ IMPORTANTE - 16/03/2025 @@@@@@@@@@
+Inicialmente, desenvolvemos este processo para usar WebServices, como fizemos 
+para enviar termos de contrato (Regra 200). Porém, ao testar o modelo FP00005.RCS, 
+encontramos erros de compilação. Esses erros não afetam a execução manual, mas 
+são capturados pelo WebServices. Abrimos um chamado com a Senior para corrigir o 
+modelo nativo, mas eles se recusaram, dizendo que o problema estava no processo 
+customizado, apesar de funcionar para a Regra 200.
+
+Por isso, mudamos a abordagem para gerar e enviar esse processo. Em vez de usar 
+WebServices, usaremos funções nativas do sistema para executar e enviar. 
+
+Duplicamos o modelo FP00005.RCS para FP00115.RCS. Esse novo modelo gera um arquivo 
+PDF sempre que é listado e salva esse PDF em um diretório específico. 
+A regra então pega o arquivo e o envia por e-mail.
+
+==================================================================
+================================================================== 
+
+*/
+
+@Definir ProvRelFP.com.senior.g5.rh.bs.relatorios.relatorios vEnvRel;@
+@Definir interno.com.senior.g5.rh.fp.relatorios.relatorios vEnvRel;@
+
+Definir Cursor C034FUN;
+Definir Cursor C014SIN;
+Definir Cursor C042RCM; 
+Definir Cursor C042GER; 
+Definir Cursor C18CCU; 
+Definir Data dDatSis;
+Definir Data dDatPag;
+Definir Data dDatDem; 
+Definir Data dFimCtt;
+Definir Data dIniCmp;
+Definir Data dFimCmp;
+Definir Data dDatCal; 
+Definir Alfa aIniCmp;
+Definir Alfa aFimCmp;  
+Definir Alfa aDatSis; 
+Definir Alfa aEmaEnv;
+Definir Alfa aEmaEcc;
+Definir Alfa aTelEnt; 
+Definir Alfa aNomFun;
+Definir Alfa aNumEmp;
+Definir Alfa aTipCol;
+Definir Alfa aNumCad;
+Definir Alfa aErro; 
+Definir Alfa aMsg;
+Definir Alfa aTipRes;
+Definir ALfa aMsgAvi;
+Definir Alfa aDatIni; 
+Definir Alfa aDatFim;
+Definir ALfa sAnexo;
+Definir Alfa sMsgErr; 
+Definir Alfa aEmaDes;
+Definir Alfa aAssEma;
+Definir Alfa aEmaOcu;
+Definir Alfa aCodCcu;
+Definir Alfa aNomCcu;  
+  
+dDatSis = DatSis;
+ 
+/*@ Apenas para teste @
+Definir Data dDatTes; 
+MontaData(31, 01, 2025, dDatTes);*/
+
+@ Cursor para verificar os calculos de rescisão que foram efetuados no dia @
+C042RCM.SQL"SELECT * FROM R042RCM WHERE USU_DATCAL = :dDatSis"; 
+                                    
+C042RCM.AbrirCursor()
+Enquanto(C042RCM.Achou){
+  nNumEmp = C042RCM.NumEmp;
+  nTipCol = C042RCM.TipCol; 
+  nNumCad = C042RCM.NumCad; 
+  dDatDem = C042RCM.DatDem;
+  nCauDem = C042RCM.CauDem;
+  nCodRmd = C042RCM.CodRmd;
+  dDatPag = C042RCM.DatPag;
+  dFimCtt = C042RCM.FimCtt;
+  dDatCal = C042RCM.USU_DatCal; 
+  
+  @ O inicio e o fim da competencia serão definidos de forma fixa para listagem @
+  @ do modelo 115 - Colaborador > Rescisão > Listar > Recibo Rescisão (Solicitação do cliente) @
+  MontaData(1, 1, 2021, dDatIni);
+  MontaData(31, 12, 2034, dDatFim); 
+
+  @ Converte data inicial e final para String @
+  ConverteMascara(3, dDatIni, aDatIni, "DD/MM/YYYY"); 
+  ConverteMascara(3, dDatFim, aDatFim, "DD/MM/YYYY");
+  
+  IntParaAlfa(nNumEmp, aNumEmp);
+  IntParaAlfa(nTipCol, aTipCol);
+  IntParaAlfa(nNumCad, aNumCad);
+  
+  @ Busca o nome do colaborador @
+  C034FUN.SQL"SELECT NOMFUN, CODCCU FROM R034FUN WHERE NUMEMP = :nNumEmp AND TIPCOL = :nTipCol AND NUMCAD = :nNumCad"; 
+  C034FUN.AbrirCursor()
+  Se(C034FUN.Achou){
+    aNomFun = C034FUN.NomFun;
+    aCodCcu = C034FUN.CodCcu; 
+    
+    Se(aCodCcu <> ""){
+      C18CCU.SQL"SELECT NOMCCU FROM R018CCU WHERE NUMEMP = :nNumEmp AND CODCCU = :aCodCcu";
+      C18CCU.AbrirCursor()
+      Se(C18CCU.Achou){
+        aNomCcu = C18CCU.NomCcu;
+      }
+    }
+  }
+  C034FUN.FecharCursor();
+
+  @ Busca o e-mail definido no campo customizado R014SIN.USU_EmaRes, R014SIN.USU_EmaCcRes @ 
+  C014SIN.SQL"SELECT USU_EmaRes, USU_EmaCcRes FROM R014SIN WHERE CODSIN = 1";
+  C014SIN.AbrirCursor()
+  Se(C014SIN.Achou){
+    aEmaEnv = C014SIN.USU_EmaRes;
+    aEmaEcc = C014SIN.USU_EmaCcRes;
+  }
+  C014SIN.FecharCursor();
+    
+  @ Mensagem que será enviada junto com o e-mail @
+  ConverteMascara(3, dDatSis, aDatSis, "DD/MM/YYYY");
+  
+  
+  @ Define o restante das informações para envio do e-mail @
+  aMsg = "Segue em anexo o recibo de rescisão do colababorador(a): " + aNomFun + "," + " emitido em: " + aDatSis; @ Titulo        @
+  aEmaDes = "senior@rhnossa.com.br";             @ Destinatario @ 
+  aEmaOcu = "evanderson.pereira@getjob.tec.br";  @ Copia Oculta  @
+  
+  
+  @ Alterado o assunto do e-mail - Titulo + Cadastro do colaborador + Cód. Ccu + Descrição do Ccu), @
+  @ Exemplo: RECIBO RESCISÃO - MAT. - COD. C.C. - DESCRIÇÃO DO CC @
+  @ Evanderson Pereira - 17/07/25 @    
+  aAssEma = "RECIBO RESCISÃO - " + aNumCad + " | " + aCodCcu + " - " + aNomCcu;
+  
+    
+    
+  @ Define os parametros da tela de entrada do modelo FP00115.RCS @
+  SetaNumeroTelaEntrada("ENumVia",0);       @  Número de Vias                    @
+  SetaDataTelaEntrada("EDatIRs",dDatIni);   @  Data de Inicio                    @
+  SetaDataTelaEntrada("EDatFRs",dDatFim);   @  Data de Término                   @
+  SetaAlfaTelaEntrada("EtipRec","T");       @  Tipo de Rescisão (N, C, T)        @
+  SetaAlfaTelaEntrada("EEmiDem","S");       @  Demonstrativo de médias (S/N)     @
+  SetaAlfaTelaEntrada("ImpRec","S");        @  Imprimir CNPJ                     @
+  SetaAlfaTelaEntrada("ENomExi","C");       @  Nome a exibir                     @
+  SetaAlfaTelaEntrada("EBasRem","S");       @  Base de remuneração               @
+  SetaAlfaTelaEntrada("EBasTar","S");       @  Base de remuneração tarefeiros    @
+  SetaAlfaTelaEntrada("EBasPrf","S");       @  Base de remuneração Professores   @
+  SetaAlfaTelaEntrada("EBusCam","C");       @  Gerar verbas rescisórias          @
+  SetaAlfaTelaEntrada("ECmp027","S");       @  Código Afastamento                @
+  SetaAlfaTelaEntrada("ELayout","F");       @  Layout do modelo                  @
+  SetaAlfaTelaEntrada("EIniCon","S");       @  Contagem Numeração SubItens       @
+  SetaAlfaTelaEntrada("EDiaSld","R");       @  Dias Saldo de salário             @
+  SetaAlfaTelaEntrada("EExtNot","1");       @  Descrição % Horas Extras noturnas @
+  SetaAlfaTelaEntrada("EDes49H","2");       @  Exibir Desconto Caract. 49H       @
+  SetaAlfaTelaEntrada("EImpCab","S");       @  Quebra de página                  @
+  SetaAlfaTelaEntrada("EValSep","S");       @  Exibir valores separados dos campos (63, 65, 66, 69, 70 e 71) @
+  SetaAlfaTelaEntrada("ENomPre"," ");       @  Nome do preposto                  @
+  SetaAlfaTelaEntrada("ELinBra","S");       @  Utiliza linha em branco           @
+  SetaAlfaTelaEntrada("ELinTot","S");       @  Utiliza linha total               @
+  SetaAlfaTelaEntrada("EAbrEmp",aNumEmp);   @  Empresa (+)                       @
+  SetaAlfaTelaEntrada("EAbrTcl",aTipCol);   @  Tipo de colaborador (+)           @
+  SetaAlfaTelaEntrada("EAbrCad",aNumCad);   @  Matricula (+)                     @
+  SetaAlfaTelaEntrada("EAbrLoc"," ");       @  Filial (+)                        @
+  SetaAlfaTelaEntrada("EAbrCau"," ");       @  Local (+)                         @
+  SetaAlfaTelaEntrada("EAbrNat"," ");       @  Causa Rescisão (+)                @
+  SetaAlfaTelaEntrada("EMosUsu"," ");       @  Natureza evento (+)               @
+  SetaAlfaTelaEntrada("EAbrLot"," ");       @  Lote (+)                          @
+                
+  @ Executa o Relatorio @
+  ExecutaRelatorio("FP00115.RCS","N"); 
+  
+  @ Juntamente com o recibo de rescição será enviado o "termo de rescisão" - FP0016.RCS - Evanderson Pereira - 17/07/25 @
+  SetaDataTelaEntrada("EDatIRs",dDatIni);     @  Data de Inicio               @
+  SetaDataTelaEntrada("EDatFRs",dDatFim);     @  Data de Término              @
+  SetaAlfaTelaEntrada("EtipRec","T");         @  Tipo de Rescisão (N, C, T)   @
+  SetaAlfaTelaEntrada("ENomExi"," ");         @  Nome a exibir                @
+  SetaAlfaTelaEntrada("ETermQu"," ");         @  Termo de quitação            @
+  SetaAlfaTelaEntrada("ECmp027","");          @  Código Afastamento           @
+  SetaNumeroTelaEntrada("EExiDad",0);         @  Exibir Dados preposto        @
+  SetaAlfaTelaEntrada("ENomPre"," ");         @  Nome do preposto             @
+  SetaAlfaTelaEntrada("EDocPre"," ");         @  Documento do preposto        @
+  SetaAlfaTelaEntrada("EChaMov"," ");         @  Chave de movimentação        @
+  SetaNumeroTelaEntrada("ENUMVIA",0);         @  Número de vias               @
+  SetaAlfaTelaEntrada("EAsiDig"," ");         @  Assinatura Digitalizada      @
+  SetaAlfaTelaEntrada("EAbrEmp",aNumEmp);     @  Empresa (+)                  @
+  SetaAlfaTelaEntrada("EAbrTcl",aTipCol);     @  Tipo de colaborador (+)      @
+  SetaAlfaTelaEntrada("EAbrCad",aNumCad);     @  Matricula (+)                @
+  SetaAlfaTelaEntrada("EAbrFil"," ");         @  Filial (+)                   @
+  SetaAlfaTelaEntrada("EAbrLoc"," ");         @  Local (+)                    @
+  SetaAlfaTelaEntrada("EAbrCau"," ");         @  Causa Rescisão (+)           @
+  SetaAlfaTelaEntrada("EAbrNat"," ");         @  Natuureza Evento (+)         @
+  SetaAlfaTelaEntrada("EAbrLot"," ");         @  Lote (+)                     @
+  
+  @ Executa o Relatorio @
+  ExecutaRelatorio("FP00316.RCS","N"); 
+  
+  @ Recupera os arquivos gerados acima no diretorio para enviar como anexo por e-mail @
+  Definir Alfa aDir; 
+  aDir = "\\\\RHN-WAP-SRV01\\SeniorProd\\Vetorh\\Relatorios\\RecibodeRescisao.pdf;\\\\RHN-WAP-SRV01\\SeniorProd\\Vetorh\\Relatorios\\TermodeRescisao.pdf";
+  
+  @Remetente/Destinatário/Copia/Copia Oculta/Assunto/Texto/Anexos/Tratamento do anexo/Papel de carta@ 
+  EnviaEmail(aEmaDes, aEmaEnv, aEmaEcc, aEmaOcu, aAssEma, aMsg, aDir, 0);
+  Se(MsgErroEnviaEmail <> "") {
+  
+    @ Em caso de erros com a geração do modelo, vai ser disparado um e-mail com os dados do erro para o e-mail do responsavel @
+    Definir Alfa vMsgNEm;
+    vMsgNEm = "Erro: " + MsgErroEnviaEmail + ". Email não enviado.";
+    
+    Definir Alfa aEma1;
+    aEma1 = "evanderson.pereira@getjob.tec.br";  
+    EnviaEMail("senior@rhnossa.com.br",aEma1,"","","Erro processo - Termino do contrato prorrogado",vMsgNEm,"",0);
+  } 
+  C042RCM.Proximo();      
+}
+C042RCM.FecharCursor();  

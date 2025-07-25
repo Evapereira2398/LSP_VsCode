@@ -1,0 +1,906 @@
+@-- Definir web services internos --@
+Definir interno.com.senior.g5.rh.fp.historicos.Cargo_2 wsAlterarCargo;
+Definir interno.com.senior.g5.rh.fp.historicos.CentroCusto wsAlterarCentroCusto;
+Definir interno.com.senior.g5.rh.fp.historicos.Posto_4 wsAlterarPosto;
+Definir interno.com.senior.g5.rh.fp.historicos.Salario_2 wsAlterarSalario;
+Definir interno.com.senior.g5.rh.fp.historicos.Escala wsAlterarEscala;
+
+/*Definir interno.com.senior.g5.rh.fp.histBPM.alterarFilial_1 wsAlterarFilial;*/
+   
+@-- Definir Cursor --@
+Definir Alfa CUR_R034FUN;
+   
+@-- Definir variáveis de data --@
+Definir Data dDatAlt;
+Definir Data dIniAtu;
+Definir Data dDatDis;
+Definir Data dDatFimTemp;
+
+
+@-- Definir variáveis numéricas --@
+Definir Numero nCplEst;
+Definir Numero nCplSal;
+Definir Numero nSalEst;
+Definir Numero nValSal;
+Definir Numero nValSalAux;
+Definir Numero nAdmeSo;
+Definir Numero nCodBHr;
+Definir Numero nCodCat;
+Definir Numero nCodCrr;
+Definir Numero nCodEqp;
+Definir Numero nCodEsc;
+Definir Numero xCodEsc;
+Definir Numero nCodEst;
+Definir Numero nCodIdm;
+Definir Numero nCodMot;
+Definir Numero nCodMotCar;
+Definir Numero nCodMotSal;
+Definir Numero nCodMts;
+Definir Numero nCodSin;
+Definir Numero nCodTap;
+Definir Numero nCodTma;
+Definir Numero nCodVin;
+Definir Numero nConFin;
+Definir Numero nFicReg;
+Definir Numero nHorBas;
+Definir Numero nHorSab;
+Definir Numero nMotPos;
+Definir Numero nNatDes;
+Definir Numero nNovCad;
+Definir Numero nNovEmp;
+Definir Numero nNovFil;
+Definir Numero nNumCad;
+Definir Numero nNumEmp;
+Definir Numero nQtdConf;
+Definir Numero nSeqAlt;
+Definir Numero nTipAdm;
+Definir Numero nTipCol;
+Definir Numero nTipSal;
+Definir Numero nTraBHr;
+Definir Numero nTurInt;
+Definir Numero nHorDsr;
+Definir Numero nHorSem;
+Definir Numero nDia;
+Definir Numero nMes;
+Definir Numero nAno;
+
+
+@-- Definir variáveis alfanuméricas --@
+Definir Alfa aDesSim;
+Definir Alfa aCarVag;
+Definir Alfa aClaSal;
+Definir Alfa aCodCCu;
+Definir Alfa aCodCcuAtual;
+Definir Alfa aCodCar;
+Definir Alfa aCodCarAtual;
+Definir Alfa aConTov;
+Definir Alfa aExcHis;
+Definir Alfa aFunEso;
+Definir Alfa aNivSal;
+Definir Alfa aNumCra;
+Definir Alfa aNumLoc;
+Definir Alfa aObsPos;
+Definir Alfa aPosTra;
+Definir Alfa aPosTraAtual;
+Definir Alfa aSocSin;
+Definir Alfa aTipOpe;
+Definir Alfa aTipOpeBPM;
+Definir Alfa aTrocaTurno;
+Definir Alfa aMensagemWsAlterarCargo;
+Definir Alfa aMensagemWsAlterarCargoNat;
+Definir Alfa aMensagemWsAlterarCentroCusto;
+Definir Alfa aMensagemWsAlterarCentroCustoNat;
+Definir Alfa aMensagemWsAlterarPosto;
+Definir Alfa aMensagemWsAlterarPostoNat;
+Definir Alfa aMensagemWsAlterarSalario;
+Definir Alfa aMensagemWsAlterarSalarioNat;
+Definir Alfa aMensagemWsAlterarFilial;
+Definir Alfa aMensagemWsAlterarFilialNat;
+Definir Alfa aMensagemWsAlterarEscala;
+Definir Alfa aDatAlt;
+Definir Alfa aIniAtu;
+Definir Alfa aDatDis;
+Definir Alfa aDatFimTemp;
+Definir Alfa aAno;
+Definir Alfa aMes;
+Definir Alfa aDia;
+Definir Alfa aAuxDat;
+Definir Alfa aEscalonamentoStr;
+Definir Alfa aEscalonamentoStrAux;
+Definir Alfa aEscalonamentoStrAuxCopy;
+Definir Alfa aEscalonamento;
+Definir Alfa aPorcentagem;
+Definir Alfa aEscalValor;
+Definir Alfa aSearchStr;
+Definir Alfa aSqlAux;
+
+
+@-- Definir funções --@
+Definir Funcao fEntrarDados();
+Definir Funcao fCorrigirData();
+Definir Funcao fAlterarCargo();
+Definir Funcao fAlterarCentroCusto();
+Definir Funcao fAlterarPosto();
+Definir Funcao fVoltarPosto();
+Definir Funcao fAlterarSalario();
+Definir Funcao fAlterarEscala();
+Definir Funcao fEscalonamentoSal();
+Definir Funcao fAlterarFilial();
+Definir Funcao fBuscarDadosAtuais();
+
+
+@-- Fluxo --@
+fEntrarDados();
+
+@ ============================================================================== @
+@ ================================== PROMOÇÃO ================================== @
+@ ============================================================================== @
+
+/* 
+  WS irá realizar duas tratativas: 
+  1. Verificar se o tipo de sala´rio irá ser alterado de Horista para Mensalista 
+  2. Realizar o fracionamento de acordo com cada condição
+    - 21,5% para promoção 
+    - 12,5% para enquadramento
+*/
+
+Se(aTipOpeBPM = "Promoção") {
+  fBuscarDadosAtuais();
+  nMotPos = 2;
+  nCodMot = 2;
+  nCodMotCar = 2;
+  nCodMotSal = 2;
+  nFracionamentoPolitica = 0.215;
+
+  @ === Atualiza Posto de trabalho === @
+  Se((aPostra <> aPosTraAtual) e (aPostra <> "")) {
+    Se((xCodEsc <> nCodEscAtual) e (xCodEsc <> 0)) {
+      nCodEsc = xCodEsc;
+    }
+    fAlterarPosto();
+  }
+
+  @ === Atualiza Cargo === @
+  Se((aCodCar <> aCodCarAtual) e (aCodCar <> "")) {
+    fAlterarCargo();
+  }
+
+  @ === Atualiza Centro de custo === @
+  Se((aCodCcu <> aCodCcuAtual) e (aCodCcu <> "")) {
+    fAlterarCentroCusto();
+  }
+
+  @ === Atualiza Escala === @
+  Se(((xCodEsc <> nCodEscAtual) e (xCodEsc <> 0)) e ((aPostra = aPosTraAtual) e (aPostra <> ""))) {
+    nCodEsc = xCodEsc;
+    fAlterarEscala();
+  }
+
+  @ 1.0 - Verificar os dados de salário atuais do colaborador @
+  Definir Cursor C38HSA;
+  Definir Data dDatAltAtual;
+  C38HSA.SQL"SELECT * FROM R038HSA WHERE NUMEMP = :nNumEmp AND TIPCOL = :nTipCol AND NUMCAD = :nNumCad ORDER BY DATALT DESC";
+  C38HSA.AbrirCursor();
+  Se(C38HSA.Achou) {
+    nValSalAtual = C38HSA.ValSal;
+    dDatAltAtual = C38HSA.DatAlt;
+    nTipSalAtual = C38HSA.TipSal;
+  }
+  C38HSA.FecharCursor();
+
+  @ 1.1 - Verifica a quantidade de horas mês @
+  Definir Cursor C06ESC;
+  C06ESC.SQL"SELECT HORMES FROM R006ESC WHERE CODESC = :nCodEscAtual";
+  C06ESC.AbrirCursor();
+  Se(C06ESC.Achou) {
+    nHorasMes = C06ESC.HorMes;
+  }
+  C06ESC.FecharCursor();
+
+  @ 1.2 - Converte valor de salário para base de comparação @
+  Se((nTipSalAtual = 2) e (nTipSal = 1)) { @ Horista ? Mensalista @
+    nValSalConvertido = nValSalAtual * nHorasMes;
+  } 
+  Senao Se((nTipSalAtual = 1) e (nTipSal = 2)) { @ Mensalista ? Horista @
+    Se(nHorasMes > 0) {
+      nValSalConvertido = nValSalAtual / nHorasMes;
+    } 
+    Senao {
+      nValSalConvertido = nValSalAtual;
+    }
+  } 
+  Senao {
+    nValSalConvertido = nValSalAtual;
+  }
+
+  @ 1.3 - Fracionamento progressivo em loop @
+  nPercentualTotal = ((nValSal - nValSalConvertido) / nValSalConvertido) * 100;
+  nPercentualRestante = nPercentualTotal;
+  nSalarioBase = nValSalConvertido;
+  dDataAtual = dDatAlt;
+  nContadorAumento = 0;
+
+  Enquanto(nPercentualRestante > 0) {
+    Se(nPercentualRestante > (nFracionamentoPolitica * 100)) {
+      nPercentualAplicado = nFracionamentoPolitica * 100;
+    } 
+    Senao {
+      nPercentualAplicado = nPercentualRestante;
+    }
+
+    nAumentoParcial = nSalarioBase * (nPercentualAplicado / 100);
+    nSalarioBase = nSalarioBase + nAumentoParcial;
+    nValSal = nSalarioBase;
+    ArredondarValor(nValSal, 0);
+
+    dDatAlt = dDataAtual;
+
+    @ Define motivo apenas no primeiro aumento @
+    Se(nContadorAumento > 0) {
+      nCodMotSal = 75;
+    }
+
+    fAlterarSalario();
+
+    DesMontaData(dDataAtual, nDia, nMes, nAno);
+    nMes = nMes + 3;
+    MontaData(nDia, nMes, nAno, dDataAtual);
+
+    nPercentualRestante = nPercentualRestante - nPercentualAplicado;
+    nContadorAumento = nContadorAumento + 1;
+  }
+}
+
+
+@ ============================================================================== @
+@ =============================== ENQUADRAMENTO ================================ @
+@ ============================================================================== @
+
+/* 
+  WS irá realizar duas tratativas: 
+  1. Verificar se o tipo de salario irá ser alterado de Horista para Mensalista 
+  2. Realizar o fracionamento de acordo com cada condição
+    - 21,5% para promoção 
+    - 12,5% para enquadramento
+*/
+
+Se(aTipOpeBPM = "Enquadramento") {
+  fBuscarDadosAtuais();
+  nMotPos = 5;
+  nCodMot = 5;
+  nCodMotCar = 5;
+  nCodMotSal = 5;
+  nFracionamentoPolitica = 0.125;
+
+  Se((aPostra <> aPosTraAtual) e (aPostra <> "")) {
+    Se((xCodEsc <> nCodEscAtual) e (xCodEsc <> 0)) {
+      nCodEsc = xCodEsc;
+    }
+    fAlterarPosto();
+  }
+
+  Se((aCodCar <> aCodCarAtual) e (aCodCar <> "")) {
+    fAlterarCargo();
+  }
+
+  Se(nValSal <> 0) {
+    @ 1.0 - Buscar salário atual @
+    Definir Cursor C38HSA;
+    Definir Data dDatAltAtual;
+    C38HSA.SQL"SELECT * FROM R038HSA WHERE NUMEMP = :nNumEmp AND TIPCOL = :nTipCol AND NUMCAD = :nNumCad ORDER BY DATALT DESC";
+    C38HSA.AbrirCursor();
+    Se(C38HSA.Achou) {
+      nValSalAtual = C38HSA.ValSal;
+      dDatAltAtual = C38HSA.DatAlt;
+      nTipSalAtual = C38HSA.TipSal;
+    }
+    C38HSA.FecharCursor();
+
+    @ 1.1 - Buscar carga horária mensal @
+    Definir Cursor C06ESC;
+    C06ESC.SQL"SELECT HORMES FROM R006ESC WHERE CODESC = :nCodEscAtual";
+    C06ESC.AbrirCursor();
+    Se(C06ESC.Achou) {
+      nHorasMes = C06ESC.HorMes;
+    }
+    C06ESC.FecharCursor();
+
+    @ 1.2 - Converter valor de salário @
+    Se((nTipSalAtual = 2) e (nTipSal = 1)) {
+      nValSalConvertido = nValSalAtual * nHorasMes;
+    } 
+    Senao Se((nTipSalAtual = 1) e (nTipSal = 2)) {
+      Se(nHorasMes > 0) {
+        nValSalConvertido = nValSalAtual / nHorasMes;
+      } 
+      Senao {
+        nValSalConvertido = nValSalAtual;
+      }
+    } 
+    Senao {
+      nValSalConvertido = nValSalAtual;
+    }
+
+    @ 1.3 - Fracionamento progressivo em loop @
+    nPercentualTotal = ((nValSal - nValSalConvertido) / nValSalConvertido) * 100;
+    nPercentualRestante = nPercentualTotal;
+    nSalarioBase = nValSalConvertido;
+    dDataAtual = dDatAlt;
+    nContadorAumento = 0;
+
+    Enquanto(nPercentualRestante > 0) {
+      Se(nPercentualRestante > (nFracionamentoPolitica * 100)) {
+        nPercentualAplicado = nFracionamentoPolitica * 100;
+      } 
+      Senao {
+        nPercentualAplicado = nPercentualRestante;
+      }
+
+      nAumentoParcial = nSalarioBase * (nPercentualAplicado / 100);
+      nSalarioBase = nSalarioBase + nAumentoParcial;
+      nValSal = nSalarioBase;
+      ArredondarValor(nValSal, 0);
+
+      dDatAlt = dDataAtual;
+
+      @ A partir do segundo aumento, aplica motivo 75 @
+      Se(nContadorAumento > 0) {
+        nCodMotSal = 75;
+      }
+
+      fAlterarSalario();
+
+      DesMontaData(dDataAtual, nDia, nMes, nAno);
+      nMes = nMes + 3;
+      MontaData(nDia, nMes, nAno, dDataAtual);
+
+      nPercentualRestante = nPercentualRestante - nPercentualAplicado;
+      nContadorAumento = nContadorAumento + 1;
+    }
+  }
+}
+
+
+
+
+@ ============================================================================== @
+@ ========================== ALTERAÇÃO DE CARGO ================================ @
+@ ============================================================================== @
+Se(aTipOpeBPM = "Alteração de Cargo"){
+  fBuscarDadosAtuais();
+  nMotPos = 10;
+  nCodMot = 10;
+  nCodMotCar = 10;
+  Se((aPostra <> aPosTraAtual) e (aPostra <> "")){
+    Se((xCodEsc <> nCodEscAtual) e (xCodEsc <> 0)){
+      nCodEsc = xCodEsc;
+    }
+    fAlterarPosto();
+  }
+
+  Se((aCodCar <> aCodCarAtual) e (aCodCar <> "")){
+    fAlterarCargo();
+  }
+         
+  Se((aCodCcu <> aCodCcuAtual) e (aCodCcu <> "")){
+    fAlterarCentroCusto();
+  }
+
+  Se(((xCodEsc <> nCodEscAtual) e (xCodEsc <> 0)) e ((aPostra = aPosTraAtual) e (aPostra <> ""))){
+    nCodEsc = xCodEsc;
+    fAlterarEscala();
+  }
+}
+
+
+
+@ ============================================================================== @
+@ ========================== MOVIMENTO DE TURNO ================================ @
+@ ============================================================================== @
+Se(aTipOpeBPM = "Movimentação de Turno"){
+  fBuscarDadosAtuais();
+  nMotPos = 21;
+  nCodMot = 21;
+  Se((xCodEsc <> nCodEscAtual) e (xCodEsc <> 0)){
+    nCodEsc = xCodEsc;
+  }
+    
+  Se((aPostra <> aPosTraAtual) e (aPostra <> "")){
+    fAlterarPosto();
+    
+    Se(aTrocaTurno = "Temporário"){
+      dIniAtu = dDatFimTemp;
+      dDatAlt = dDatFimTemp;
+      aPostra = aPosTraAtual;
+      nCodEsc = nCodEscAtual;
+      fAlterarPosto();
+    }
+  }
+        
+  Se(((xCodEsc <> nCodEscAtual) e (xCodEsc <> 0)) e ((aPostra = aPosTraAtual) e (aPostra <> ""))){
+    nCodEsc = xCodEsc;
+    fAlterarEscala();
+  }
+}
+
+
+
+
+@ ============================================================================== @
+@ =============---====== MOVIMENTAÇÃO DE CENTRO DE CUSTO  ====================== @
+@ ============================================================================== @
+Se(aTipOpeBPM = "Movimentação de Centro de Custo"){
+  fBuscarDadosAtuais();
+  nMotPos = 23;
+  nCodMot = 23;
+  Se((aPostra <> aPosTraAtual) e (aPostra <> "")){
+      fAlterarPosto();
+  }
+  
+  Se((aCodCcu <> aCodCcuAtual) e (aCodCcu <> "")){
+    fAlterarCentroCusto();
+  }
+    
+  @Se(((xCodEsc <> nCodEscAtual) e (xCodEsc <> 0)) e ((aPostra = aPosTraAtual) e (aPostra <> ""))){ - Retirei dia 22/05 estava dando erro na escala no posto e então precisava executar fora do posto@
+  
+  Se((xCodEsc <> nCodEscAtual) e (xCodEsc <> 0)) {  
+    nCodEsc = xCodEsc;
+    fAlterarEscala();
+  }
+}
+
+
+
+@-- Função para entrada de dados da porta --@
+Funcao fEntrarDados();
+{
+  aDatAlt = integrarBPM_historicos.datAlt;
+  aIniAtu = integrarBPM_historicos.iniAtu;
+  aDatFimTemp = integrarBPM_historicos.datfimtemp;
+  nValSal = integrarBPM_historicos.valSal;
+  xCodEsc = integrarBPM_historicos.codEsc;
+  nCodEst = integrarBPM_historicos.codEst;
+  nCodTap = integrarBPM_historicos.codTap;
+  nNumCad = integrarBPM_historicos.numCad;
+  nNumEmp = integrarBPM_historicos.numEmp;
+  nSeqAlt = integrarBPM_historicos.seqAlt;
+  nTipAdm = integrarBPM_historicos.tipAdm;
+  nTipCol = integrarBPM_historicos.tipCol;
+  nTipSal = integrarBPM_historicos.tipSal;
+  aCodCCu = integrarBPM_historicos.codCCu;
+  aCodCar = integrarBPM_historicos.codCar;
+  aPosTra = integrarBPM_historicos.posTra;
+  aTipOpe = integrarBPM_historicos.tipOpe;
+  aTipOpeBPM = integrarBPM_historicos.tipOpeBPM;
+  aTrocaTurno = integrarBPM_historicos.trocaturno;
+    
+  /*
+  aDatDis = integrarBPM_historicos.datDis;
+  nCplSal = integrarBPM_historicos.cplSal;
+  nAdmeSo = integrarBPM_historicos.admeSo;
+  nCodBHr = integrarBPM_historicos.codBHr;
+  nCodMot = integrarBPM_historicos.codMot;
+  nCodMts = integrarBPM_historicos.codMts;
+  nCodSin = integrarBPM_historicos.codSin;
+  nCodTma = integrarBPM_historicos.codTma;
+  nCodVin = integrarBPM_historicos.codVin;
+  nFicReg = integrarBPM_historicos.ficReg;
+  nHorBas = integrarBPM_historicos.horBas;
+  nHorSab = integrarBPM_historicos.horSab;
+  nMotPos = integrarBPM_historicos.motPos;
+  nNatDes = integrarBPM_historicos.natDes;
+  nNovCad = integrarBPM_historicos.novCad;
+  nNovEmp = integrarBPM_historicos.novEmp;
+  nNovFil = integrarBPM_historicos.novFil;
+  nTraBHr = integrarBPM_historicos.traBHr;
+  aClaSal = integrarBPM_historicos.claSal;
+  aConTov = integrarBPM_historicos.conTov;
+  aNivSal = integrarBPM_historicos.nivSal;
+  aNumCra = integrarBPM_historicos.numCra;
+  aNumLoc = integrarBPM_historicos.numLoc
+  aSocSin = integrarBPM_historicos.socSin;
+  nCodMotCar = integrarBPM_historicos.codMotCar;
+  nCodMotSal = integrarBPM_historicos.codMotSal;
+  aEscalonamento = integrarBPM_historicos.escalonamento; 
+  aEscalonamentoStr = integrarBPM_historicos.escalonamentoStr;
+  */
+    
+  Se(aDatAlt <> ""){
+    aAuxDat = aDatAlt;
+    CopiarAlfa (aAuxDat, 1, 2);
+    aDia = aAuxDat;
+    aAuxDat = aDatAlt;
+    CopiarAlfa (aAuxDat, 4, 2);
+    aMes = aAuxDat;
+    aAuxDat = aDatAlt;
+    CopiarAlfa (aAuxDat, 7, 4);
+    aAno = aAuxDat;
+    AlfaParaInt (aAno, nAno);
+    AlfaParaInt (aMes, nMes);
+    AlfaParaInt (aDia, nDia);
+    MontaData (nDia, nMes, nAno, dDatAlt);
+  }
+
+    
+  Se(aIniAtu <> ""){
+    aAuxDat = aIniAtu;
+    CopiarAlfa (aAuxDat, 1, 2);
+    aDia = aAuxDat;
+    aAuxDat = aIniAtu;
+    CopiarAlfa (aAuxDat, 4, 2);
+    aMes = aAuxDat;
+    aAuxDat = aIniAtu;
+    CopiarAlfa (aAuxDat, 7, 4);
+    aAno = aAuxDat;
+    AlfaParaInt (aAno, nAno);
+    AlfaParaInt (aMes, nMes);
+    AlfaParaInt (aDia, nDia);
+    MontaData (nDia, nMes, nAno, dIniAtu);
+  }
+  
+  Se(aDatFimTemp <> ""){
+    aAuxDat = aDatFimTemp;
+    CopiarAlfa (aAuxDat, 1, 2);
+    aDia = aAuxDat;
+    aAuxDat = aDatFimTemp;
+    CopiarAlfa (aAuxDat, 4, 2);
+    aMes = aAuxDat;
+    aAuxDat = aDatFimTemp;
+    CopiarAlfa (aAuxDat, 7, 4);
+    aAno = aAuxDat;
+    AlfaParaInt (aAno, nAno);
+    AlfaParaInt (aMes, nMes);
+    AlfaParaInt (aDia, nDia);
+    nDia = nDia + 1;
+    MontaData (nDia, nMes, nAno, dDatFimTemp);       
+  }
+
+  /*
+  Se(aDatDis <> ""){
+    aAuxDat = aDatDis;
+    CopiarAlfa (aAuxDat, 1, 2);
+    aDia = aAuxDat;
+    aAuxDat = aDatDis;
+    CopiarAlfa (aAuxDat, 4, 2);
+    aMes = aAuxDat;
+    aAuxDat = aDatDis;
+    CopiarAlfa (aAuxDat, 7, 4);
+    aAno = aAuxDat;
+    AlfaParaInt (aAno, nAno);
+    AlfaParaInt (aMes, nMes);
+    AlfaParaInt (aDia, nDia);
+    MontaData (nDia, nMes, nAno, dDatDis);
+  }  
+  */
+}
+
+@-- Função para corrigir data --@
+/*
+Funcao fCorrigirData();
+{
+  ConverteMascara(3, dDatAlt, aDatAlt, "DD-MM-YYYY");
+  ConverteMascara(3, dIniAtu, aIniAtu, "DD-MM-YYYY");
+
+  Se(aDatAlt <> "00-00-0000"){
+    DesmontaData(dDatAlt, nDia, nMes, nAno);
+    Se(nDia > 20){
+      nDia = 1;
+      nMes = nMes + 1;
+      Se (nMes = 13){
+        nMes = 1;
+        nAno = nAno + 1;
+      }
+    }
+    Senao {
+      nDia = 1;
+      nMes = nMes;
+      Se (nMes > 12){
+        nMes = 1;
+        nAno = nAno + 1;
+      }
+    }
+
+    MontaData(nDia, nMes, nAno, dDatAlt);
+    ConverteMascara(3, dDatAlt, aDatAlt, "DD-MM-YYYY");
+  }
+
+  Se(aIniAtu <> "00-00-0000"){
+    DesmontaData(dIniAtu, nDia, nMes, nAno);
+    Se(nDia > 20){
+      nDia = 1;
+      nMes = nMes + 1;
+      Se(nMes > 12){
+        nMes = 1;
+        nAno = nAno + 1;
+      }
+    }
+    Senao {
+      nDia = 1;
+    }
+    
+    MontaData(nDia, nMes, nAno, dIniAtu);
+    ConverteMascara(3, dIniAtu, aIniAtu, "DD-MM-YYYY");
+  }
+} 
+*/
+
+@-- Função para alterar cargo --@
+Funcao fAlterarCargo();
+{
+  wsAlterarCargo.numEmp = nNumEmp;
+  wsAlterarCargo.tipCol = nTipCol;
+  wsAlterarCargo.numCad = nNumCad;
+  wsAlterarCargo.datAlt = dDatAlt;
+  wsAlterarCargo.codCar = aCodCar;
+  wsAlterarCargo.codMot = nCodMotCar;
+  wsAlterarCargo.tipOpe = aTipOpe;
+  
+  wsAlterarCargo.ModoExecucao = 2;
+  wsAlterarCargo.Executar();
+    
+  aMensagemWsAlterarCargo = wsAlterarCargo.erroExecucao;
+  Se(aMensagemWsAlterarCargo = ""){
+    integrarBPM_historicos.msgRetWsSucessoAlterarCargo = "Histórico de cargo inserido com sucesso!";
+  }
+  Senao {
+    integrarBPM_historicos.MsgRetWsAlterarCargoNat = aMensagemWsAlterarCargo;
+
+    aSearchStr = "Registro já existe";
+    PosicaoAlfa(aSearchStr, aMensagemWsAlterarCargo, nPosicaoExiste);
+    Se((nPosicaoExiste = 0) e (aMensagemWsAlterarCargo <> "")){
+      integrarBPM_historicos.erroExecucao = aMensagemWsAlterarCargo;
+    }
+  }   
+}
+
+
+@-- Função para alterar centro de custo --@
+Funcao fAlterarCentroCusto();
+{
+  wsAlterarCentroCusto.datAlt = dDatAlt;
+  wsAlterarCentroCusto.numCad = nNumCad;
+  wsAlterarCentroCusto.numEmp = nNumEmp;
+  wsAlterarCentroCusto.tipCol = nTipCol;
+  wsAlterarCentroCusto.codCCu = aCodCCu;
+  wsAlterarCentroCusto.tipOpe = aTipOpe;
+  
+  wsAlterarCentroCusto.ModoExecucao = 2;
+  wsAlterarCentroCusto.Executar();
+    
+  aMensagemWsAlterarCentroCusto = wsAlterarCentroCusto.erroExecucao;
+  Se(aMensagemWsAlterarCentroCusto = ""){
+    integrarBPM_historicos.msgRetWsAlterarCentroCustoNat = "Histórico de Centro de Custo inserido com sucesso!";
+  }
+  Senao {
+    integrarBPM_historicos.msgRetWsAlterarCentroCustoNat = aMensagemWsAlterarCentroCusto;
+    aSearchStr = "sucesso";
+    PosicaoAlfa(aSearchStr, aMensagemWsAlterarCentroCusto, nPosicao);
+    aSearchStr = "Centro de Custo informado igual ao anterior";
+    PosicaoAlfa(aSearchStr, aMensagemWsAlterarCentroCustoNat, nPosicaoExiste);
+    aSearchStr = "Registro já existe";
+    PosicaoAlfa(aSearchStr, aMensagemWsAlterarCentroCustoNat, nPosicaoExiste);
+    Se(((nPosicao = 0) e (nPosicaoExiste = 0)) e (aMensagemWsAlterarCentroCustoNat <> "")){
+      integrarBPM_historicos.erroExecucao = aMensagemWsAlterarCentroCustoNat;
+    }
+  }
+}
+
+
+@-- Função para alterar posto --@
+Funcao fAlterarPosto();
+{
+  wsAlterarPosto.tipOpe = aTipOpe;
+  wsAlterarPosto.numEmp = nNumEmp;
+  wsAlterarPosto.tipCol = nTipCol;
+  wsAlterarPosto.numCad = nNumCad;
+  wsAlterarPosto.iniAtu = dIniAtu;
+  wsAlterarPosto.posTra = aPosTra;
+  wsAlterarPosto.motPos = nMotPos;
+  Se ((xCodEsc <> nCodEscAtual) e (nCodEsc <> 0)){
+    Se(aTipOpeBPM <> "Movimentação de Centro de Custo"){
+      wsAlterarPosto.codesc = nCodEsc;
+      wsAlterarPosto.codtma = 1;
+    }
+  }  
+  Senao Se((xCodEsc <> nCodEscAtual) e (xCodEsc <> 0)){
+    Se(aTipOpeBPM <> "Movimentação de Centro de Custo"){
+      wsAlterarPosto.codesc = xCodEsc;
+    }
+    @wsAlterarPosto.codtma = 1;@
+  }
+    
+  wsAlterarPosto.ModoExecucao = 2;
+  wsAlterarPosto.Executar();
+    
+  aMensagemWsAlterarPosto = wsAlterarPosto.erroExecucao;
+  Se(aMensagemWsAlterarPosto = ""){
+    integrarBPM_historicos.msgRetWsSucessoAlterarPosto = "Histórico de posto inserido com sucesso!";
+  }
+  Senao {
+    integrarBPM_historicos.MsgRetWsAlterarPostoNat = aMensagemWsAlterarPosto;
+    aSearchStr = "FR038HSI - Histórico Sindicato";
+    PosicaoAlfa(aSearchStr, aMensagemWsAlterarPosto, nPosicaoExiste1);
+    aSearchStr = "Registro já existe";
+    PosicaoAlfa(aSearchStr, aMensagemWsAlterarPosto, nPosicaoExiste2);
+    aSearchStr = "CBAltPosto";
+    PosicaoAlfa(aSearchStr, aMensagemWsAlterarPosto, nPosicaoExiste3);
+    Se((nPosicaoExiste1 = 0) e (nPosicaoExiste2 = 0) e (nPosicaoExiste3 = 0) e (aMensagemWsAlterarPosto <> "")){
+      integrarBPM_historicos.erroExecucao = aMensagemWsAlterarPosto;
+    }   
+  }
+}
+
+
+@-- Função para alterar salário --@
+Funcao fAlterarSalario();
+{
+  wsAlterarSalario.numEmp = nNumEmp;
+  wsAlterarSalario.tipCol = nTipCol;
+  wsAlterarSalario.numCad = nNumCad;
+  wsAlterarSalario.datAlt = dDatAlt;
+  wsAlterarSalario.seqAlt = nSeqAlt;
+  wsAlterarSalario.codMot = nCodMotSal;
+  wsAlterarSalario.tipSal = nTipSal;
+  wsAlterarSalario.codEst = nCodEst;
+  /*
+  wsAlterarSalario.claSal = aClaSal;
+  wsAlterarSalario.nivSal = aNivSal;
+  wsAlterarSalario.datDis = dDatDis;
+  */
+    
+  Se(nValSal1 <> 0){
+    wsAlterarSalario.valSal = nValSal1;
+  }
+  Senao Se(nValSal2 <> 0){
+    wsAlterarSalario.valSal = nValSal2;
+  }
+  Senao {
+    wsAlterarSalario.valSal = nValSal;
+  }
+      
+  wsAlterarSalario.tipOpe = aTipOpe;
+  wsAlterarSalario.ModoExecucao = 2;
+  wsAlterarSalario.Executar();
+  aMensagemWsAlterarSalario = wsAlterarSalario.erroExecucao;
+
+  Se(aMensagemWsAlterarSalario = ""){
+    integrarBPM_historicos.msgRetWsSucessoAlterarSalario = "Histórico de salário inserido com sucesso!";
+  }
+  Senao {
+    integrarBPM_historicos.MsgRetWsAlterarSalarioNat = aMensagemWsAlterarSalario;
+    aSearchStr = "Registro já existe";
+    PosicaoAlfa(aSearchStr, aMensagemWsAlterarSalario, nPosicaoExiste);
+    Se((nPosicaoExiste = 0) e (aMensagemWsAlterarSalario <> "")){
+      integrarBPM_historicos.erroExecucao = aMensagemWsAlterarSalario;
+    }
+  }
+}
+
+
+@-- Função para alterar escala --@
+Funcao fAlterarEscala();
+{
+  wsAlterarEscala.datAlt = dDatAlt;
+  wsAlterarEscala.codEsc = nCodEsc;
+  wsAlterarEscala.codTma = 1;
+  wsAlterarEscala.numCad = nNumCad;
+  wsAlterarEscala.numEmp = nNumEmp;
+  wsAlterarEscala.tipCol = nTipCol;
+  wsAlterarEscala.tipOpe = aTipOpe;
+  /* 
+  wsAlterarEscala.turInt = nTurInt;
+  wsAlterarEscala.desSim = aDesSim; 
+  */
+
+  wsAlterarEscala.ModoExecucao = 2;
+  wsAlterarEscala.Executar();
+
+  aMensagemWsAlterarEscala = wsAlterarEscala.erroExecucao;
+
+  Se(aMensagemWsAlterarEscala = ""){
+    integrarBPM_historicos.msgRetWsSucessoAlterarEscala = "Histórico de escala inserido com sucesso!";
+  }
+  Senao {
+    integrarBPM_historicos.MsgRetWsAlterarEscala = aMensagemWsAlterarEscala;
+    aSearchStr = "Registro já existe";
+    PosicaoAlfa(aSearchStr, aMensagemWsAlterarEscala, nPosicaoExiste);
+    Se((nPosicaoExiste = 0) e (aMensagemWsAlterarEscala <> "")){
+      integrarBPM_historicos.erroExecucao = aMensagemWsAlterarEscala;
+    }
+  }
+}
+
+
+@-- Função para buscar posto atual --@
+Funcao fBuscarDadosAtuais();
+{
+  SQL_Criar(CUR_R034FUN);
+
+  aSqlAux = "SELECT PosTra, CodCcu, CodCar, CodEsc, ValSal, TipSal, CodEsc FROM R034FUN WHERE NumEmp = :nNumEmp AND NumCad = :nNumCad AND TipCol = :nTipCol";
+  SQL_DefinirComando(CUR_R034FUN, aSqlAux);
+  SQL_DefinirInteiro(CUR_R034FUN, "nNumEmp", nNumEmp);
+  SQL_DefinirInteiro(CUR_R034FUN, "nNumCad", nNumCad);
+  SQL_DefinirInteiro(CUR_R034FUN, "nTipCol", nTipCol);
+
+  SQL_AbrirCursor(CUR_R034FUN);
+  Enquanto (SQL_EOF(CUR_R034FUN) = 0){
+    SQL_RetornarAlfa(CUR_R034FUN, "PosTra", aPosTraAtual);
+    SQL_RetornarAlfa(CUR_R034FUN, "CodCcu", aCodCcuAtual);
+    SQL_RetornarAlfa(CUR_R034FUN, "CodCar", aCodCarAtual);
+    SQL_RetornarInteiro(CUR_R034FUN, "CodEsc", nCodEscAtual);
+    SQL_RetornarInteiro(CUR_R034FUN, "ValSal", nValSalAtual);
+    SQL_RetornarInteiro(CUR_R034FUN, "TipSal", nTipSalAtual);
+    SQL_Proximo(CUR_R034FUN);
+  }
+}
+
+
+
+
+
+/*@-- Função para escalonamento salarial --@
+Funcao fEscalonamentoSal();
+{
+  aEscalonamentoStr = integrarBPM_historicos.escalonamentoStr;
+  aEscalonamentoStrAux = aEscalonamentoStr;
+  nPosicao = 1;
+  Enquanto (nPosicao <> 0){
+    aSearchStr = "novas_datas_escalonadas_porcentagem=";
+    PosicaoAlfa(aSearchStr, aEscalonamentoStrAux, nPosicao);
+      
+    Se (nPosicao <> 0){
+      nPosicao = nPosicao + 35;
+      DeletarAlfa(aEscalonamentoStrAux, 1, nPosicao);
+      PosicaoAlfa(",", aEscalonamentoStrAux, nPosicao);
+      aEscalonamentoStrAuxCopy = aEscalonamentoStrAux;
+      CopiarAlfa(aEscalonamentoStrAuxCopy, 1, nPosicao - 1);
+      aPorcentagem = aEscalonamentoStrAuxCopy;
+
+      aSearchStr = "novas_datas_escalonadas_data=";
+      PosicaoAlfa(aSearchStr, aEscalonamentoStrAux, nPosicao);
+      nPosicao = nPosicao + 28;
+      DeletarAlfa(aEscalonamentoStrAux, 1, nPosicao);
+      PosicaoAlfa(",", aEscalonamentoStrAux, nPosicao);
+      aEscalonamentoStrAuxCopy = aEscalonamentoStrAux;
+      CopiarAlfa(aEscalonamentoStrAuxCopy, 1, nPosicao - 1);
+      aAuxDat = aEscalonamentoStrAuxCopy;
+      aDatAlt = aAuxDat;
+      aAuxDat = aDatAlt;
+      CopiarAlfa(aAuxDat, 1, 4);
+      aAno = aAuxDat;
+      aAuxDat = aDatAlt;
+      CopiarAlfa(aAuxDat, 6, 2);
+      aMes = aAuxDat;
+      aAuxDat = aDatAlt;
+      CopiarAlfa(aAuxDat, 9, 2);
+      aDia = aAuxDat;
+      AlfaParaInt(aAno, nAno);
+      AlfaParaInt(aMes, nMes);
+      AlfaParaInt(aDia, nDia);
+      MontaData(nDia, nMes, nAno, dDatAlt);
+
+      aSearchStr = "novas_datas_escalonadas_valor=";
+      PosicaoAlfa(aSearchStr, aEscalonamentoStrAux, nPosicao);
+      nPosicao = nPosicao + 29;
+      DeletarAlfa(aEscalonamentoStrAux, 1, nPosicao);
+      PosicaoAlfa("}", aEscalonamentoStrAux, nPosicao);
+      aEscalonamentoStrAuxCopy = aEscalonamentoStrAux;
+      CopiarAlfa(aEscalonamentoStrAuxCopy, 1, nPosicao - 1);
+      aEscalValor = aEscalonamentoStrAuxCopy;
+      TrocaString(aEscalValor, ".", ",", aEscalValor);
+      AlfaParaInt(aEscalValor, nValSalAux);
+          
+      nValSal = nValSalAux;
+      nCodMotSal = 13;
+
+      aSearchStr = "novas_datas_escalonadas_porcentagem=";
+      PosicaoAlfa(aSearchStr, aEscalonamentoStrAux, nPosicao);
+      
+      fCorrigirData();
+      fAlterarSalario();
+
+      nContador++;
+    }
+  }
+} 
+*/

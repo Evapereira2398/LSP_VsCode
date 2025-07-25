@@ -1,0 +1,50 @@
+Definir Cursor C_R030Emp;
+Definir Alfa vHTTP;
+Definir Alfa xUser;
+Definir Alfa xPass;
+Definir Alfa xJson;
+Definir Alfa xToken;
+Definir Alfa aNumEmp;
+Definir Alfa aNomEmp;
+
+xUser  = "admin@grupoacos-homolog.com.br";
+xPass = "2O7XM084e58s!";
+ 
+xJson = "{\"username\": \""+xUser+"\", \"password\": \""+xPass+"\"}";
+HttpObjeto(vHTTP);
+HttpDesabilitaErroResposta(vHTTP);
+HttpAlteraCabecalhoRequisicao(vHTTP, "Content-Type", "application/json");  
+HttpPost(vHTTP, "https://platform.senior.com.br/t/senior.com.br/bridge/1.0/rest/platform/authentication/actions/login", xJson, xToken);
+
+PosicaoAlfa("access_token", xToken, nPos);
+nPos = nPos + 17;
+CopiarAlfa(xToken, nPos, 32);
+xToken = "Bearer " + xToken;
+
+C_R030Emp.Sql"Select NumEmp, NomEmp From R030Emp   \
+               Where Usu_IntCol = 'S'              \
+                 And ((Usu_IntCola Is Null)        \
+                  Or (Usu_IntCola = 'N')           \
+                  Or (Usu_IntCola = '')            \
+                  Or (Usu_IntCola = ' '))          ";
+C_R030Emp.AbrirCursor();
+Enquanto(C_R030Emp.Achou){
+  nNumEmp = C_R030Emp.NumEmp;
+  aNomEmp = C_R030Emp.NomEmp;
+  IntParaAlfa(nNumEmp, aNumEmp);    
+
+  xJson = "{\"companyName\":\"" + aNomEmp + "\",\"code\":\"" + aNumEmp + "\",\"enabled\": \"ACTIVE\"}";
+  
+  HttpAlteraCabecalhoRequisicao(vHTTP, "Authorization", xToken); 
+  HttpAlteraCodifCaracPadrao(vHTTP, "utf-8");     
+  HttpPost(vHTTP, "https://platform.senior.com.br/t/senior.com.br/bridge/1.0/rest/hcm/onboarding/entities/company", xJson, xJson);  
+  HttpLeCodigoResposta(vHTTP, nCodigo);
+  
+  Se ((nCodigo >= 200) E (nCodigo < 300)) {
+    ExecSql"Update R030Emp Set Usu_IntCola = 'S', Usu_RetCol = :xJson Where NumEmp = :nNumEmp";
+  }
+  C_R030Emp.Proximo();
+}
+C_R030Emp.FecharCursor();     
+
+n = n;

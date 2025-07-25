@@ -1,0 +1,372 @@
+Definir Cursor C17HDI;
+Definir Alfa aCriRev; 
+Definir Data dDatVig;
+Definir Alfa aMsgRet;
+Definir ALfa aPosTra;
+Definir Alfa aTraCar;
+Definir Alfa aEscMin;   
+Definir Alfa aEscDej;   
+Definir Alfa aConPro;      
+Definir Alfa aConTecMin;
+Definir Alfa aConTecDej;
+Definir Alfa aExpMin;   
+Definir Alfa aExpDej;   
+Definir Alfa aComEss;   
+Definir Alfa aComTec;
+Definir Alfa aTreObg;
+Definir Alfa aTreDej;
+Definir Alfa aDesAtv1;
+Definir Alfa aDesAtv2;
+Definir Alfa aDesAtv3;
+Definir Alfa aCompTec1;
+Definir Alfa aCompTec2;
+Definir Alfa aCompTec3;
+Definir Alfa aCompEssen;
+Definir Alfa aPulaLinha;
+Definir Alfa aCompEssenEspecf;  
+ 
+ 
+/*
+Campos BPM - Unimed
+
+vigencia
+trajetoria_carreira
+formacao_minima
+formacao_desejada
+conselho profissional
+conhecimento_tecnico_certificacoes_minimas
+conhecimento_tecnico_certificacoes_desejadas
+experiencia mínima
+experiencia desejada
+competenciasessenciais
+competenciastecnicas
+descricao_sumaria
+descricao_item
+descricao_atividade
+treinamentos obrigatórios
+treinamentos_desejados
+criacao_ou_revisao
+Descrição da Atividade 1, 2 e 3
+
+
+*/
+
+@ --------- Retorno dos campos que veem do BPM -------- @
+aCriRev = insere_desc_cargo.CriRev;
+nEstPos = insere_desc_cargo.EstPos;        @ Estrutura do posto de trabalho @
+aPosTra = insere_desc_cargo.PosTra;        @ Posto de trabalho              @
+dDatVig = insere_desc_cargo.DatVig;        @ Data de vigência               @
+aTraCar = insere_desc_cargo.TraCar;        @ Trajetória de Carreira         @
+aEscMin = insere_desc_cargo.EscMin;        @ Escolaridade Mínima            @
+aEscDej = insere_desc_cargo.EscDej;        @ Escolaridade Desejada          @
+aConPro = insere_desc_cargo.ConPro;        @ Conselho Profissional          @
+aExpMin = insere_desc_cargo.ExpMin;        @ Experiencia Minima             @
+aExpDej = insere_desc_cargo.ExpDej;        @ Experiencia Desejada           @ 
+aComEss = insere_desc_cargo.ComEss;        @ Competencias Essenciais        @
+aComTec = insere_desc_cargo.ComTec;        @ Competencias Tecnicas          @
+aConTecMin = insere_desc_cargo.ConTecMin;  @ Conhecimento Tecnica e Certificações Minima @
+aConTecDej = insere_desc_cargo.ConTecDej;  @ Conhecimento Tecnico e Certificações Desejadas @
+aTreObg = insere_desc_cargo.TreObg;        @ Treinamentos Obrigatórios      @
+aTreDej = insere_desc_cargo.TreDej;        @ Treinamentos Desejados         @
+aDesAtv1 = insere_desc_cargo.DesAtv1;      @ Descrição das atividades 1     @
+aDesAtv2 = insere_desc_cargo.DesAtv2;      @ Descrição das atividades 2     @
+aDesAtv3 = insere_desc_cargo.DesAtv3;      @ Descrição das atividades 3     @
+aCompTec1 = insere_desc_cargo.comptec1;    @ Competencia Tecnica 1 @
+aCompTec2 = insere_desc_cargo.comptec2;    @ Competencia Tecnica 2 @
+aCompTec3 = insere_desc_cargo.comptec3;    @ Competencia Tecnica 3 @
+aCompEssen = insere_desc_cargo.compessen;  @ Competencia Essenciais @
+aCompEssenEspecf = insere_desc_cargo.compessenespec; @ Evanderson Pereira - 25/05/2025 - Competencias Essenciais especificas @
+
+RetornaAscII(13,aPulaLinha);
+
+@ == Retorna a data da Revisão da Descrição do Posto == @
+C17HDI.SQL "SELECT DATHIS FROM R017HDI \
+             WHERE ESTPOS = :nEstPos   \
+               AND POSTRA = :aPosTra";     
+C17HDI.ABRIRCURSOR();
+Se (C17HDI.Achou){
+  dDatHis = C17HDI.dathis;
+}
+C17HDI.FecharCursor(); 
+
+@ == Verifica se a data de vigencia é superior a ultima revisão == @
+Se(dDatHis < dDatVig){
+
+  @ Insert com nova data R017HDE @
+  ExecSql"INSERT INTO R017HDE (EstPos, PosTra, DatHis) \
+            Values (:nEstPos, :aPosTra, :dDatVig)";
+  
+
+
+  @ == INSERE - Trajetória de Carreira == @
+  Se(aTraCar <> ""){
+    ExecSql"INSERT INTO R017HDI (EstPos, PosTra, DatHis, SeqIdp, TexIte) \
+            Values (:nEstPos, :aPosTra, :dDatVig, 5, :aTraCar)";
+  }
+  
+  @ == INSERE - Escolaridade Mínima == @
+  Se(aEscMin <> ""){
+    ExecSql"INSERT INTO R017HDI (EstPos, PosTra, DatHis, SeqIdp, TexIte) \
+            Values (:nEstPos, :aPosTra, :dDatVig, 6, :aEscMin)";
+  }
+  
+  @ == INSERE -  Escolaridade Desejada == @
+  Se(aEscDej <> ""){
+    ExecSql"INSERT INTO R017HDI (EstPos, PosTra, DatHis, SeqIdp, TexIte) \
+            Values (:nEstPos, :aPosTra, :dDatVig, 12, :aEscDej)";
+  }
+  
+  @ == INSERE - Conselho Profissional == @
+  Se(aConPro <> " "){
+    ExecSql"INSERT INTO R017HDI (EstPos, PosTra, DatHis, SeqIdp, TexIte) \
+            Values (:nEstPos, :aPosTra, :dDatVig, 7, :aConPro)";
+  }
+  
+  @ == INSERE - Experiencia Minima == @
+  Se(aExpMin <> ""){
+    ExecSql"INSERT INTO R017HDI (EstPos, PosTra, DatHis, SeqIdp, TexIte) \
+            Values (:nEstPos, :aPosTra, :dDatVig, 9, :aExpMin)";
+  }        
+    
+  @ == INSERE - Experiencia Desejada == @
+  Se(aExpDej <> ""){
+    ExecSql"INSERT INTO R017HDI (EstPos, PosTra, DatHis, SeqIdp, TexIte) \
+            Values (:nEstPos, :aPosTra, :dDatVig, 10, :aExpDej)";
+  }        
+  
+  
+  /****Competencias Essenciais****/
+  Definir Alfa aCur;
+  Definir Alfa aCompEss;
+  Definir Alfa aConcat; 
+  Definir Alfa aSql;
+  Definir Alfa aPulaLinha;
+  Definir Alfa aCodCpE;
+  Definir Alfa aDesCpE;
+
+  RetornaAscII(13,aPulaLinha);
+  
+  aCompEss = "";
+
+  aSql = "SELECT * FROM R577ORG";
+  
+  SQL_Criar(aCur);
+  SQL_UsarAbrangencia(aCur, 1);
+  SQL_DefinirComando (aCur, aSql);    
+  SQL_AbrirCursor(aCur);
+  Enquanto(SQL_EOF(aCur) = 0){
+    
+    SQL_RetornarAlfa(aCur, "CodCpE", aCodCpE);
+    SQL_RetornarAlfa(aCur, "DesCpE", aDesCpE);
+    
+    @ Concatena (Código + Descrição) @
+    aConcat = aCodCpE + " - " + aDesCpE + aPulaLinha;
+    aCompEss = aCompEss + aConcat;
+     
+    SQL_Proximo(aCur);   
+  }
+  SQL_FecharCursor(aCur);
+  SQL_Destruir(aCur);
+  
+  @ == INSERE - Competencias Essenciais == @
+  @ Alterado - Evanderson Pereira - 08/05/2025 @
+  @ As competencias essenciais serão sempre fixas com o valor da variavel aCompEssen @ 
+  /*Se((aCompEssen <> "") e (aCompEssenEspecf = "")){
+    ExecSql"INSERT INTO R017HDI (EstPos, PosTra, DatHis, SeqIdp, TexIte) \
+            Values (:nEstPos, :aPosTra, :dDatVig, 11, :aCompEssen)"; */
+
+            
+  @ Alterado - Evanderson Pereira - 25/05/2025 @
+  @ Além das competencias essenciais que são sempre fixas, podem haver casos onde serão informadas,@
+  @ competencias adicionais @
+  Se(aCompEssenEspecf <> ""){
+    aCompEss = aCompEss + "; " + aCompEssenEspecf;     
+    
+    ExecSql"INSERT INTO R017HDI (EstPos, PosTra, DatHis, SeqIdp, TexIte) \
+            Values (:nEstPos, :aPosTra, :dDatVig, 11, :aCompEssen)";    
+  }
+  
+  @ == INSERE - Competencias Tecnicas == @
+  @ Alterado - Evanderson Pereira - 08/05/2025 @
+  @ Para as competencias tecnicas, o BPM enviará 3 valores, em variaveis separadas, @
+  @ Neste caso tornase necessario concatenar os tres registros para o INSERT        @
+  
+  Definir Alfa aConcatena;
+  
+  aConcatena = aCompTec1 + "; " + aPulaLinha; 
+  aConcatena = aConcatena + aCompTec2 + "; " + aPulaLinha;
+  aConcatena = aConcatena + aCompTec3 + "; " + aPulaLinha; 
+  
+  Se(aConcatena <> ""){
+    ExecSql"INSERT INTO R017HDI (EstPos, PosTra, DatHis, SeqIdp, TexIte) \
+            Values (:nEstPos, :aPosTra, :dDatVig, 15, :aConcatena)"; 
+  }
+  
+  @ == INSERE - Conhecimento Tecnica e Certificações Minimas == @
+  Se(aConTecMin <> ""){
+    ExecSql"INSERT INTO R017HDI (EstPos, PosTra, DatHis, SeqIdp, TexIte) \
+            Values (:nEstPos, :aPosTra, :dDatVig, 8, :aConTecMin)";
+  }        
+  
+  @ == INSERE - Conhecimento Tecnico e Certificações Desejadas == @
+  Se(aConTecDej <> ""){
+    ExecSql"INSERT INTO R017HDI (EstPos, PosTra, DatHis, SeqIdp, TexIte) \
+            Values (:nEstPos, :aPosTra, :dDatVig, 16, :aConTecDej)";
+  }
+  
+  @ == INSERE - Descrição das atividades 1 == @
+  Se(aDesAtv1 <> ""){
+    ExecSql"INSERT INTO R017HDI (EstPos, PosTra, DatHis, SeqIdp, TexIte) \
+            Values (:nEstPos, :aPosTra, :dDatVig, 2, :aDesAtv1)";
+  }
+  
+  @ == INSERE - Descrição da atividades 2 == @
+  Se(aDesAtv2 <> ""){
+    ExecSql"INSERT INTO R017HDI (EstPos, PosTra, DatHis, SeqIdp, TexIte) \
+            Values (:nEstPos, :aPosTra, :dDatVig, 3, :aDesAtv2)";
+  }
+  
+  @ == INSERE - Descrição da atividades 3 == @
+  Se(aDesAtv3 <> ""){
+    ExecSql"INSERT INTO R017HDI (EstPos, PosTra, DatHis, SeqIdp, TexIte) \
+            Values (:nEstPos, :aPosTra, :dDatVig, 4, :aDesAtv3)";
+  }
+  
+  @ == INSERE - Treinamentos Desejados == @
+  Se(aTreObg <> ""){
+    ExecSql"INSERT INTO R017HDI (EstPos, PosTra, DatHis, SeqIdp, TexIte) \
+            Values (:nEstPos, :aPosTra, :dDatVig, 19, :aTreObg)";
+  }
+  
+  @ == INSERE - Treinamentos Obrigatórios == @
+  Se(aTreDej <> ""){
+    ExecSql"INSERT INTO R017HDI (EstPos, PosTra, DatHis, SeqIdp, TexIte) \
+            Values (:nEstPos, :aPosTra, :dDatVig, 18, :aTreDej)";
+  }
+  
+  @ == Finaliza WS == @
+  aMsgRet = "Sucesso";
+  insere_desc_cargo.retorno = aMsgRet;
+}
+  Senao {
+  aMsgRet = "Verifique a data da revisão";
+  insere_desc_cargo.retorno = aMsgRet; 
+}
+
+
+
+/*@ Se aCriRev = Revisão, será realizado UPDATE @
+Senao Se(aCriRev = "2") {
+  
+  @ == UPDATE - Trajetória de Carreira == @
+  Se(aTraCar <> " "){
+    ExecSql"UPDATE R017HDI SET TexIte = :aTraCar \
+             WHERE EstPos = :nEstPos \
+               AND PosTra = :aPosTra \
+               AND SeqIdp = 5        \
+               AND DatHis = :dDatVig";
+  }
+  
+  @ == UPDATE - Escolaridade Mínima == @
+  Se(aEscMin <> " "){
+    ExecSql"UPDATE R017HDI SET TexIte = :aEscMin \
+             WHERE EstPos = :nEstPos \
+               AND PosTra = :aPosTra \
+               AND SeqIdp = 6        \
+               AND DatHis = :dDatVig";
+  }
+  
+  @ == UPDATE -  Escolaridade Desejada == @
+  Se(aEscDej <> " "){
+    ExecSql"UPDATE R017HDI SET TexIte = :aEscDej \
+             WHERE EstPos = :nEstPos \
+               AND PosTra = :aPosTra \
+               AND SeqIdp = 12       \
+               AND DatHis = :dDatVig";
+  }
+  
+  @ == UPDATE - Conselho Profissional == @
+  Se(aConPro <> " "){
+    ExecSql"UPDATE R017HDI SET TexIte = :aConPro \
+             WHERE EstPos = :nEstPos \
+               AND PosTra = :aPosTra \
+               AND SeqIdp = 7        \
+               AND DatHis = :dDatVig";
+  }
+  
+  @ == UPDATE - Experiencia Minima == @
+  Se(aExpMin <> " "){
+    ExecSql"UPDATE R017HDI SET TexIte = :aExpMin \
+             WHERE EstPos = :nEstPos \
+               AND PosTra = :aPosTra \
+               AND SeqIdp = 9        \
+               AND DatHis = :dDatVig";
+  }        
+    
+  @ == UPDATE - Experiencia Desejada == @
+  Se(aExpDej <> " "){
+    ExecSql"UPDATE R017HDI SET TexIte = :aExpDej \
+             WHERE EstPos = :nEstPos \
+               AND PosTra = :aPosTra \
+               AND SeqIdp = 10       \
+               AND DatHis = :dDatVig";
+  }        
+  
+  @ == UPDATE - Competencias Essenciais == @
+  Se(aComEss <> " "){
+     ExecSql"UPDATE R017HDI SET TexIte = :aComEss \
+             WHERE EstPos = :nEstPos \
+               AND PosTra = :aPosTra \
+               AND SeqIdp = 11       \
+               AND DatHis = :dDatVig"; 
+  }        
+  
+  @ == UPDATE - Competencias Tecnicas == @
+  Se(aComTec <> " "){
+    ExecSql"UPDATE R017HDI SET TexIte = :aComTec \
+             WHERE EstPos = :nEstPos \
+               AND PosTra = :aPosTra \
+               AND SeqIdp = 15       \
+               AND DatHis = :dDatVig";  
+  }
+  
+  @ == UPDATE - Conhecimento Tecnica e Certificações Minimas == @
+  Se(aConTecMin <> " "){
+    ExecSql"UPDATE R017HDI SET TexIte = :aConTecMin \
+             WHERE EstPos = :nEstPos \
+               AND PosTra = :aPosTra \
+               AND SeqIdp = 8        \
+               AND DatHis = :dDatVig";
+  }        
+  
+  @ == UPDATE - Conhecimento Tecnico e Certificações Desejadas == @
+  Se(aConTecDej <> " "){
+    ExecSql"UPDATE R017HDI SET TexIte = :aConTecDej \
+             WHERE EstPos = :nEstPos \
+               AND PosTra = :aPosTra \
+               AND SeqIdp = 16       \
+               AND DatHis = :dDatVig";
+  }
+  
+  @ == UPDATE - Treinamentos Obrigatórios == @
+  /*Se(aTreObg <> " "){
+    ExecSql"UPDATE R017HDI SET DatHis = :dDatVig, TexIte = :aTreObg \
+             WHERE EstPos = :nEstPos \
+               AND PosTra = :aPosTra \
+               AND SeqIdp = ";
+  }
+  
+  @ == UPDATE - Treinamentos Obrigatórios == @
+  Se(aTreDej <> " "){
+    ExecSql"UPDATE R017HDI SET DatHis = :dDatVig, TexIte = :aTreDej \
+             WHERE EstPos = :nEstPos \
+               AND PosTra = :aPosTra \
+               AND SeqIdp = ";
+  }*/
+  
+  /*@ == Finaliza WS == @
+  aMsgRet = "Sucesso";
+  insere_desc_cargo.retorno = aMsgRet;   
+}*/
+
+x=0;
