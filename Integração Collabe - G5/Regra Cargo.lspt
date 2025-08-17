@@ -14,7 +14,7 @@ Definir Alfa aAux;
 
 dDatSis = DatSis;
 
-xUser  = "admin@grupoacos-homolog.com.br";
+xUser = "admin@grupoacos-homolog.com.br";
 xPass = "2O7XM084e58s!";
  
 xJson = "{\"username\": \""+xUser+"\", \"password\": \""+xPass+"\"}";

@@ -1,3 +1,8 @@
+@ Regra refatorada 100% - Evanderson Pereira 02/07/2025 @
+
+Definir Cursor cur_aux;
+Definir Cursor Cur_R034FUN;
+
 Definir Alfa aAno;
 Definir Alfa aMes;
 Definir Alfa aDia;
@@ -17,7 +22,7 @@ Definir Alfa anomfun;
 Definir Alfa aApeFun;   
 Definir Alfa aPagSin;   
 Definir Alfa amodPag;   
-Definir Alfa aNumcra;
+
 Definir Alfa aestCtp;   
 Definir Alfa aserCtp;   
 Definir Alfa adigCar;   
@@ -39,8 +44,7 @@ Definir Alfa anumCnh;
 Definir Alfa acatCnh;   
 Definir Alfa anumRes;
 Definir Alfa acatRes;   
-Definir Alfa aEmicid;
-
+Definir Alfa aEmicid; 
 
 Definir Data dDatadm;  
 Definir Data dDexcpt;    
@@ -52,17 +56,964 @@ Definir Data dultExm;
 Definir Data ddvlest;
 Definir Data dDatVazia;
 
-Definir Cursor cur_aux;
-Definir Cursor Cur_R034FUN;
-
+Definir Alfa aCodBan;
+Definir Alfa aCodLoc;
+Definir Alfa aCodAge;
+Definir Alfa aTipSal;
+Definir Alfa aDesPos;
+Definir Alfa aCodLoc;
+Definir Alfa aMsg;
+Definir Alfa aErroExecucao;
 
 MontaData (31, 12, 1900, dDatVazia);
 aEspacoBranco = " ";
 
+Definir Alfa aMsg;
+x = 0;                                                      
+Se(x=0){
+  aMsg = "Travado antes dos inserts na base";
+  @cadastro_colaborador.aret = aMsg;@
+  @Vapara FimWs;@
+}  
 
-@ ====================  INICIO DO PROCESSO, FICHA BASICA ==================== @
 
-@ ========= Mudança da dataadm ========= @
+@ Reestruturação do processo de conversão das datas - Evanderson Pereira - 10/08/2025 @
+@ Obs.: O formato original está comentado no final da regra @
+
+@ Conversão das datas enviadas pelo BPM @
+Definir Alfa aDatAdm;
+Definir Alfa aDexCtp;
+Definir Alfa aDatNas;
+Definir Alfa aDexCid;
+Definir Alfa aDatCnh;
+Definir Alfa aVenCnh;
+Definir Alfa aUltExm;
+Definir Alfa aDvlEst;
+
+aDatAdm = cadastro_colaborador.Datadm;
+aDexCtp = cadastro_colaborador.Dexcpt;
+aDatNas = cadastro_colaborador.DatNas;
+aDexCid = cadastro_colaborador.dexcid;
+aDatCnh = cadastro_colaborador.datcnh;
+aVenCnh = cadastro_colaborador.venCnh;
+aUltExm = cadastro_colaborador.ultExm;
+aDvlEst = cadastro_colaborador.dvlest;
+
+@ Converte Data de Admissão @
+Se(aDatAdm <> ""){
+  AlfaParaData(aDatAdm, "YYYY/MM/DD", dDatadm);
+}
+
+@ Converte Data de expedição da CTPS @ 
+Se(aDexCtp <> ""){
+  AlfaParaData(aDexCtp, "YYYY/MM/DD", dDexcpt);
+}
+
+@ Converte Data de Nascimento @
+Se(aDatNas <> ""){
+  AlfaParaData(aDatNas, "YYYY/MM/DD", dDatnas);
+}
+  
+@ Converte Data de expedição do RG @
+Se(aDexCid <> ""){
+  AlfaParaData(aDexCid, "YYYY/MM/DD", dDexCid);
+}
+
+@ Converte Data de emissão da CNH @
+Se(aDatCnh <> ""){
+  AlfaParaData(aDatCnh, "YYYY/MM/DD", dDatCnh);
+}
+
+@ Converte Data de vencimento da CNH @ 
+Se(aVenCnh <> ""){
+  AlfaParaData(aVenCnh, "YYYY/MM/DD", dVenCnh);
+}
+
+@ Converte Data do ultimo exame @ 
+Se(aUltExm <> ""){
+  AlfaParaData(aUltExm, "YYYY/MM/DD", dUltExm);
+}  
+  
+@ Converte Data de validade da carteira de estrangeiro @ 
+Se(aDvlEst <> ""){
+  AlfaParaData(aDvlEst, "YYYY/MM/DD", dDvlEst);
+}
+
+
+
+@ ===================================================== @                                      
+nNumEmp = cadastro_colaborador.NumEmp;
+aCodCcu = cadastro_colaborador.codCcu;
+nCodEsc = cadastro_colaborador.codesc;
+nCodFil = cadastro_colaborador.codfil;
+aCodCar = cadastro_colaborador.codcar;
+aNomAge = cadastro_colaborador.nomage;
+aDigAge = cadastro_colaborador.digage;
+aCodBan = cadastro_colaborador.codban;
+aDigCon = cadastro_colaborador.digcon;
+nCodNac = cadastro_colaborador.codNac;
+nGraIns = cadastro_colaborador.graIns;
+nConBan = cadastro_colaborador.conBan;
+aCodAge = cadastro_colaborador.codage;
+nCodEsc = cadastro_colaborador.codesc;
+aEstCtp = cadastro_colaborador.estCtp;
+aDesPos = cadastro_colaborador.posTra;
+aCodLoc = cadastro_colaborador.codloc;
+aSerCtp = cadastro_colaborador.serCtp;    
+aDigCar = cadastro_colaborador.digCar;
+aPagSin = cadastro_colaborador.pagSin;
+aTipSal = cadastro_colaborador.tipSal;
+nCodTma = cadastro_colaborador.codTmaHes;
+nCodSinHsi = cadastro_colaborador.CodSin;
+nValSalHsa = cadastro_colaborador.ValSal;
+nCodVinHvi =  cadastro_colaborador.codvin;
+nCadEnt = cadastro_colaborador.numcad_entrada;
+aCodLoc = cadastro_colaborador.codloc;
+nNumLoc = cadastro_colaborador.numloc;
+nTabOrg = cadastro_colaborador.taborg;
+
+
+
+AlfaparaInt(aCodBan, nCodBan);
+AlfaparaInt(aCodAge,nCodAge);
+
+
+@ Valida o posto de trabalho retornado pelo BPM @
+Se(aDesPos <> ""){
+  Definir Alfa aSql;
+  Definir Alfa C17POS;
+  
+  aSql = "SELECT ESTPOS, POSTRA FROM R017POS WHERE DESPOS LIKE '%" + aDesPos + "%'";
+  SQL_Criar(C17POS);
+  SQL_UsarAbrangencia(C17POS, 1);
+  SQL_DefinirComando (C17POS, aSql);    
+  SQL_AbrirCursor(C17POS);
+  Se(SQL_EOF(C17POS) = 0){
+    SQL_RetornarInteiro(C17POS, "ESTPOS", nEstPos);
+    SQL_RetornarAlfa(C17POS, "POSTRA", aPosTra);
+  }
+}
+
+
+@ Gera uma matricula de acordo com o ultimo registro (NumCad), caso não tenha sido informada no BPM @
+Se(nCadEnt = 0) {
+  Cur_R034FUN.sql "SELECT NUMCAD            \
+                     FROM R034FUN           \
+                    WHERE NUMEMP = :nNumEmp \
+                      AND TIPCOL = 1        \
+                      AND NUMCAD < 8000     \
+                 ORDER BY NUMCAD DESC";
+  Cur_R034FUN.AbrirCursor();
+  Se(Cur_R034FUN.Achou){
+    nNumCad = Cur_R034FUN.NumCad + 1;
+  }
+  Cur_R034FUN.FecharCursor();
+}
+Senao {
+  nNumcad = nCadEnt;   
+}
+
+   
+@ ===================================================== @
+Cur_Aux.sql "SELECT ESTCAR, DATALT FROM R030CAR WHERE NUMEMP = :nNumEmp ORDER BY DATALT DESC";
+Cur_Aux.AbrirCursor();
+Se (Cur_Aux.Achou) {
+  nestcar = Cur_Aux.estcar;
+}
+Cur_Aux.FecharCursor();
+
+
+@ ===================================================== @
+Cur_Aux.sql "SELECT NOMBAN FROM R012BAN WHERE CODBAN = :nCodban";
+Cur_Aux.AbrirCursor();
+Se(Cur_Aux.achou) {
+  aNomBan = Cur_Aux.NomBan;
+}
+Senao {
+  aNomBan = cadastro_colaborador.nomBan; 
+  ExecSql "INSERT INTO R012BAN (CODBAN, NOMBAN) VALUES (:nCodBan,:aNomBan)";     
+}
+Cur_Aux.FecharCursor();  
+  
+
+@ ===================================================== @
+Cur_Aux.sql "select nomage from r012age where codban = :nCodban and codage = :nCodAge";
+Cur_Aux.AbrirCursor();
+Se(Cur_Aux.NaoAchou) {
+  ExecSql "insert into r012age(codban,codage, nomage, digage) values(:nCodBan,:nCodAge,:aNomAge, :aDigAge)";    
+} 
+Cur_Aux.FecharCursor();      
+    
+
+
+
+@ Tratamentos @
+Definir Alfa aNumCad;
+Definir Alfa aNumEmp;
+Definir Alfa aNumCra;
+Definir Alfa aTipCon;
+
+@ Numero do crachá @
+IntParaAlfa(nNumCad, aNumCad);
+IntParaAlfa(nNumEmp, aNumEmp);
+aNumCra = aNumEmp + aNumCad;
+AlfaParaInt(aNumCra, nNumcra);
+
+@ Tipo de salário @
+PosicaoAlfa("-", aTipSal, PosStr);
+CopiarAlfa(aTipSal, 0, PosStr-2);
+AlfaParaInt(aTipSal, nTipSal);
+nTipSalHsa = nTipSal;
+
+@ Tipo de contrato @
+aTipCon = cadastro_colaborador.tipCon;
+PosicaoAlfa("-", aTipCon, PosStr);
+CopiarAlfa (aTipCon, 0, PosStr-2);
+AlfaParaInt(aTipCon, nAux);
+nTipCon = nAux;
+
+@ Sexo do colaborador @
+aAux = cadastro_colaborador.TipSex;
+PosicaoAlfa("-", aAux, PosStr);
+CopiarAlfa(aAux, 0, PosStr-2);
+aTipSex = aAux;
+
+@ Estado Civil @
+aAux = cadastro_colaborador.estCil;
+PosicaoAlfa("-", aAux, PosStr);
+CopiarAlfa (aAux, 0, PosStr-2);
+AlfaParaInt(aAux, nAux);
+nEstCiv = nAux;
+
+@ Nome do colaborador / Apelido do colaborador (Será o apenas o primeiro nome) @
+aAux = cadastro_colaborador.nomfun;
+AlfaPuro(aAux,1,1);
+aNomFun = aAux;
+PosicaoAlfa(" ", aAux, nPos);
+CopiarAlfa(aAux,1,nPos -1);
+aApeFun = aAux;
+
+@ Tipo de admissão @
+aAux = cadastro_colaborador.tipAdmHfi;
+PosicaoAlfa("-", aAux, PosStr);
+CopiarAlfa (aAux, 0, PosStr-2);
+AlfaParaInt(aAux, nAux);
+nTipAdmHfi = nAux;
+Se(nTipAdmHfi = 0){
+  nTipAdmHfi = 2;
+}
+
+@ Contribuição sindical @ 
+Se(aPagSin = "Sim"){
+  aPagSin = "S";
+}
+Senao {
+  aPagSin = "N";
+}  
+
+@ Modo de pagamento @
+aModPag = "R";
+Se((nCodBan = 0) ou (nCodAge = 0)){ 
+  aModPag = "D";
+}
+
+@ Numero da CTPS @
+aAux = cadastro_colaborador.numCtp;
+AlfaPuro(aAux,1,1); 
+AlfaParaInt(aAux, nNumCtp); 
+
+@ CPF @
+aAux = cadastro_colaborador.numCpf;
+TrocaString(aAux, ".", "", aAux);
+TrocaString(aAux, "-", "", aAux);
+AlfaParaInt(aAux, NumCpf);
+
+@ Numero PIS @
+aAux = cadastro_colaborador.numPis;
+TrocaString(aAux, ".", "", aAux);
+AlfaParaInt(aAux, nNumPis);
+
+@ Tipo da conta @
+aAux = cadastro_colaborador.tpCtBa;
+PosicaoAlfa("-", aAux, PosStr);
+CopiarAlfa (aAux, 0, PosStr-2);
+AlfaParaInt(aAux, ntpCtBa);
+
+@ Categoria eSocial @
+aAux = cadastro_colaborador.catEso;
+PosicaoAlfa("-", aAux, PosStr);
+CopiarAlfa (aAux, 0, PosStr-2);
+AlfaParaInt(aAux, nAux); 
+nCatEso = nAux;
+
+@ Admissão eSocial @
+aAux = cadastro_colaborador.admeSo;
+PosicaoAlfa("-", aAux, PosStr);
+CopiarAlfa (aAux, 0, PosStr-2);
+AlfaParaInt(aAux, nAux);     
+nAdmESO =  nAux; 
+
+@ Local de trabalho @
+aAux = cadastro_colaborador.locTraHlo;
+TrocaString(aAux,".", "", aAux);
+AlfaParaInt(aAux, nlocTraHlo);
+Se(nlocTraHlo = 0) {
+  nlocTraHlo = 4106902; @Curitiba@ 
+}
+
+@ Indicativo de admissão @
+aAux = cadastro_colaborador.indAdm;
+PosicaoAlfa("-", aAux, PosStr);
+CopiarAlfa (aAux, 0, PosStr-2);
+AlfaParaInt(aAux, nAux); 
+nindAdm = nAux; 
+
+@ Categoria SEFIP @
+aAux = cadastro_colaborador.catSef;
+PosicaoAlfa("-", aAux, PosStr);
+CopiarAlfa (aAux, 0, PosStr-2);
+AlfaParaInt(aAux, nAux);
+ncatSef = nAux;
+
+@ === Tratamento estado - Evanderson Pereira  03/07/2025 ===== @ 
+aEstCtp = cadastro_colaborador.estCtp;
+Se(aEstCtp = "Acre") {
+  aEstCtp = "AC";
+}
+Senao Se(aEstCtp = "Alagoas") {
+  aEstCtp = "AL";
+}
+Senao Se(aEstCtp = "Amapá") {
+  aEstCtp = "AP";
+}
+Senao Se(aEstCtp = "Amazonas") {
+  aEstCtp = "AM";
+}
+Senao Se(aEstCtp = "Bahia") {
+  aEstCtp = "BA";
+}
+Senao Se(aEstCtp = "Ceará") {
+  aEstCtp = "CE";
+}
+Senao Se(aEstCtp = "Distrito Federal") {
+  aEstCtp = "DF";
+}
+Senao Se(aEstCtp = "Espírito Santo") {
+  aEstCtp = "ES";
+}
+Senao Se(aEstCtp = "Goiás") {
+  aEstCtp = "GO";
+}
+Senao Se(aEstCtp = "Maranhão") {
+  aEstCtp = "MA";
+}
+Senao Se(aEstCtp = "Mato Grosso") {
+  aEstCtp = "MT";
+}
+Senao Se(aEstCtp = "Mato Grosso do Sul") {
+  aEstCtp = "MS";
+}
+Senao Se(aEstCtp = "Minas Gerais") {
+  aEstCtp = "MG";
+}
+Senao Se(aEstCtp = "Pará") {
+  aEstCtp = "PA";
+}
+Senao Se(aEstCtp = "Paraíba") {
+  aEstCtp = "PB";
+}
+Senao Se(aEstCtp = "Paraná") {
+  aEstCtp = "PR";
+}
+Senao Se(aEstCtp = "Pernambuco") {
+  aEstCtp = "PE";
+}
+Senao Se(aEstCtp = "Piauí") {
+  aEstCtp = "PI";
+}
+Senao Se(aEstCtp = "Rio de Janeiro") {
+  aEstCtp = "RJ";
+}
+Senao Se(aEstCtp = "Rio Grande do Norte") {
+  aEstCtp = "RN";
+}
+Senao Se(aEstCtp = "Rio Grande do Sul") {
+  aEstCtp = "RS";
+}
+Senao Se(aEstCtp = "Rondônia") {
+  aEstCtp = "RO";
+}
+Senao Se(aEstCtp = "Roraima") {
+  aEstCtp = "RR";
+}
+Senao Se(aEstCtp = "Santa Catarina") {
+  aEstCtp = "SC";
+}
+Senao Se(aEstCtp = "São Paulo") {
+  aEstCtp = "SP";
+}
+Senao Se(aEstCtp = "Sergipe") {
+  aEstCtp = "SE";
+}
+Senao Se(aEstCtp = "Tocantins") {
+  aEstCtp = "TO";
+}
+Senao {
+  aMsg = "Favor verificar a UF de emissão da carteira de trabalho. A UF definida não foi encontrado na base de dados.";
+  cadastro_colaborador.erroexecucao = aMsg;
+  VaPara FimWs;
+}
+
+
+@ O INSERT precisou ser reestruturado para identificação do campo que estava causando erro @
+@ Erro de acesso ao banco de dados: Banco de Dados: SQL Server 2016. Erro do Banco (8152): String or binary data would be truncated. @
+@ Evanderson Pereira - 02/07/2025 @
+
+@ INSERT - R034FUN @
+IniciarTransacao();
+ExecSqlEx("INSERT INTO R034FUN(                                                                                               \
+            numemp, numcad, taborg, numloc, estpos, postra, codccu, codesc, codfil, estcar,                                   \
+            codcar, codtma, codban, codage, numcra, digban, tipsal, valsal, tipcon, tipsex,                                   \
+            codnac, datnas, estciv, grains, nomfun, apefun, tipadm, datopc, pagsin, conban,                                   \
+            modpag, numctp, serctp, dvlest, numpis, numcpf, estctp, dexctp, tpctba, digcar,                                   \
+            outtet, codcha, clasal, nivsal, sitrec, regest, recgra, nmfun3, nmfun4, irrise,                                   \
+            apoida, nmfun2, movsef, nmfun1, benrea, cotdef, chvpix, forpro, codcbo, numpsp,                                   \
+            rettrp, emtcar, ratpfs, deffis, tippfs, contov, apupfs, dedcar, cauadv,                                           \
+                                                                                                                              \
+            verint, perpag, socsin, gespon, opcatu, catter, recadi, rec13s, lisrai, emicar,                                   \
+            tipopc, rateve, outcon, cadfol,                                                                                   \
+                                                                                                                              \
+            datinc, datesc, datloc, datpos, datcar, datsal, datadm,                                                           \
+                                                                                                                              \
+            datsim, datapo, datafa, dvlctp, dcdpis, datccu, opcces, datces, datrei, datsef,                                   \
+            datsin, datvin, datevt, datche, dathct, datsld, dincra, datetb, datadi, datfil,                                   \
+            gpstri, datppr,                                                                                                   \
+                                                                                                                              \
+            outemp, outtip, outcad, empres, tipres, cadres, turint, codpro, ultcal, assppr,                                   \
+            inscur, tipter, escvtr, tipapo, ponemb, horafa, caudem, codest, cplsal, anoche,                                   \
+            codetb, visest, confgt, perjur, depirf, depsaf, docest, sisces, codlim, coddef,                                   \
+            bushor, tipsrv, codglo, tpcpix, staalf, codpes, codvin, temhct, stahct, faiins,                                   \
+            dctins, empfil, cadfil, horbas, horsab, apoesp, codfor, raccor, hincra, tipcol,                                   \
+            motcar, codmot, codtap, sitafa, catsef, elimar, conrho, horinc, valsup, salsim,                                   \
+            perdes, codidn, dedins, perirt, seqreg, pertra, jamsld, hordsr, depsld, numins,                                   \
+            horsem, perins, periss, perper, perrea, fattpo, cateso)                                                           \
+                                                                                                                              \
+        VALUES (                                                                                                              \
+            :nNumEmp, :nNumCad, :nTaborg, :nnumloc, :nestpos, :aposTra, :acodCcu, :ncodesc, :ncodfil, :nestcar,               \                                            
+            :acodcar, :ncodTma, :nCodBan, :nCodAge, :aNumcra, :adigcon, :ntipSalHsa, :nvalSalHsa, :ntipCon, :aTipSex,         \
+            :ncodNac, :dDatnas, :nestCiv, :ngraIns, :anomfun, :aApeFun, :ntipAdmHfi, :dDatadm, :aPagSin, :nConBan,            \
+            :amodPag, :nnumCtp, :aserCtp, :ddvlest, :nnumPis, :numCpf, :aEstCtp, :dDexcpt, :ntpCtBa, :adigCar,                \
+                                                                                                                              \
+            :aEspacoBranco, :aEspacoBranco, :aEspacoBranco, :aEspacoBranco, :aEspacoBranco, :aEspacoBranco, :aEspacoBranco,   \
+            :aEspacoBranco, :aEspacoBranco, :aEspacoBranco, :aEspacoBranco, :aEspacoBranco, :aEspacoBranco, :aEspacoBranco,   \
+            :aEspacoBranco, :aEspacoBranco, :aEspacoBranco, :aEspacoBranco, :aEspacoBranco, :aEspacoBranco, :aEspacoBranco,   \
+            :aEspacoBranco, :aEspacoBranco, :aEspacoBranco, :aEspacoBranco, :aEspacoBranco, :aEspacoBranco, :aEspacoBranco,   \
+            :aEspacoBranco,                                                                                                   \
+                                                                                                                              \
+            'I', 'M', 'N', 'N', 'N', 'O', 'S', 'S', 'S', 'S', 'S', 'S', 'U', '60',                                            \
+                                                                                                                              \
+            :dDatadm, :dDatadm, :dDatadm, :dDatadm, :dDatadm, :dDatadm, :dDatadm,                                             \
+                                                                                                                              \
+            :dDatVazia, :dDatVazia, :dDatVazia, :dDatVazia, :dDatVazia, :dDatVazia, :dDatVazia, :dDatVazia, :dDatVazia,       \
+            :dDatVazia, :dDatVazia, :dDatVazia, :dDatVazia, :dDatVazia, :dDatVazia, :dDatVazia, :dDatVazia, :dDatVazia,       \
+            :dDatVazia, :dDatVazia, :dDatVazia, :dDatVazia,                                                                   \
+                                                                                                                              \
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,          \
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 2, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,    \
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 101)", nErro, aMsg);
+            
+Se(nErro = 0){
+  FinalizarTransacao();
+}
+Senao {
+  aErroExecucao = "Não foi possivel inserir os dados na tabela R034FUN, favor verificar os logs do WebServices";
+  cadastro_colaborador.erroexecucao = aErroExecucao;
+  DesfazerTransacao();
+  Vapara FimWs;
+}
+
+
+@ INSERT - R038HPO @
+IniciarTransacao();
+ExecSqlEx("INSERT INTO R038HPO (NumEmp,TipCol,NumCad,IniAtu,SeqHis,CodTap,    \  
+                              MotAlt,EstPos,PosTra,TerAtu,ObsHpo,StaHis,      \
+                              TipSbs,CadSbs,PerAdi,FunEso,CodUsu)             \
+                      VALUES (:nNumEmp, 1 ,:nNumCad ,:dDatadm , 1, 1,         \
+                              1, :nEstPos, :aPosTra, :dDatVazia, ' ', 1,      \
+                              0, 0, 0.0, ' ',0)", nErro, aMsg);
+Se(nErro = 0){
+  FinalizarTransacao();
+}
+Senao {
+  aErroExecucao = "Não foi possivel inserir os dados na tabela R038HPO, favor verificar os logs do WebServices";
+  cadastro_colaborador.erroexecucao = aErroExecucao;
+  DesfazerTransacao();
+  Vapara FimWs;
+}
+
+
+@ INSERT - R038APU @
+IniciarTransacao();
+ExecSqlEx("INSERT INTO R038APU (NumEmp,TipCol,NumCad,IniApu,UltApu,ApuPon,    \
+                              ConPon, ParPfa,AjuPon,AprPon,ArtCLT,CodDSi)     \
+                      VALUES (:nNumEmp ,1 ,:nNumCad ,:dDatadm ,:dDatVazia,    \
+                              1 ,1 ,'N' ,'N' ,'N' ,1 ,0 )", nErro, aMsg);
+Se(nErro = 0){
+  FinalizarTransacao();
+}
+Senao {
+  aErroExecucao = "Não foi possivel inserir os dados na tabela R038APU, favor verificar os logs do WebServices";
+  cadastro_colaborador.erroexecucao = aErroExecucao;
+  DesfazerTransacao();
+  Vapara FimWs;
+}
+
+
+@ INSERT - R038HVI @
+IniciarTransacao();
+ExecSqlEx("INSERT INTO R038HVI (NumEmp,TipCol,NumCad,DatAlt,CodVin,StaHis)    \
+                      VALUES (:nNumEmp,1,:nNumCad,:dDatadm,:nCodVinHvi,1)", nErro, aMsg);                      
+Se(nErro = 0){
+  FinalizarTransacao();
+}
+Senao {
+  aErroExecucao = "Não foi possivel inserir os dados na tabela R038HVI, favor verificar os logs do WebServices";
+  cadastro_colaborador.erroexecucao = aErroExecucao;
+  DesfazerTransacao();
+  Vapara FimWs;
+}
+ 
+                     
+@ INSERT - R038HSI @
+IniciarTransacao();
+ExecSqlEx("INSERT INTO R038HSI (NumEmp,TipCol,NumCad,DatAlt,CodSin,SocSin,    \
+                              StaHis,PossBH,UsaBhr,CodBHr)                    \
+                      VALUES (:nNumEmp,1,:nNumCad,:dDatadm,:ncodSinHsi,       \
+                              'N' ,1 ,' ' ,0 ,0)", nErro, aMsg);
+Se(nErro = 0){
+  FinalizarTransacao();
+}
+Senao {
+  aErroExecucao = "Não foi possivel inserir os dados na tabela R038HSI, favor verificar os logs do WebServices";
+  cadastro_colaborador.erroexecucao = aErroExecucao;
+  DesfazerTransacao();
+  Vapara FimWs;
+}
+
+
+@ INSERT - R038CAT @
+IniciarTransacao();
+ExecSqlEx("INSERT INTO R038CAT (NumEmp,TipCol,NumCad,DatAlt,CodCat,StaHis)    \
+                      VALUES (:nNumEmp,1,:nNumCad,:dDatadm,:nCatEso,1)", nErro, aMsg);
+Se(nErro = 0){
+  FinalizarTransacao();
+}
+Senao {
+  aErroExecucao = "Não foi possivel inserir os dados na tabela R038CAT, favor verificar os logs do WebServices";
+  cadastro_colaborador.erroexecucao = aErroExecucao;
+  DesfazerTransacao();
+  Vapara FimWs;
+}
+
+
+@ INSERT - R038HCA @
+IniciarTransacao();
+ExecSqlEx("INSERT INTO R038HCA (NumEmp,TipCol,NumCad,DatAlt,EstCar,CodCar,    \
+                              CodMot,StaHis,CarVag,CodCrr,FunEso)             \
+                      VALUES (:nNumEmp,1,:nNumCad,:dDatadm,:nestcar,          \
+                              :acodcar,1,1,:acodcar,0,' ')", nErro, aMsg);
+Se(nErro = 0){
+  FinalizarTransacao();
+}
+Senao {
+  aErroExecucao = "Não foi possivel inserir os dados na tabela R038HCA, favor verificar os logs do WebServices";
+  cadastro_colaborador.erroexecucao = aErroExecucao;
+  DesfazerTransacao();
+  Vapara FimWs;
+}
+
+
+@ INSERT - R038HES @
+IniciarTransacao();
+ExecSqlEx("INSERT INTO R038HES (NumEmp,TipCol,NumCad,DatAlt,CodEsc,CodTma,    \
+                              TurInt,HorBas,HorSab,HorSem,HorDsr,StaAcc,      \
+                              StaHis,CodEqp,CodCat,DesSim)                    \  
+                      VALUES (:nNumEmp,1,:nNumCad,:dDatadm,:ncodesc,          \
+                              :ncodTma,0,0,0,0,0,0,1,0,0,' ')", nErro, aMsg);
+Se(nErro = 0){
+  FinalizarTransacao();
+}
+Senao {
+  aErroExecucao = "Não foi possivel inserir os dados na tabela R038HES, favor verificar os logs do WebServices";
+  cadastro_colaborador.erroexecucao = aErroExecucao;
+  DesfazerTransacao();
+  Vapara FimWs;
+}
+
+
+@ INSERT - R038HFI @
+IniciarTransacao();
+ExecSqlEx("INSERT INTO R038HFI (NumEmp,TipCol,NumCad,DatAlt,EmpAtu,CodTap,    \
+                              EstPos,PosTra,CodFil,TabOrg,NumLoc,CadAtu,      \
+                              CodCcu,NatDes,TipAdm,FicReg,ConTov,StaAcc,      \
+                              MotPos,EstCar,CodCar,CodMot,CodEsc,CodTma,      \
+                              TurInt,HorBas,HorSab,HorSem,HorDsr,CodMts,      \
+                              CodEst,ValSal,CplSal,TipSal,TipEst,ClaSal,      \
+                              NivSal,PerDes,PerRea,CodSin,NumCra,StaHis,      \
+                              ConFin,CodVin,CarVag,SocSin,AdmEso,TraBHr,      \
+                              CodBHr)                                         \         
+                     VALUES  (:nNumEmp,1,:nNumCad,:dDatadm,:nNumEmp,1,        \
+                              :nestpos,:aposTra,:ncodfil,:nTaborg,:nnumloc,   \
+                              :nNumCad,:acodCcu,0,:ntipAdmHfi,0,' ',0,1,      \
+                              :nestcar,:acodcar,1,:ncodesc,:ncodtma,0,0,0,0,  \
+                              0,0,0,:nvalSalHsa,0,:ntipSalHsa,0,' ',' ',0,0,  \
+                              :ncodSinHsi,:aNumCra,1,0,:nCodVinHvi,' ',' ',   \
+                              :nadmeSo,0,0)", nErro, aMsg);
+Se(nErro = 0){
+  FinalizarTransacao();
+}
+Senao {
+  aErroExecucao = "Não foi possivel inserir os dados na tabela R038HFI, favor verificar os logs do WebServices";
+  cadastro_colaborador.erroexecucao = aErroExecucao;
+  DesfazerTransacao();
+  Vapara FimWs;
+}
+   
+                   
+@ INSERT - R038HSA @
+IniciarTransacao();
+ExecSqlEx("INSERT INTO R038HSA (numemp,tipcol,numcad,datalt,seqalt,codmot,    \
+                              codest,valsal,cplsal,tipsal,tipest,clasal,      \
+                              nivsal,perdes,perrea,stahis,codidm,salest,      \
+                              cplest)                                         \
+                     VALUES  (:nNumEmp,1,:nNumCad,:dDatadm,1,1,0,             \
+                              :nvalSalHsa,0,:ntipSalHsa,0,' ',' ',0,0,1,      \
+                              0,0,0)", nErro, aMsg);
+Se(nErro = 0){
+  FinalizarTransacao();
+}
+Senao {
+  aErroExecucao = "Não foi possivel inserir os dados na tabela R038HSA, favor verificar os logs do WebServices";
+  cadastro_colaborador.erroexecucao = aErroExecucao;
+  DesfazerTransacao();
+  Vapara FimWs;
+}
+    
+           
+@ INSERT - R038HLO @
+IniciarTransacao();                              
+ExecSqlEx("INSERT INTO R038HLO (NumEmp,TipCol,NumCad,DatAlt,TabOrg,NumLoc,    \
+                              ConTov,ConTos,StaHis,LocTra,MotAlt)             \
+                      VALUES (:nNumEmp,1,:nNumCad,:dDatadm,:nTaborg,          \
+                              :nnumloc,'N','N',1,:nlocTraHlo,0)", nErro, aMsg);
+Se(nErro = 0){
+  FinalizarTransacao();
+}
+Senao {
+  aErroExecucao = "Não foi possivel inserir os dados na tabela R038HLO, favor verificar os logs do WebServices";
+  cadastro_colaborador.erroexecucao = aErroExecucao;
+  DesfazerTransacao();
+  Vapara FimWs;
+}
+
+
+@ INSERT - R038HCC @
+IniciarTransacao();
+ExecSqlEx("INSERT INTO R038HCC (NumEmp,TipCol,NumCad,DatAlt,CodCcu,           \
+                              StaHis,ConFin)                                  \
+                      VALUES (:nNumEmp,1,:nNumCad,:dDatadm,:acodCcu,1,0)", nErro, aMsg);
+Se(nErro = 0){
+  FinalizarTransacao();
+}
+Senao {
+  aErroExecucao = "Não foi possivel inserir os dados na tabela R038HCC, favor verificar os logs do WebServices";
+  cadastro_colaborador.erroexecucao = aErroExecucao;
+  DesfazerTransacao();
+  Vapara FimWs;
+}
+
+
+@ INSERT - R034ADM @
+IniciarTransacao();
+ExecSqlEx("INSERT INTO R034ADM (NumEmp,TipCol,NumCad,DatAdm,AdmEso,IndAdm,    \
+                              CodPro,TInAnt,CnpjAn,AdmAnt,MatAnt,OnuSce,      \
+                              CatAnt,ResOnu,SegDes)                           \
+                      VALUES (:nNumEmp,1,:nNumCad,:dDatadm,:nadmeSo,          \
+                              :nindAdm,0,0,0,:dDatVazia,' ',0 ,0,' ',0)", nErro, aMsg);
+Se(nErro = 0){
+  FinalizarTransacao();
+}
+Senao {
+  aErroExecucao = "Não foi possivel inserir os dados na tabela R034ADM, favor verificar os logs do WebServices";
+  cadastro_colaborador.erroexecucao = aErroExecucao;
+  DesfazerTransacao();
+  Vapara FimWs;
+}
+ 
+     
+@ INSERT - R038HCH @
+IniciarTransacao();
+ExecSqlEx("INSERT INTO R038HCH (tipcra,numemp,tipcol,numcad,datini,horini,    \
+                              viacra,recepr,staatu,staacc,numcra,datfim,      \
+                              horfim)                                         \
+                      VALUES (1,:nNumEmp,1,:nNumCad,:dDatadm,0,0,' ',1,1,     \
+                              :aNumCra,:dDatVazia,0)", nErro, aMsg);                        
+Se(nErro = 0){
+  FinalizarTransacao();
+}
+Senao {
+  aErroExecucao = "Não foi possivel inserir os dados na tabela R038HCH, favor verificar os logs do WebServices";
+  cadastro_colaborador.erroexecucao = aErroExecucao;
+  DesfazerTransacao();
+  Vapara FimWs;
+}
+
+
+@ INSERT - R034TRI @
+IniciarTransacao();
+ExecSqlEx("INSERT INTO R034TRI (NumEmp,TipCol,NumCad,CriPes)                  \
+                      VALUES (:nNumEmp ,1 ,:nNumCad ,'S' )", nErro, aMsg);
+Se(nErro = 0){
+  FinalizarTransacao();
+}
+Senao {
+  aErroExecucao = "Não foi possivel inserir os dados na tabela R034TRI, favor verificar os logs do WebServices";
+  cadastro_colaborador.erroexecucao = aErroExecucao;
+  DesfazerTransacao();
+  Vapara FimWs;
+}
+
+
+@ INSERT - R034DAC @
+IniciarTransacao();
+ExecSqlEx("INSERT INTO R034DAC (NumEmp,TipCol,NumCad,VerPrm,CodPrm,PrmFer,    \
+                              PrmSab,PrmDom,PrmVis,ConFai,ConAdp,ConCre,      \
+                              ConIAl,TemAlm,BloFal,RecVis,AutAgv,AutAsa,      \
+                              AutExt,UsaFro,GraCon,ConPac,TemPac,ConRee,      \
+                              TolAcp,UsaBio,DatAso,DatTse,AutDbl,VerAfa,      \
+                              AprSol,MonLot,ConInt,TolInt,IntBDC,DatInc,      \
+                              HorInc,StaBDC,ConRea,UtiChv,RepOnl,SeqReg,      \
+                              UsaRfa)                                         \
+                      VALUES (:nNumEmp ,1 ,:nNumCad ,'S' ,0 ,0 ,0 ,0 ,0 ,     \
+                              0 ,'S' ,0 ,'N' ,0 ,'S' ,'N' ,'N' ,'N' ,'N' ,    \
+                              'N' ,50 ,'N' ,0 ,'N' ,0 ,1 ,:dDatVazia,         \
+                              :dDatVazia ,'N' ,'S' ,'N' ,'N' ,'N' ,0 ,'N',    \
+                              :dDatVazia ,0 ,0 ,'S' ,'N' ,'S' ,0.0 ,'N')", nErro, aMsg);    
+Se(nErro = 0){
+  FinalizarTransacao();
+}
+Senao {
+  aErroExecucao = "Não foi possivel inserir os dados na tabela R034DAC, favor verificar os logs do WebServices";
+  cadastro_colaborador.erroexecucao = aErroExecucao;
+  DesfazerTransacao();
+  Vapara FimWs;
+}
+
+
+@ INSERT - R038HCS @
+IniciarTransacao();
+ExecSqlEx("INSERT INTO R038HCS (NumEmp,TipCol,NumCad,DatAlt,CatSef,StaHis)    \
+                      VALUES (:nNumEmp ,1 ,:nNumCad , :dDatadm ,:ncatSef ,1 )", nErro, aMsg);
+Se(nErro = 0){
+  FinalizarTransacao();
+}
+Senao {
+  aErroExecucao = "Não foi possivel inserir os dados na tabela R038HCS, favor verificar os logs do WebServices";
+  cadastro_colaborador.erroexecucao = aErroExecucao;
+  DesfazerTransacao();
+  Vapara FimWs;
+}
+
+
+@ INSERT - R040PER @
+IniciarTransacao();
+ExecSqlEx("INSERT INTO R040PER (NumEmp,TipCol,NumCad,IniPer,FimPer,QtdDir,    \
+                              QtdFal,QtdAfa,QtdLir,QtdDeb,QtdLin,QtdMil,      \
+                              QtdAbo,QtdSld,QtdAbn,QtdAsd,QtdGas,AvoFer,      \
+                              AvoPer,DiaCom,DiaDev,QtdPng,SitPer,AltFim,      \
+                              PerSus,PagAdi,QtdUte,TotUte,TotU30,LimCon,      \
+                              DiaInt,DatInt)                                  \
+                      VALUES (:nNumEmp ,1 ,:nNumCad , :dDatadm ,:dDatVazia ,  \
+                              0.0 ,0.0 ,0.0 ,0.0 ,0.0 ,0.0 ,0.0 ,0.0 ,        \
+                              0.0 ,0.0 ,0.0 ,0.0 ,0 ,0 ,0 ,0 ,0.0 ,0 ,        \
+                              ' ' ,' ' ,' ' ,0.0 ,0 ,0 ,:dDatVazia ,0.0 ,     \
+                              :dDatVazia)", nErro, aMsg);
+Se(nErro = 0){
+  FinalizarTransacao();
+}
+Senao {
+  aErroExecucao = "Não foi possivel inserir os dados na tabela R040PER, favor verificar os logs do WebServices";
+  cadastro_colaborador.erroexecucao = aErroExecucao;
+  DesfazerTransacao();
+  Vapara FimWs;
+}
+
+
+@ ====== DADOS DA FICHA COMPLEMENTAR ====== @ 
+FichaComplementar:
+
+
+aendRua = cadastro_colaborador.endRua;
+aendnum = cadastro_colaborador.endnum;
+aEndCpl = cadastro_colaborador.endcpl;
+aNomBai = cadastro_colaborador.NomBai;
+nCodCid = cadastro_colaborador.codcid;
+acodEst = cadastro_colaborador.codEst;
+anumTel = cadastro_colaborador.numTel;
+aemaPar = cadastro_colaborador.empar;  
+aemaCom = cadastro_colaborador.emaCom;
+nCidnas = cadastro_colaborador.cidnas; 
+aestNas = cadastro_colaborador.estnas;
+anumCid = cadastro_colaborador.numcid;
+aestCid = cadastro_colaborador.estCid;
+ncidemi = cadastro_colaborador.cidemi;
+aEmiCid = cadastro_colaborador.emicid; 
+anumCnh = cadastro_colaborador.numCnh;
+acatCnh = cadastro_colaborador.catCnh;
+anumRes = cadastro_colaborador.numRes;
+acatRes = cadastro_colaborador.catRes; 
+ndurCon = cadastro_colaborador.durCon;
+nproCon = cadastro_colaborador.proCon;
+azonEle = cadastro_colaborador.zonEle;
+asecEle = cadastro_colaborador.secEle;
+
+AlfaPuro(aendRua,1,1);
+AlfaPuro(aEndCpl,1,1);
+AlfaPuro(aCodBai,1,1);
+
+@ Numero do titulo de eleitor @
+anumEle = cadastro_colaborador.numEle;
+TrocaString(anumEle, ".", "", anumEle);
+TrocaString(anumEle, "-", "", anumEle);
+TrocaString(anumEle, " ", "", anumEle);
+
+@ Tipo de logradouro do endereço @
+aAux = cadastro_colaborador.tipLgr;
+PosicaoAlfa("-", aAux, PosStr);
+CopiarAlfa (aAux, 0, PosStr-2);
+atipLgr = aAux;
+
+@ CEP @
+aAux = cadastro_colaborador.codcep;
+TrocaString(aAux, ".", "", aAux);
+TrocaString(aAux, "-", "", aAux);
+AlfaparaInt(aAux, nCodCEP);
+
+@ Data de expedição do registro profissional @
+Definir Data dDatExp; 
+dDatExp = dDatadm + ndurCon + nproCon - 1;
+
+@ Consistir cidade @
+Se(ncodcid = 0){
+  ncodcid = 4106902; @ Curitiba @
+}
+
+@ Busca o código do bairro @         
+Cur_Aux.sql "SELECT CODBAI FROM R074BAI WHERE CODCID = :nCodCid AND NOMBAI = :aNomBai";
+Cur_Aux.AbrirCursor();
+Se(Cur_Aux.achou){
+  nCodBai = Cur_Aux.Codbai;
+}
+Senao {
+  Cur_Aux.FecharCursor(); 
+  Cur_Aux.sql "SELECT CODBAI FROM R074BAI WHERE CODCID = :nCodCid ORDER BY CODBAI DESC";
+  Cur_Aux.AbrirCursor();
+  Se(Cur_Aux.achou) {
+    nCodBai = Cur_Aux.Codbai + 1;
+  }
+  Cur_Aux.FecharCursor(); 
+  ExecSql "INSERT INTO R074BAI(CODCID, CODBAI, NOMBAI) VALUES (:nCodCid,:nCodBai,:aNomBai)";     
+}
+Cur_Aux.FecharCursor();
+
+
+@ Busca o código do Pais @
+Cur_Aux.sql "SELECT CODPAI FROM R074CID WHERE CODCID = :nCodCid";
+Cur_Aux.abrircursor();
+Se(Cur_Aux.achou){
+  ncodPai = Cur_Aux.codpai;
+}
+Cur_Aux.fecharcursor();
+
+@ Busca o código do pais de nascimento @
+Cur_Aux.sql "SELECT CODPAI FROM R074CID WHERE CODCID = :nCidnas AND ESTCID = :aestnas";
+Cur_Aux.abrircursor();
+Se(Cur_Aux.achou){
+  npaiNas = Cur_Aux.codpai;
+}
+Cur_Aux.fecharcursor();
+
+@ Verifica se o registro já não foi populado na base @
+Cur_Aux.sql "select numcad from r034cpl where numcad = :nNumcad and numemp = :nNumEmp and tipcol = 1";
+Cur_Aux.abrircursor();
+Se(Cur_Aux.NaoAchou) {  
+    
+    @ Se não encontrar, realiza o INSERT @
+    IniciarTransacao();                                                                                                                              
+    ExecSqlEx("INSERT INTO R034CPL (                                                                                                                 \
+            numemp,numcad,codcid,codbai,painas,estnas,codpai,codest,vencnh,                                                                          \
+            ultexm,datcnh,procon,catres,numres,durcon,catcnh,endrua,tiplgr,                                                                          \
+            endcep,numtel,endcpl,endnum,ficreg,zonele,dexcid,estcid,numcnh,                                                                          \
+            numele,secele,ccinas,cidemi,emicid,numcid,datexp,emacom,emapar,                                                                          \
+                                                                                                                                                     \
+            proexm,incpsa,excpsa,altipe,dvapsp,datpor,dempsp,tercon,pricnh,                                                                          \
+            dexric,datven,fimarm,iniarm,demciv,                                                                                                      \
+                                                                                                                                                     \
+            tipcol,docidn,tipcer,estpad,sitipe,matipe,cidciv,cidric,altsen,                                                                          \
+            catvei,dditel,dddtel,codrad,paipsp,codqua,codprf,                                                                                        \
+            codcas,codrlr,nmddi2,                                                                                                                    \
+                                                                                                                                                     \
+            matpsa,numric,seqreg,                                                                                                                    \
+                                                                                                                                                     \
+            nomrad,numram,numpor,estric,estciv,carciv,folciv,emipsp,numpsp,                                                                          \
+            emiric,regmte,objdet,nomsoc,estcnh,orgcnh,nomcom,sitreg,nroarm,                                                                          \
+            andtrb,pretrb,carsus,livciv,matciv,matccv,nasviv,nmram2,nmtel2,                                                                          \
+            nmddd2,sencan,nifext,estpsp,regcon,codpsa,tippsa,nivsal,clasal,                                                                          \
+            claass,maspsa)                                                                                                                           \
+                                                                                                                                                     \
+            VALUES (                                                                                                                                 \
+            :nNumEmp,:nNumCad,:nCodCid,:nCodBai,:npainas,:aestnas,:ncodPai,:acodest,:dvenCnh,                                                        \
+            :dultExm,:ddatCnh,:nproCon,:acatRes,:anumRes,:ndurCon,:acatCnh,:aendrua,:atipLgr,                                                        \
+            :nCodCEP,:anumTel,:aEndCpl,:aendnum,:nNumCad,:azonEle,:ddexCid,:aestCid,:anumCnh,                                                        \
+            :anumEle,:asecEle,:nCidnas,:ncidemi,:aEmicid,:anumCid,:dDatExp,:aemaCom,:aemaPar,                                                        \
+                                                                                                                                                     \
+            :dDatVazia, :dDatVazia, :dDatVazia, :dDatVazia, :dDatVazia, :dDatVazia, :dDatVazia, :dDatVazia, :dDatVazia,                              \
+            :dDatVazia, :dDatVazia, :dDatVazia, :dDatVazia, :dDatVazia,                                                                              \
+                                                                                                                                                     \
+            1,1,'1',0,0,0,0,0,0,                                                                                                                     \
+            0,0,0,0,0,0,0,                                                                                                                           \
+            0,0,0,                                                                                                                                   \
+                                                                                                                                                     \
+            0.0,0.0,0.0,                                                                                                                             \
+                                                                                                                                                     \
+            :aEspacoBranco,:aEspacoBranco,:aEspacoBranco,:aEspacoBranco,:aEspacoBranco,:aEspacoBranco,:aEspacoBranco,:aEspacoBranco,:aEspacoBranco,  \
+            :aEspacoBranco,:aEspacoBranco,:aEspacoBranco,:aEspacoBranco,:aEspacoBranco,:aEspacoBranco,:aEspacoBranco,:aEspacoBranco,:aEspacoBranco,  \
+            :aEspacoBranco,:aEspacoBranco,:aEspacoBranco,:aEspacoBranco,:aEspacoBranco,:aEspacoBranco,:aEspacoBranco,:aEspacoBranco,:aEspacoBranco,  \
+            :aEspacoBranco,:aEspacoBranco,:aEspacoBranco,:aEspacoBranco,:aEspacoBranco,:aEspacoBranco,:aEspacoBranco,:aEspacoBranco,:aEspacoBranco,  \
+            'N',:aEspacoBranco)", nErro, aMsg);
+    Se(nErro = 0){
+      FinalizarTransacao();
+    }
+    Senao {
+      aErroExecucao = "Não foi possivel inserir os dados na tabela R034CPL, favor verificar os logs do WebServices";
+      cadastro_colaborador.erroexecucao = aErroExecucao;
+      DesfazerTransacao();
+      Vapara FimWs;
+    }                                        
+} 
+Cur_Aux.FecharCursor();
+
+
+@ ===================================================== @
+cadastro_colaborador.numcad = nNumCad;
+cadastro_colaborador.tipcol = 1; 
+
+
+cadastro_colaborador.aret = "Todos os dados foram incluidos com sucesso!";  
+FimWs: 
+x=1;  
+
+/*@ ========= Mudança da DatAdm ========= @
 Se((cadastro_colaborador.Datadm <> "") e (cadastro_colaborador.Datadm <> " ")) { 
   aAno = cadastro_colaborador.Datadm;
   aMes = cadastro_colaborador.Datadm;
@@ -77,9 +1028,9 @@ Se((cadastro_colaborador.Datadm <> "") e (cadastro_colaborador.Datadm <> " ")) {
 }
 Senao {
   MontaData (31, 12, 1900, dDatadm);
-}
-  
-@ ========= mudança da Dexcpt ========= @
+}*/
+
+/*@ ========= mudança da Dexcpt ========= @
 Se((cadastro_colaborador.Dexcpt <> "") e (cadastro_colaborador.Dexcpt <> " ")) { 
   aAno = cadastro_colaborador.Dexcpt;
   aMes = cadastro_colaborador.Dexcpt;
@@ -94,9 +1045,9 @@ Se((cadastro_colaborador.Dexcpt <> "") e (cadastro_colaborador.Dexcpt <> " ")) {
 }
 Senao {
   MontaData (31, 12, 1900, dDexcpt);
-}
-  
-/*******mudança da Datnas************/
+}*/
+
+/*@******mudança da Datnas***********@
 Se((cadastro_colaborador.Datnas <> "") e (cadastro_colaborador.Datnas <> " ")) { 
   aAno = cadastro_colaborador.Datnas;
   aMes = cadastro_colaborador.Datnas;
@@ -111,9 +1062,9 @@ Se((cadastro_colaborador.Datnas <> "") e (cadastro_colaborador.Datnas <> " ")) {
 }
 Senao {
   MontaData (31, 12, 1900, dDatnas); 
-} 
-  
-/*******mudança da dexcid************/
+}*/
+
+/*@******mudança da dexcid***********@
 Se((cadastro_colaborador.dexcid <> "") e (cadastro_colaborador.dexcid <> " ")) { 
   aAno = cadastro_colaborador.dexcid;
   aMes = cadastro_colaborador.dexcid;
@@ -128,9 +1079,9 @@ Se((cadastro_colaborador.dexcid <> "") e (cadastro_colaborador.dexcid <> " ")) {
 }
 Senao {
   MontaData (31, 12, 1900, ddexcid);
-}
+}  */
 
-/*******mudança da datcnh************/
+/*@******mudança da datcnh***********@
 Se((cadastro_colaborador.datcnh <> "") e (cadastro_colaborador.datcnh <> " ")) { 
   aAno = cadastro_colaborador.datcnh;
   aMes = cadastro_colaborador.datcnh;
@@ -145,10 +1096,9 @@ Se((cadastro_colaborador.datcnh <> "") e (cadastro_colaborador.datcnh <> " ")) {
 }
 Senao {
   MontaData (31, 12, 1900, ddatcnh);
-} 
-  
-  
-/*******mudança da venCnh************/
+} */
+
+/*@******mudança da venCnh***********@
 Se((cadastro_colaborador.venCnh <> "") e (cadastro_colaborador.venCnh <> " ")) { 
   aAno = cadastro_colaborador.venCnh;
   aMes = cadastro_colaborador.venCnh;
@@ -163,10 +1113,9 @@ Se((cadastro_colaborador.venCnh <> "") e (cadastro_colaborador.venCnh <> " ")) {
 }
 Senao {
   MontaData (31, 12, 1900, dvenCnh);  
-} 
-  
-  
-/*******mudança da ultExm************/
+}*/   
+
+/*@******mudança da ultExm***********@
 Se((cadastro_colaborador.ultExm <> "") e (cadastro_colaborador.ultExm <> " ")) { 
   aAno = cadastro_colaborador.ultExm;
   aMes = cadastro_colaborador.ultExm;
@@ -181,10 +1130,9 @@ Se((cadastro_colaborador.ultExm <> "") e (cadastro_colaborador.ultExm <> " ")) {
 }
 Senao {
   MontaData (31, 12, 1900, dultExm);  
-}
+}*/
   
-  
-/*******mudança da dvlest************/
+/*@******mudança da dvlest***********@
 Se((cadastro_colaborador.dvlest <> "") e (cadastro_colaborador.dvlest <> " ")) { 
   aAno = cadastro_colaborador.dvlest;
   aMes = cadastro_colaborador.dvlest;
@@ -200,98 +1148,104 @@ Se((cadastro_colaborador.dvlest <> "") e (cadastro_colaborador.dvlest <> " ")) {
 Senao {
   MontaData (31, 12, 1900, ddvlest);      
 }
-                
- 
- 
-                                           
+
+@ ===================================================== @                                      
 nNumEmp = cadastro_colaborador.NumEmp;
 Se(cadastro_colaborador.numcad_entrada = 0) {
-  Cur_R034FUN.sql "SELECT NUMCAD FROM R034FUN WHERE NUMEMP = :nNumEmp and tipcol = 1 and numcad < 8000 ORDER BY NUMCAD DESC";
+  Cur_R034FUN.sql "SELECT NUMCAD            \
+                     FROM R034FUN           \
+                    WHERE NUMEMP = :nNumEmp \
+                      and tipcol = 1        \
+                      and numcad < 8000     \
+                 ORDER BY NUMCAD DESC";
   Cur_R034FUN.AbrirCursor();
-  Se (Cur_R034FUN.Achou){
+  Se(Cur_R034FUN.Achou){
     nNumCad = Cur_R034FUN.NumCad + 1;
   }
   Cur_R034FUN.FecharCursor();
 }
-senao {
+Senao {
  nNumcad = cadastro_colaborador.numcad_entrada;   
 }
 
-cur_aux.sql "SELECT taborg, datalt FROM r030org where numemp = :nNumEmp ORDER BY datalt DESC";
-cur_aux.AbrirCursor();
-Se(cur_aux.Achou){
-  nTaborg = cur_aux.taborg;
+@ ===================================================== @
+Cur_Aux.sql "SELECT TABORG, DATALT    \
+               FROM R030ORG           \
+              WHERE NUMEMP = :nNumEmp \
+           ORDER BY datalt DESC";
+Cur_Aux.AbrirCursor();
+Se(Cur_Aux.Achou){
+  nTabOrg = Cur_Aux.taborg;
 }
-cur_aux.FecharCursor();     
+Cur_Aux.FecharCursor();     
 
-
-
+@ ===================================================== @
 aAux = cadastro_colaborador.codloc;
 nnumloc = RetornaNumLoc(nTaborg, aAux);  
-cur_aux.sql "SELECT estpos, datalt FROM r030pos where numemp = :nNumEmp ORDER BY datalt DESC";
-cur_aux.AbrirCursor();
-Se(cur_aux.Achou) {
-  nestpos = cur_aux.estpos;
+Cur_Aux.sql "SELECT estpos, datalt FROM r030pos where numemp = :nNumEmp ORDER BY datalt DESC";
+Cur_Aux.AbrirCursor();
+Se(Cur_Aux.Achou) {
+  nestpos = Cur_Aux.estpos;
 }
-cur_aux.FecharCursor();
+Cur_Aux.FecharCursor();
 
-
-cur_aux.sql "SELECT postra FROM r017pos where estpos = :nEstPos and datext = :dDatVazia ";
-cur_aux.AbrirCursor();
-enquanto (cur_aux.Achou) {
-  aAux = Cur_aux.postra;
+@ ===================================================== @
+Cur_Aux.sql "SELECT postra FROM r017pos where estpos = :nEstPos and datext = :dDatVazia ";
+Cur_Aux.AbrirCursor();
+enquanto (Cur_Aux.Achou) {
+  aAux = Cur_Aux.postra;
   ALfaPuro(aAux,1,1);
   Se(aAux = cadastro_colaborador.posTra){
-    aposTra = Cur_aux.postra;
+    aposTra = Cur_Aux.postra;
   }
-  cur_aux.proximo();
+  Cur_Aux.proximo();
 }  
-cur_aux.FecharCursor();
+Cur_Aux.FecharCursor();
 
 acodCcu =  cadastro_colaborador.codCcu;
 ncodesc =  cadastro_colaborador.codesc;
 ncodfil =  cadastro_colaborador.codfil;
 
-
-cur_aux.sql "SELECT estcar, datalt FROM r030car where numemp = :nNumEmp ORDER BY datalt DESC";
-cur_aux.AbrirCursor();
-Se (cur_aux.Achou) {
-  nestcar = cur_aux.estcar;
+@ ===================================================== @
+Cur_Aux.sql "SELECT estcar, datalt FROM r030car where numemp = :nNumEmp ORDER BY datalt DESC";
+Cur_Aux.AbrirCursor();
+Se (Cur_Aux.Achou) {
+  nestcar = Cur_Aux.estcar;
 }
-cur_aux.FecharCursor();
+Cur_Aux.FecharCursor();
 
 acodcar =  cadastro_colaborador.codcar;
 ncodTma = cadastro_colaborador.codTmaHes;
 
 
-/************* Cadastro do banco ***************************/
-nCodBan = cadastro_colaborador.codban;
-cur_aux.sql "select nomban from r012ban where codban = :nCodban";
-cur_aux.AbrirCursor();
-Se(cur_aux.achou) {
- nCodBan = cadastro_colaborador.codban;
+@ ===================================================== @
+Definir Alfa aCodBan;
+aCodBan = cadastro_colaborador.codban;
+AlfaparaInt(aCodBan, nCodBan);
+Cur_Aux.sql "SELECT NOMBAN FROM R012BAN WHERE CODBAN = :nCodban";
+Cur_Aux.AbrirCursor();
+Se(Cur_Aux.achou) {
+ aNomBan = Cur_Aux.NomBan;
 }
 Senao {
    aNomBan = cadastro_colaborador.nomBan; 
    ExecSql "insert into r012ban(codban, nomban) values(:nCodBan,:aNomBan)";     
 }
-cur_aux.FecharCursor();  
+Cur_Aux.FecharCursor();  
   
 aNomAge = cadastro_colaborador.nomage;
 aDigAge = cadastro_colaborador.digage;
 
 
-
-
-/************* Cadastro da Agencia ***************************/
+@ ===================================================== @
 aAux = cadastro_colaborador.codage;
 AlfaparaInt(aAux,nCodAge);
-cur_aux.sql "select nomage from r012age where codban = :nCodban and codage = :nCodAge";
-cur_aux.AbrirCursor();
-Se(cur_aux.NaoAchou) {
+Cur_Aux.sql "select nomage from r012age where codban = :nCodban and codage = :nCodAge";
+Cur_Aux.AbrirCursor();
+Se(Cur_Aux.NaoAchou) {
    ExecSql "insert into r012age(codban,codage, nomage, digage) values(:nCodBan,:nCodAge,:aNomAge, :aDigAge)";    
 } 
-cur_aux.FecharCursor();      
+Cur_Aux.FecharCursor();      
     
     
     
@@ -302,6 +1256,8 @@ AlfaParaInt(aAux, nNumcra);
 
 adigcon = cadastro_colaborador.digcon;
 
+
+@ ===================================================== @
 aAux = cadastro_colaborador.tipSal;
 PosicaoAlfa("-",aAux, PosStr);
 CopiarAlfa (aAux, 0,PosStr-2);
@@ -310,12 +1266,16 @@ ntipSalHsa = nAux;
 
 nvalSalHsa = cadastro_colaborador.ValSal;
 
+
+@ ===================================================== @
 aAux = cadastro_colaborador.tipCon;
 PosicaoAlfa("-",aAux, PosStr);
 CopiarAlfa (aAux, 0,PosStr-2);
 AlfaParaInt(aAux, nAux);
 ntipCon = nAux;
 
+
+@ ===================================================== @
 aAux = cadastro_colaborador.TipSex;
 PosicaoAlfa("-",aAux, PosStr);
 CopiarAlfa (aAux, 0,PosStr-2);
@@ -323,6 +1283,8 @@ aTipSex = aAux;
 
 ncodNac = cadastro_colaborador.codNac;
 
+
+@ ===================================================== @
 aAux = cadastro_colaborador.estCil;
 PosicaoAlfa("-",aAux, PosStr);
 CopiarAlfa (aAux, 0,PosStr-2);
@@ -331,14 +1293,18 @@ nestCiv = nAux;
 
 ngraIns = cadastro_colaborador.graIns;
 
+
+@ ===================================================== @
 aAux = cadastro_colaborador.nomfun;
 AlfaPuro(aAux,1,1);
 anomfun = aAux;
 
+@ ===================================================== @
 PosicaoAlfa(" ",aAux, nPos);
 CopiarAlfa(aAux,1,nPos -1);
 aApeFun = aAux;
 
+@ ===================================================== @
 aAux = cadastro_colaborador.tipAdmHfi;
 PosicaoAlfa("-",aAux, PosStr);
 CopiarAlfa (aAux, 0,PosStr-2);
@@ -348,6 +1314,8 @@ Se(ntipAdmHfi = 0){
   ntipAdmHfi = 2;
 }
 
+
+@ ===================================================== @
 Se(cadastro_colaborador.pagSin = "Sim"){
   aPagSin = "S";
 }
@@ -355,53 +1323,75 @@ Senao {
   aPagSin = "N";
 }  
 
+@ ===================================================== @
 nConBan = cadastro_colaborador.conBan;
 
+
+@ ===================================================== @
 amodPag = "R";
 Se((nCodBan = 0) ou (nCodAge = 0)){ 
   amodPag = "D";
 }
 
+
+@ ===================================================== @
 aAux = cadastro_colaborador.numCtp;
 AlfaPuro(aAux,1,1); 
 AlfaParaInt(aAux, nnumCtp);   
 
+
+@ ===================================================== @
 aAux = cadastro_colaborador.numCpf;
 TrocaString(aAux,".","",aAux);
 TrocaString(aAux,"-","",aAux);
 AlfaParaInt(aAux, numCpf);
 
+@ ===================================================== @
 aAux = cadastro_colaborador.numPis;
 TrocaString(aAux,".","",aAux);
 AlfaParaInt(aAux, nnumPis);
+
+
 
 IntParaAlfa(nnumcad, aAux);
 IntParaAlfa(nNumEmp, aAux2);
 aNumCra = aAux2+aAux;
     
-
+@ ===================================================== @
 nCodEsc = cadastro_colaborador.codesc;
-ncodSinHsi = cadastro_colaborador.CodSin;  
-aestCtp = cadastro_colaborador.estCtp; 
+ncodSinHsi = cadastro_colaborador.CodSin; 
+aEstCtp = cadastro_colaborador.estCtp;
+
+
 aserCtp = cadastro_colaborador.serCtp;    
 adigCar = cadastro_colaborador.digCar; 
 
-
+@ ===================================================== @
 aAux = cadastro_colaborador.tpCtBa;
 PosicaoAlfa("-",aAux, PosStr);
 CopiarAlfa (aAux, 0,PosStr-2);
 AlfaParaInt(aAux, ntpCtBa); 
 
-cur_aux.sql "select numcad from r034fun where datadm = :dDatadm and numcpf = :numCpf and sitafa = 1 order by numcad desc";
-Cur_aux.abrircursor();
+
+
+
+@ ===================================================== @
+Cur_Aux.sql "select numcad            \
+               from r034fun           \
+              where datadm = :dDatadm \
+                and numcpf = :numCpf  \
+                and sitafa = 1        \
+              order by numcad desc";
+Cur_Aux.AbrirCursor();
 Se(Cur_Aux.Achou) {
-  nNumcad = cur_aux.numcad;
-  Cur_aux.FecharCursor();
-  Vapara FichaComplementar;
+  nNumcad = Cur_Aux.numcad;
+  Cur_Aux.FecharCursor();
+  Vapara FichaComplementar;  
 } 
-Cur_aux.FecharCursor();
+Cur_Aux.FecharCursor();
+                                                    
                                                        
-   
+@ ===================================================== @ 
 ExecSql "INSERT INTO r034fun(                                                                                  \
     numemp, tipcol, numcad, outemp, outtip, outcad, empres, tipres, cadres, taborg,                            \
     numloc, estpos, postra, codccu, codesc, turint, codfil, estcar, codcar, codtma,                            \
@@ -415,7 +1405,7 @@ ExecSql "INSERT INTO r034fun(                                                   
     regest, dvlest, numpis, dcdpis, numcpf, estctp, dexctp, datccu, docest, codidn,                            \
     recgra, nmfun3, nmfun4, sisces, irrise, apoida, codlim, opcces, tpctba, nmfun2,                            \
     dedins, digcar, catsef, perirt, coddef, movsef, bushor, nmfun1, tipsrv, benrea,                            \
-    codglo, datces, cotdef, cateso, seqreg, gespon, forpro, tpcpix, chvpix, datrei,                            \
+    codglo, datces, cotdef, nCatEso, seqreg, gespon, forpro, tpcpix, chvpix, datrei,                            \
     codcbo, staalf, datsef, datsin, codpes, datvin, rettrp, codvin, datevt, numpsp,                            \
     datche, dathct, temhct, stahct, pertra, datsld, faiins, jamsld, hordsr, depsld,                            \
     opcatu, cadfol, dincra, dctins, emtcar, numins, horsem, datetb, datadi, empfil,                            \
@@ -432,7 +1422,7 @@ VALUES (                                                                        
     :nvalSalHsa, 0, :ntipCon, :aTipSex, :ncodNac, 0, :dDatnas, :nestCiv, :ngraIns, 0,                          \
     :anomfun, :aApeFun, 1, 1, :dDatadm, :ntipAdmHfi, 0, 0, 0, :dDatadm,                                        \
     :aPagSin, 'S', :nConBan, :amodPag, 0, 0, 'N', :nnumCtp, :aserCtp, :dDatVazia,                              \
-    :aEspacoBranco, :ddvlest, :nnumPis, :dDatVazia, :numCpf, :aestCtp, :dDexcpt, :dDatVazia, 0, 0.0,           \
+    :aEspacoBranco, :ddvlest, :nnumPis, :dDatVazia, :numCpf, :aEstCtp, :dDexcpt, :dDatVazia, 0, 0.0,           \
     :aEspacoBranco, :aEspacoBranco, :aEspacoBranco, 0, :aEspacoBranco, :aEspacoBranco, 0, :dDatVazia,          \
     :ntpCtBa, :aEspacoBranco, 0.0, :adigCar, 1, 0.0, 0, :aEspacoBranco, 0, :aEspacoBranco,                     \
     0, :aEspacoBranco, 0, :dDatVazia, :aEspacoBranco, 101, 0.0, 'N', :aEspacoBranco, 0,                        \
@@ -441,43 +1431,56 @@ VALUES (                                                                        
     0, 0.0, 0.0, 0.0, 'N', '60', :dDatVazia, 0, :aEspacoBranco, 0.0, 0.0, :dDatVazia,                          \
     :dDatVazia, 0, :dDatVazia, 0, 0.0, 0, 0, 0.0, 0.0, 0, :aEspacoBranco,                                      \
     :aEspacoBranco, :aEspacoBranco, :aEspacoBranco, :aEspacoBranco, 0.0, 0, 'S', :aEspacoBranco,               \
-    :dDatVazia, 0, 'I', 0.0, 'O', 0, 1, 0, :dDatVazia, 0, 0, :aEspacoBranco)";                                 
+    :dDatVazia, 0, 'I', 0.0, 'O', 0, 1, 0, :dDatVazia, 0, 0, :aEspacoBranco)";
 
 
+    @ ===================================================== @
+ExecSql "INSERT INTO R038HPO (NumEmp,TipCol,NumCad,IniAtu,SeqHis,CodTap,   \
+                              MotAlt,EstPos,PosTra,TerAtu,ObsHpo,StaHis,   \
+                              TipSbs,CadSbs,PerAdi,FunEso,CodUsu)          \
+                      VALUES (:nNumEmp ,1 ,:nNumCad ,:dDatadm , 1, 1,      \
+                              1, :nestpos, :aposTra, :dDatVazia, ' ', 1, 0,\                   
+                              0, 0.0, ' ',0)";
 
-
-
-ExecSql "INSERT INTO R038HPO (NumEmp,TipCol,NumCad,IniAtu,SeqHis,CodTap,MotAlt,EstPos,PosTra,TerAtu,ObsHpo,StaHis,TipSbs,CadSbs,PerAdi,FunEso,CodUsu) \
-                      VALUES (:nNumEmp ,1 ,:nNumCad ,:dDatadm ,1 ,1 ,1 ,:nestpos ,:aposTra ,:dDatVazia ,' ' ,1 ,0 ,0 ,0.0 ,' ' ,0 )";
-
+@ ===================================================== @
 ExecSql "INSERT INTO R038APU (NumEmp,TipCol,NumCad,IniApu,UltApu,ApuPon,ConPon,ParPfa,AjuPon,AprPon,ArtCLT,CodDSi) \
                       VALUES (:nNumEmp ,1 ,:nNumCad ,:dDatadm ,:dDatVazia ,1 ,1 ,'N' ,'N' ,'N' ,1 ,0 )";
 
-codVinHvi =  cadastro_colaborador.codvin;
+@ ===================================================== @
+nCodVinHvi =  cadastro_colaborador.codvin;
+ExecSql "INSERT INTO R038HVI (NumEmp,TipCol,NumCad,DatAlt,CodVin,StaHis) VALUES (:nNumEmp ,1 ,:nNumCad ,:dDatadm ,:nCodVinHvi ,1 )";                      
                       
-ExecSql "INSERT INTO R038HVI (NumEmp,TipCol,NumCad,DatAlt,CodVin,StaHis) VALUES (:nNumEmp ,1 ,:nNumCad ,:dDatadm ,:codVinHvi ,1 )";                     
-                      
+@ ===================================================== @
 ExecSql "INSERT INTO R038HSI (NumEmp,TipCol,NumCad,DatAlt,CodSin,SocSin,StaHis,PossBH,UsaBhr,CodBHr) VALUES (:nNumEmp ,1 ,:nNumCad ,:dDatadm, :ncodSinHsi ,'N' ,1 ,' ' ,0 ,0 )";
 
-aAux = cadastro_colaborador.cateSo;
+
+
+@ ===================================================== @
+aAux = cadastro_colaborador.nCatEso;
   PosicaoAlfa("-",aAux, PosStr);
   CopiarAlfa (aAux, 0,PosStr-2);
   AlfaParaInt(aAux, nAux); 
-cateSo = nAux;
+nCatEso = nAux;
 
-ExecSql "INSERT INTO R038CAT (NumEmp,TipCol,NumCad,DatAlt,CodCat,StaHis) VALUES (:nNumEmp ,1 ,:nNumCad ,:dDatadm ,:cateSo ,1 )";
+ExecSql "INSERT INTO R038CAT (NumEmp,TipCol,NumCad,DatAlt,CodCat,StaHis) \
+                      VALUES (:nNumEmp ,1 ,:nNumCad ,:dDatadm ,:nCatEso ,1 )";
 
-ExecSql "INSERT INTO R038HCA (NumEmp,TipCol,NumCad,DatAlt,EstCar,CodCar,CodMot,StaHis,CarVag,CodCrr,FunEso) VALUES (:nNumEmp ,1 ,:nNumCad ,:dDatadm ,:nestcar ,:acodcar ,1 ,1 ,:acodcar ,0 ,' ' )";
+@ ===================================================== @
+ExecSql "INSERT INTO R038HCA (NumEmp,TipCol,NumCad,DatAlt,EstCar,CodCar,CodMot,StaHis,CarVag,CodCrr,FunEso) \
+                      VALUES (:nNumEmp ,1 ,:nNumCad ,:dDatadm ,:nestcar ,:acodcar ,1 ,1 ,:acodcar ,0 ,' ' )";
 
+@ ===================================================== @
 ExecSql "INSERT INTO R038HES (NumEmp,TipCol,NumCad,DatAlt,CodEsc,CodTma,TurInt,HorBas,HorSab,HorSem,HorDsr,StaAcc,StaHis,CodEqp,CodCat,DesSim) \
                       VALUES (:nNumEmp ,1 ,:nNumCad ,:dDatadm ,:ncodesc ,:ncodTma ,0 ,0 ,0 ,0 ,0 ,0 ,1 ,0 ,0 ,' ' )";
 
+@ ===================================================== @
 aAux = cadastro_colaborador.tipSal;
 PosicaoAlfa("-",aAux, PosStr);
-CopiarAlfa (aAux, 0,PosStr-2);
+CopiarAlfa (aAux, 0,PosStr - 2);
 AlfaParaInt(aAux, nAux);
 tipSalHsa = nAux;
 
+@ ===================================================== @
 aAux = cadastro_colaborador.admeSo;
 PosicaoAlfa("-",aAux, PosStr);
 CopiarAlfa (aAux, 0,PosStr-2);
@@ -491,47 +1494,52 @@ ExecSql "INSERT INTO R038HFI (NumEmp,TipCol,NumCad,DatAlt,EmpAtu,CodTap,EstPos,P
                      VALUES (:nNumEmp ,1 ,:nNumCad ,:dDatadm ,:nNumEmp ,1 ,:nestpos ,:aposTra ,:ncodfil ,:nTaborg ,:nnumloc ,:nNumCad ,:acodCcu ,0 , \
                               :ntipAdmHfi,0,' ' ,0 ,1 ,:nestcar ,:acodcar ,1 ,:ncodesc ,:ncodtma ,0 ,0 ,0 ,0 , \
                               0 ,0 ,0 ,:nvalSalHsa ,0 ,:tipSalHsa,0 ,' ' ,' ' ,0 ,0,:ncodSinHsi ,:aNumCra ,1, \
-                              0 ,:codVinHvi ,' ' ,' ' ,:nadmeSo ,0 ,0 )";
+                              0 ,:nCodVinHvi ,' ' ,' ' ,:nadmeSo ,0 ,0 )";
                       
+@ ===================================================== @
 ExecSql "INSERT INTO R038HSA(numemp,tipcol,numcad,datalt,seqalt,codmot,codest,valsal,cplsal,tipsal,tipest,clasal,nivsal,perdes,perrea,stahis,codidm,salest,cplest) \
                      VALUES( :nNumEmp ,1 ,:nNumCad ,:dDatadm,1,1,0,:nvalSalHsa,0,:ntipSalHsa,0,' ',' ',0,0,1,0,0,0)";
-                     
+           
+@ ===================================================== @                   
 aAux = cadastro_colaborador.locTraHlo;
 TrocaString(aAux,".","",aAux);
 AlfaParaInt(aAux,nlocTraHlo);
 Se(nlocTraHlo = 0) {
   nlocTraHlo = 4106902; @curitiba@ 
 }                 
-                                                              
 ExecSql "INSERT INTO R038HLO (NumEmp,TipCol,NumCad,DatAlt,TabOrg,NumLoc,ConTov,ConTos,StaHis,LocTra,MotAlt) \
                       VALUES (:nNumEmp ,1 ,:nNumCad ,:dDatadm ,:nTaborg ,:nnumloc ,'N' ,'N' ,1 ,:nlocTraHlo ,0 )";
-                      
+
+@ ===================================================== @
 ExecSql "INSERT INTO R038HCC (NumEmp,TipCol,NumCad,DatAlt,CodCcu,StaHis,ConFin) VALUES (:nNumEmp ,1 ,:nNumCad ,:dDatadm ,:acodCcu ,1 ,0 )";
 
 
-
+@ ===================================================== @
 aAux = cadastro_colaborador.indAdm;
 PosicaoAlfa("-",aAux, PosStr);
 CopiarAlfa (aAux, 0,PosStr-2);
 AlfaParaInt(aAux, nAux); 
 nindAdm = nAux;
-      
 
 ExecSql "INSERT INTO R034ADM (NumEmp,TipCol,NumCad,DatAdm,AdmEso,IndAdm,CodPro,TInAnt,CnpjAn,AdmAnt,MatAnt,OnuSce,CatAnt,ResOnu,SegDes) \
                       VALUES (:nNumEmp ,1 ,:nNumCad ,:dDatadm ,:nadmeSo ,:nindAdm ,0 ,0 ,0 ,:dDatVazia ,' ' ,0 ,0 ,' ' ,0 )";
-
+      
+@ ===================================================== @
 ExecSql "INSERT INTO r038hch(tipcra, numemp, tipcol, numcad, datini, horini, viacra, recepr, staatu, staacc, numcra, datfim, horfim) \
                      VALUES (1, :nNumEmp ,1 ,:nNumCad ,:dDatadm , 0, 0, ' ', 1, 1, :aNumCra, :dDatVazia, 0)";
 
+@ ===================================================== @
 ExecSql "INSERT INTO R034TRI (NumEmp,TipCol,NumCad,CriPes) VALUES (:nNumEmp ,1 ,:nNumCad ,'S' )";
 
+
+@ ===================================================== @
 ExecSql "INSERT INTO R034DAC (NumEmp,TipCol,NumCad,VerPrm,CodPrm,PrmFer,PrmSab,PrmDom,PrmVis,ConFai,ConAdp,ConCre,ConIAl,TemAlm,BloFal,RecVis,AutAgv, \
                               AutAsa,AutExt,UsaFro,GraCon,ConPac,TemPac,ConRee,TolAcp,UsaBio,DatAso,DatTse,AutDbl,VerAfa,AprSol,MonLot,ConInt,TolInt, \
                               IntBDC,DatInc,HorInc,StaBDC,ConRea,UtiChv,RepOnl,SeqReg,UsaRfa) \
                       VALUES (:nNumEmp ,1 ,:nNumCad ,'S' ,0 ,0 ,0 ,0 ,0 ,0 ,'S' ,0 ,'N' ,0 ,'S' ,'N' ,'N' ,'N' ,'N' ,'N' ,50 ,\
                               'N' ,0 ,'N' ,0 ,1 ,:dDatVazia,:dDatVazia ,'N' ,'S' ,'N' ,'N' ,'N' ,0 ,'N' ,:dDatVazia ,0 ,0 ,'S' ,'N' ,'S' ,0.0 ,'N' )";
 
-
+@ ===================================================== @
 aAux = cadastro_colaborador.catSef;
 PosicaoAlfa("-",aAux, PosStr);
 CopiarAlfa (aAux, 0,PosStr-2);
@@ -539,7 +1547,8 @@ AlfaParaInt(aAux, nAux);
 ncatSef = nAux;
 
 ExecSql "INSERT INTO R038HCS (NumEmp,TipCol,NumCad,DatAlt,CatSef,StaHis) VALUES (:nNumEmp ,1 ,:nNumCad , :dDatadm ,:ncatSef ,1 )";
-                              
+
+@ ===================================================== @
 ExecSql "INSERT INTO R040PER (NumEmp,TipCol,NumCad,IniPer,FimPer,QtdDir,QtdFal,QtdAfa,QtdLir,QtdDeb,QtdLin,QtdMil,   \
                               QtdAbo,QtdSld,QtdAbn,QtdAsd,QtdGas,AvoFer,AvoPer,DiaCom,DiaDev,QtdPng,SitPer,AltFim,PerSus,PagAdi,  \
                               QtdUte,TotUte,TotU30,LimCon,DiaInt,DatInt)                                             \
@@ -547,7 +1556,7 @@ ExecSql "INSERT INTO R040PER (NumEmp,TipCol,NumCad,IniPer,FimPer,QtdDir,QtdFal,Q
                               0.0 ,0.0 ,0.0 ,0.0 ,0 ,0 ,0 ,0 ,0.0 ,0 ,' ' ,' ' ,' ' ,0.0 ,0 ,0 ,:dDatVazia ,0.0 ,:dDatVazia)";
 
 
-
+@ ===================================================== @
 FichaComplementar:
 
 aAux = cadastro_colaborador.tipLgr;
@@ -569,51 +1578,39 @@ Se(ncodcid = 0){
   ncodcid = 4106902; @curitiba@
 }
 
-cur_aux.sql "select codPai from r074cid where codcid = :nCodCid";
-cur_aux.abrircursor();
-Se(cur_aux.achou){
-  ncodPai = cur_aux.codpai;
+Cur_Aux.sql "select codPai from r074cid where codcid = :nCodCid";
+Cur_Aux.abrircursor();
+Se(Cur_Aux.achou){
+  ncodPai = Cur_Aux.codpai;
 }
-cur_aux.fecharcursor();
+Cur_Aux.fecharcursor();
 
 
 
-/************* Cadastro do bairro ***************************/
+
 aNomBai = cadastro_colaborador.NomBai;
 AlfaPuro(aCodBai,1,1);         
-cur_aux.sql "select codbai from r074bai where codcid = :nCodCid and nombai = :aNomBai";
-cur_aux.AbrirCursor();
-Se(cur_aux.achou){
-  nCodBai = cur_aux.Codbai;
+Cur_Aux.sql "select codbai from r074bai where codcid = :nCodCid and nombai = :aNomBai";
+Cur_Aux.AbrirCursor();
+Se(Cur_Aux.achou){
+  nCodBai = Cur_Aux.Codbai;
 }
 Senao {
-  cur_aux.FecharCursor(); 
-  cur_aux.sql "select codbai from r074bai where codcid = :nCodCid order by codbai desc";
-  cur_aux.AbrirCursor();
-  Se(cur_aux.achou) {
-    nCodBai = cur_aux.Codbai + 1;
+  Cur_Aux.FecharCursor(); 
+  Cur_Aux.sql "select codbai from r074bai where codcid = :nCodCid order by codbai desc";
+  Cur_Aux.AbrirCursor();
+  Se(Cur_Aux.achou) {
+    nCodBai = Cur_Aux.Codbai + 1;
   }
-  cur_aux.FecharCursor(); 
+  Cur_Aux.FecharCursor(); 
   ExecSql "insert into r074bai(codcid,codbai, nombai) values(:nCodCid,:nCodBai,:aNomBai)";     
 }
-cur_aux.FecharCursor(); 
+Cur_Aux.FecharCursor();
 
-
- 
-/************* Cadastro do bairro ***************************/  
 anumTel =  cadastro_colaborador.numTel;
 aemaPar =  cadastro_colaborador.empar;  
 aemaCom =  cadastro_colaborador.emaCom;
-nCidnas = cadastro_colaborador.cidnas;
-aestnas= cadastro_colaborador.estnas; 
-  
-cur_aux.sql "select codPai from r074cid where codcid = :nCidnas and estcid = :aestnas";
-cur_aux.abrircursor();
-Se(cur_aux.achou){
-  npaiNas = cur_aux.codpai;
-}
-cur_aux.fecharcursor(); 
-
+nCidnas =  cadastro_colaborador.cidnas; 
 aestNas =  cadastro_colaborador.estnas;
 anumCid =  cadastro_colaborador.numcid;
 aestCid =  cadastro_colaborador.estCid;
@@ -633,13 +1630,19 @@ ndurCon =  cadastro_colaborador.durCon;
 nproCon =  cadastro_colaborador.proCon;
 aDatExp =  dDatadm +ndurCon+ nproCon-1;
 
+Cur_Aux.sql "select codPai from r074cid where codcid = :nCidnas and estcid = :aestnas";
+Cur_Aux.abrircursor();
+Se(Cur_Aux.achou){
+  npaiNas = Cur_Aux.codpai;
+}
+Cur_Aux.fecharcursor(); 
 
 
-cur_aux.sql "select numcad from r034cpl where numcad = :nNumcad and numemp = :nNumEmp and tipcol = 1";
-Cur_aux.abrircursor();
+Cur_Aux.sql "select numcad from r034cpl where numcad = :nNumcad and numemp = :nNumEmp and tipcol = 1";
+Cur_Aux.abrircursor();
 Se(Cur_Aux.NaoAchou) {  
-    ExecSql "INSERT INTO r034cpl 
-            (
+    ExecSql "INSERT INTO r034cpl                                                                             \
+            (                                                                                                \
               numemp, tipcol, numcad, codcid, codrad, codbai, paipsp, estpsp, painas, estnas,                \
               codpai, codest, proexm, vencnh, ultexm, datcnh, codqua, procon, catres, codprf,                \
               numres, durcon, regcon, incpsa, matpsa, codpsa, codcas, codrlr, excpsa, tippsa,                \
@@ -663,9 +1666,11 @@ Se(Cur_Aux.NaoAchou) {
               ' ', ' ', ' ', :aemaPar, :dDatVazia, :dDatVazia, 0, :dDatVazia, ' ', ' ',                      \
               ' ', ' ', ' ', ' ', ' ', ' ', 0, ' ', ' ', ' ')";    
 } 
-Cur_aux.FecharCursor();
+Cur_Aux.FecharCursor();
 
+
+@ ===================================================== @
 cadastro_colaborador.numcad = nNumCad;
 cadastro_colaborador.tipcol = 1; 
-    
-x=1;     
+
+*/   
